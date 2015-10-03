@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import MagicMock, create_autospec
 from hamcrest import *
 from sgcs.induction.detector import Detector
-from sgcs.induction.environment import Environment
+from sgcs.induction.environment import Environment, CykTableIndexError
 from sgcs.induction.rule import Rule
 from sgcs.induction.rule_population import RulePopulation
 
@@ -23,12 +23,12 @@ class TestDetector(unittest.TestCase):
             self.environment_mock, self.rule_population_mock)
 
     def test_invalid_coord_should_cause_an_exception(self):
-        self.environment_mock.get_symbols.side_effect = IndexError()
+        self.environment_mock.get_symbols.side_effect = CykTableIndexError(self.coordinates)
 
         assert_that(
             calling(self.sut.generate_production).
                 with_args(self.environment_mock, self.rule_population_mock),
-            raises(IndexError))
+            raises(CykTableIndexError, repr(self.coordinates)))
 
         self.environment_mock.get_symbols.assert_called_once_with(self.coordinates)
         assert_that(self.rule_population_mock.get_rules_by_right.call_count, is_(equal_to(0)))
