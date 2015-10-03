@@ -23,11 +23,19 @@ class CykTableExecutor(CykExecutor):
     def __init__(self, executor_factory):
         super().__init__(ExecutorLevel.per_table, executor_factory)
 
+    def execute(self, environment, rule_population, production_pool):
+        sentence_length = environment.get_sentence_length()
+
+        for row in range(0, sentence_length):
+            child_executor = self.create_child_executor(self, row, self.executor_factory)
+            child_executor.execute(environment, rule_population, production_pool)
+
 
 class CykRowExecutor(CykExecutor):
     def __init__(self, table_executor, row, executor_factory):
         super().__init__(ExecutorLevel.per_row, executor_factory)
         self._row = row
+        self.parent_executor = table_executor
 
     @property
     def current_row(self):

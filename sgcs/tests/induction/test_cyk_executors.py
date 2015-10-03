@@ -12,7 +12,7 @@ from sgcs.tests.test_common import are_
 
 class ExecutorSuite(unittest.TestCase):
     def initialize_mocks(self, parent_class):
-        self.parent_executor = create_autospec(parent_class)
+        self.parent_executor = create_autospec(parent_class) if parent_class else None
         self.environment_mock = create_autospec(Environment)
         self.rule_population_mock = create_autospec(RulePopulation)
         self.production_pool_mock = create_autospec(ProductionPool)
@@ -23,7 +23,7 @@ class ExecutorSuite(unittest.TestCase):
                 ExecutorLevel.per_parent_combination: self.child_mocker(CykSymbolPairExecutor),
                 ExecutorLevel.per_cell: self.child_mocker(CykParentCombinationExecutor),
                 ExecutorLevel.per_row: self.child_mocker(CykCellExecutor),
-                ExecutorLevel.per_table: None
+                ExecutorLevel.per_table: self.child_mocker(CykRowExecutor)
             }
         )
 
@@ -174,5 +174,33 @@ class TestCykRowExecutor(ExecutorSuite):
             [
                 (self.sut, 0, self.executor_factory),
                 (self.sut, 1, self.executor_factory)
+            ]
+        ))
+
+
+class TestCykTableExecutor(ExecutorSuite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initialize_mocks(None)
+
+        self.sut = CykTableExecutor(self.executor_factory)
+
+    def test_cells_in_row_should_be_executed(self):
+        # Given:
+        self.environment_mock.get_sentence_length.return_value = 5
+
+        # When:
+        self.sut.execute(self.environment_mock, self.rule_population_mock,
+                         self.production_pool_mock)
+
+        # Then:
+        assert_that(self.children_created, are_(
+            [
+                (self.sut, 0, self.executor_factory),
+                (self.sut, 1, self.executor_factory),
+                (self.sut, 2, self.executor_factory),
+                (self.sut, 3, self.executor_factory),
+                (self.sut, 4, self.executor_factory)
             ]
         ))
