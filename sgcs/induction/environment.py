@@ -8,6 +8,9 @@ class Environment(object):
     def get_right_parent_symbol_count(self, coordinates):
         pass
 
+    def get_row_length(self, row):
+        pass
+
 
 class CykTableIndexError(Exception):
     def __init__(self, coordinates):

@@ -135,8 +135,6 @@ class TestCykCellExecutor(ExecutorSuite):
         self.current_col = 3
 
     def test_parent_combinations_should_be_executed(self):
-        # Given:
-
         # When:
         self.sut.execute(self.environment_mock, self.rule_population_mock,
                          self.production_pool_mock)
@@ -147,5 +145,34 @@ class TestCykCellExecutor(ExecutorSuite):
                 (self.sut, 1, self.executor_factory),
                 (self.sut, 2, self.executor_factory),
                 (self.sut, 3, self.executor_factory)
+            ]
+        ))
+
+
+class TestCykRowExecutor(ExecutorSuite):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.initialize_mocks(CykTableExecutor)
+        self.initialize_coordinates()
+
+        self.sut = CykRowExecutor(self.parent_executor, self.current_row, self.executor_factory)
+
+    def initialize_coordinates(self):
+        self.current_row = 2
+
+    def test_cells_in_row_should_be_executed(self):
+        # Given:
+        self.environment_mock.get_row_length.return_value = 2
+
+        # When:
+        self.sut.execute(self.environment_mock, self.rule_population_mock,
+                         self.production_pool_mock)
+
+        # Then:
+        assert_that(self.children_created, are_(
+            [
+                (self.sut, 0, self.executor_factory),
+                (self.sut, 1, self.executor_factory)
             ]
         ))

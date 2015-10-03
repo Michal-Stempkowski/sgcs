@@ -19,13 +19,26 @@ class CykExecutor(object):
         return self.executor_factory.create(self.level, *args)
 
 
+class CykTableExecutor(CykExecutor):
+    def __init__(self, executor_factory):
+        super().__init__(ExecutorLevel.per_table, executor_factory)
+
+
 class CykRowExecutor(CykExecutor):
-    def __init__(self, row_executor, column, executor_factory):
-        super().__init__(ExecutorLevel.per_cell, executor_factory)
+    def __init__(self, table_executor, row, executor_factory):
+        super().__init__(ExecutorLevel.per_row, executor_factory)
+        self._row = row
 
     @property
     def current_row(self):
-        return None
+        return self._row
+
+    def execute(self, environment, rule_population, production_pool):
+        row_length = environment.get_row_length(self.current_row)
+
+        for col in range(0, row_length):
+            child_executor = self.create_child_executor(self, col, self.executor_factory)
+            child_executor.execute(environment, rule_population, production_pool)
 
 
 class CykCellExecutor(CykExecutor):
