@@ -2,18 +2,41 @@ import unittest
 from unittest.mock import MagicMock, create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.detector import Detector
-from sgcs.induction.production import ProductionPool, Production
+from sgcs.induction.production import ProductionPool, Production, EmptyProduction
 from sgcs.induction.rule import Rule
 
 
 class TestProductionPool(unittest.TestCase):
-    def test_adding_production_should_result_in_storing_it(self):
-        detector = create_autospec(Detector)
-        rule = create_autospec(Rule)
-        type(rule).parent = PropertyMock(return_value='A')
-        production = Production(detector, rule)
-        sut = ProductionPool()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        sut.add_production(production)
-        assert_that(sut.non_empty_productions, only_contains(production))
+        self.detector = create_autospec(Detector)
+
+        self.rule_left_side = 'A'
+        self.rule = create_autospec(Rule)
+        type(self.rule).parent = PropertyMock(return_value=self.rule_left_side)
+
+        self.sut = ProductionPool()
+
+    def test_adding_production_should_result_in_storing_it(self):
+        # Given:
+        production = Production(self.detector, self.rule)
+
+        # When:
+        self.sut.add_production(production)
+
+        # Then:
+        assert_that(self.sut.is_empty(), is_(equal_to(False)))
+        assert_that(self.sut.get_effectors(), only_contains('A'))
+
+    def test_adding_empty_production_should_be_handled_well(self):
+        # Given:
+        production = EmptyProduction(self.detector)
+
+        # When:
+        self.sut.add_production(production)
+
+        # Then:
+        assert_that(self.sut.is_empty(), is_(equal_to(True)))
+        assert_that(self.sut.get_effectors(), is_(empty()))
 

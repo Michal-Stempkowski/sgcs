@@ -24,7 +24,10 @@ class TestEnvironment(unittest.TestCase):
         assert_that(self.sut.get_row_length(3), is_(1))
 
     def test_adding_symbols_should_work_properly(self):
+        # Given:
         new_symbols = {'A', 'B'}
+
+        # When/Then:
         self.sut.add_symbols((2, 2), new_symbols)
 
         assert_that(self.sut.cyk_table[2][2].symmetric_difference(new_symbols),
@@ -40,6 +43,7 @@ class TestEnvironment(unittest.TestCase):
                     raises(CykTableIndexError))
 
     def test_getting_symbols_should_work_properly(self):
+        # Given:
         current_symbols = {'A', 'B'}
         current_coord = (3, 0)
         self.sut.add_symbols(current_coord, current_symbols)
@@ -54,8 +58,7 @@ class TestEnvironment(unittest.TestCase):
 
         unshifted_parent_coords = (3, 0, 2)
 
-        print(self.sut.cyk_table)
-
+        # When/Then:
         assert_that(self.sut.get_symbols(current_coord).
                     symmetric_difference(current_symbols),
                     is_(equal_to(set())))
