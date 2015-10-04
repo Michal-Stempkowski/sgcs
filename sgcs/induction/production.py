@@ -15,8 +15,19 @@ class EmptyProduction(Production):
 
 class ProductionPool(object):
     def __init__(self):
-        self.pool = []
-        self.proposals = []
+        self.non_empty_productions = []
+        self.empty_productions = []
+        self.effectors = set()
 
     def add_production(self, production):
-        self.pool.append(production)
+        if production.is_empty():
+            self.empty_productions.append(production)
+        else:
+            self.non_empty_productions.append(production)
+            self.effectors.add(production.rule.parent)
+
+    def is_empty(self):
+        return not self.non_empty_productions
+
+    def get_effectors(self):
+        return self.effectors

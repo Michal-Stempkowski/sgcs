@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec, PropertyMock
+from unittest.mock import create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import *
@@ -20,10 +20,11 @@ class ExecutorSuite(unittest.TestCase):
 
         self.executor_factory = Factory(
             {
-                ExecutorLevel.per_parent_combination: self.child_mocker(CykSymbolPairExecutor),
-                ExecutorLevel.per_cell: self.child_mocker(CykParentCombinationExecutor),
-                ExecutorLevel.per_row: self.child_mocker(CykCellExecutor),
-                ExecutorLevel.per_table: self.child_mocker(CykRowExecutor)
+                ExecutorTypeId.parent_combination_executor: self.child_mocker(CykSymbolPairExecutor),
+                ExecutorTypeId.cell_executor: self.child_mocker(CykParentCombinationExecutor),
+                ExecutorTypeId.row_executor: self.child_mocker(CykCellExecutor),
+                ExecutorTypeId.table_executor: self.child_mocker(CykRowExecutor),
+                ExecutorTypeId.production_pool: lambda *args: self.production_pool_mock
             }
         )
 
@@ -134,10 +135,13 @@ class TestCykCellExecutor(ExecutorSuite):
         type(self.parent_executor).current_row = PropertyMock(return_value=4)
         self.current_col = 3
 
-    def test_parent_combinations_should_be_executed(self):
+    def parent_combinations_should_be_executed_scenario(self, effectors):
+        # Given:
+        self.production_pool_mock.is_empty.return_value = not effectors
+        self.production_pool_mock.get_effectors.return_value = effectors
+
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.children_created, are_(
@@ -147,6 +151,26 @@ class TestCykCellExecutor(ExecutorSuite):
                 (self.sut, 3, self.executor_factory)
             ]
         ))
+
+    def test_effectors_found(self):
+        # Given:
+        effectors = {'A', 'B', 'C'}
+
+        # When:
+        self.parent_combinations_should_be_executed_scenario(effectors)
+
+        # Then:
+        self.environment_mock.add_symbols.assert_called_once_with((4, 3), effectors)
+
+    def test_effectors_not_found(self):
+        # Given:
+        effectors = {}
+
+        # When:
+        self.parent_combinations_should_be_executed_scenario(effectors)
+
+        # Then:
+        assert_that(self.environment_mock.add_symbols.called, is_(False))
 
 
 class TestCykRowExecutor(ExecutorSuite):
@@ -166,8 +190,7 @@ class TestCykRowExecutor(ExecutorSuite):
         self.environment_mock.get_row_length.return_value = 2
 
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.children_created, are_(
@@ -191,8 +214,7 @@ class TestCykTableExecutor(ExecutorSuite):
         self.environment_mock.get_sentence_length.return_value = 5
 
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.children_created, are_(

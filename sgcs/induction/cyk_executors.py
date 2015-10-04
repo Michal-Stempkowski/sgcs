@@ -2,12 +2,13 @@ from enum import Enum
 from sgcs.induction.detector import Detector
 
 
-class ExecutorLevel(Enum):
-    per_symbol_pair = 0
-    per_parent_combination = 1
-    per_cell = 2
-    per_row = 3
-    per_table = 4
+class ExecutorTypeId(Enum):
+    symbol_pair_executor = 0
+    parent_combination_executor = 1
+    cell_executor = 2
+    row_executor = 3
+    table_executor = 4
+    production_pool = 5
 
 
 class CykExecutor(object):
@@ -21,19 +22,19 @@ class CykExecutor(object):
 
 class CykTableExecutor(CykExecutor):
     def __init__(self, executor_factory):
-        super().__init__(ExecutorLevel.per_table, executor_factory)
+        super().__init__(ExecutorTypeId.table_executor, executor_factory)
 
-    def execute(self, environment, rule_population, production_pool):
+    def execute(self, environment, rule_population):
         sentence_length = environment.get_sentence_length()
 
         for row in range(0, sentence_length):
             child_executor = self.create_child_executor(self, row, self.executor_factory)
-            child_executor.execute(environment, rule_population, production_pool)
+            child_executor.execute(environment, rule_population)
 
 
 class CykRowExecutor(CykExecutor):
     def __init__(self, table_executor, row, executor_factory):
-        super().__init__(ExecutorLevel.per_row, executor_factory)
+        super().__init__(ExecutorTypeId.row_executor, executor_factory)
         self._row = row
         self.parent_executor = table_executor
 
@@ -41,17 +42,17 @@ class CykRowExecutor(CykExecutor):
     def current_row(self):
         return self._row
 
-    def execute(self, environment, rule_population, production_pool):
+    def execute(self, environment, rule_population):
         row_length = environment.get_row_length(self.current_row)
 
         for col in range(0, row_length):
             child_executor = self.create_child_executor(self, col, self.executor_factory)
-            child_executor.execute(environment, rule_population, production_pool)
+            child_executor.execute(environment, rule_population)
 
 
 class CykCellExecutor(CykExecutor):
     def __init__(self, row_executor, column, executor_factory):
-        super().__init__(ExecutorLevel.per_cell, executor_factory)
+        super().__init__(ExecutorTypeId.cell_executor, executor_factory)
         self.parent_executor = row_executor
         self._column = column
 
@@ -63,17 +64,23 @@ class CykCellExecutor(CykExecutor):
     def current_col(self):
         return self._column
 
-    def execute(self, environment, rule_population, production_pool):
+    def execute(self, environment, rule_population):
+        production_pool = self.executor_factory.create(ExecutorTypeId.production_pool)
         for shift in range(1, self.current_row):
             child_executor = self.create_child_executor(self, shift, self.executor_factory)
             child_executor.execute(environment, rule_population, production_pool)
 
-        # If production_pool is empty, then perform some coverage
+        if production_pool.is_empty():
+            pass  # If production_pool is empty, then perform some coverage
+
+        if not production_pool.is_empty():
+            effectors = production_pool.get_effectors()
+            environment.add_symbols((self.current_row, self.current_col), effectors)
 
 
 class CykParentCombinationExecutor(CykExecutor):
     def __init__(self, cell_executor, shift, executor_factory):
-        super().__init__(ExecutorLevel.per_parent_combination, executor_factory)
+        super().__init__(ExecutorTypeId.parent_combination_executor, executor_factory)
         self.parent_executor = cell_executor
         self._shift = shift
 
@@ -108,7 +115,7 @@ class CykParentCombinationExecutor(CykExecutor):
 
 class CykSymbolPairExecutor(CykExecutor):
     def __init__(self, parent_executor, left_id, right_id, executor_factory):
-        super().__init__(ExecutorLevel.per_symbol_pair, executor_factory)
+        super().__init__(ExecutorTypeId.symbol_pair_executor, executor_factory)
         self.parent_executor = parent_executor
         self.left_id = left_id
         self.right_id = right_id
