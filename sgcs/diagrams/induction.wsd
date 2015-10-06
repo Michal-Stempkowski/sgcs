@@ -1,0 +1,131 @@
+@startuml
+package induction {
+
+    Detector ..> RulePopulation: uses
+    Detector "1" --> "[1;*]" Production: creates
+    Detector ..> Environment: uses
+    Detector : __init__(self, coordinates)
+    Detector : generate_production(self, environment, rule_population): list<Production>
+    Detector : coordinates: tuple
+
+    ProductionPool --o Production
+    ProductionPool : non_empty_productions
+    ProductionPool : empty_productions
+    ProductionPool : add_production(self, production)
+    ProductionPool : is_empty(self)
+    ProductionPool : get_effectors(self)
+
+    Production : __init__(self, detector, rule)
+    Production : detector
+    Production : rule
+    Production : is_empty(self)
+
+
+    EmptyProduction --|> Production
+    EmptyProduction : __init__(self, detector)
+    EmptyProduction : detector
+
+    package CykExecutors {
+    '&begin_cyk_executors
+
+        enum ExecutorTypeId {
+            symbol_pair_executor
+            parent_combination_executor
+            cell_executor
+            row_executor
+            table_executor
+            production_pool
+        }
+
+        CykExecutor --* "1" ExecutorTypeId
+        CykExecutor : __init__(self, level, executor_factory)
+        CykExecutor : create_child_executor(self, *args)
+
+        CykSymbolPairExecutor --|> CykExecutor
+        CykSymbolPairExecutor --> Detector: uses
+        CykSymbolPairExecutor ..> RulePopulation: uses
+        CykSymbolPairExecutor ..> Environment: uses
+        CykSymbolPairExecutor ..> ProductionPool: uses
+        CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
+        CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, executor_factory)
+        CykSymbolPairExecutor : execute(self, environment, rule_population, production_pool)
+        CykSymbolPairExecutor : get_coordinates(self)
+        CykSymbolPairExecutor : parent_executor
+
+        CykParentCombinationExecutor --|> CykExecutor
+        CykParentCombinationExecutor ..> RulePopulation: uses
+        CykParentCombinationExecutor ..> Environment: uses
+        CykParentCombinationExecutor : __init__(self, cell_executor, shift, executor_factory)
+        CykParentCombinationExecutor : parent_executor
+        CykParentCombinationExecutor : current_row
+        CykParentCombinationExecutor : current_col
+        CykParentCombinationExecutor : shift
+        CykParentCombinationExecutor : execute(self, environment, rule_population, production_pool)
+        CykParentCombinationExecutor : get_coordinates(self)
+
+        CykCellExecutor --|> CykExecutor
+        CykCellExecutor ..> RulePopulation: uses
+        CykCellExecutor ..> Environment: uses
+        ' &dependency_executors
+        CykCellExecutor --> ProductionPool: uses
+        CykCellExecutor <..> CykParentCombinationExecutor: uses
+        CykCellExecutor : __init__(self, row_executor, column, executor_factory)
+        CykCellExecutor : parent_executor
+        CykCellExecutor : current_row
+        CykCellExecutor : current_col
+        CykCellExecutor : execute(self, environment, rule_population)
+
+        CykRowExecutor --|> CykExecutor
+        CykRowExecutor ..> RulePopulation: uses
+        CykRowExecutor ..> Environment: uses
+        CykRowExecutor <..> CykCellExecutor
+        CykRowExecutor : __init__(self, table_executor, row, executor_factory)
+        CykRowExecutor : parent_executor
+        CykRowExecutor : current_row
+        CykRowExecutor : execute(self, environment, rule_population)
+
+        CykTableExecutor --|> CykExecutor
+        CykTableExecutor ..> RulePopulation: uses
+        CykTableExecutor ..> Environment: uses
+        CykTableExecutor <..> CykRowExecutor: uses
+        CykTableExecutor : __init__(self, executor_factory)
+        CykTableExecutor : execute(self, environment, rule_population)
+
+    '&end_cyk_executors
+    }
+
+    '&alt_cyk_executors CykExecutors ..> Environment: uses
+    '&alt_cyk_executors CykExecutors --> ProductionPool: creates
+    '&alt_cyk_executors CykExecutors --> Production: creates
+    '&alt_cyk_executors CykExecutors --> RulePopulation: uses
+
+    Environment ..* "1" Sentence
+    Environment : __init__(self, sentence)
+    Environment : sentence
+    Environment : cyk_table
+    Environment : get_symbols(self, absolute_coordinates)
+    Environment : add_symbols(self, absolute_coordinates, symbols)
+    Environment : get_left_parent_symbol_count(self, coordinates_with_shift)
+    Environment : get_right_parent_symbol_count(self, coordinates_with_shift)
+    Environment : get_row_length(self, row)
+    Environment : get_sentence_length(self)
+    Environment : validate_absolute_coordinates(self, coordinates)
+
+    SymbolTranslator --> Symbol: translates
+
+    Sentence --o Symbol
+    Sentence : __len__(self)
+
+    RulePopulation : get_rules_by_right(self, pair)
+    RulePopulation --o Rule
+
+    Rule : parent
+    Rule : left_child
+    Rule : right_child
+}
+
+package datalayer {
+    SymbolTranslator --() ExternalSymbol: translates
+}
+
+@enduml

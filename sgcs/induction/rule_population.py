@@ -23,5 +23,5 @@ class RulePopulation(object):
         if by_right_key not in self.rules_by_right:
             self.rules_by_right[by_right_key] = dict()
 
-        # if there is allready such an rule, then make mess
+        # if there is already such an rule, then make mess
         self.rules_by_right[by_right_key][rule.parent] = rule
