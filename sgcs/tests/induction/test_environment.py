@@ -49,7 +49,7 @@ class TestEnvironment(unittest.TestCase):
         self.sut.add_symbols(current_coord, current_symbols)
 
         left_parent_symbols = {'D'}
-        left_parent_coord = (1, 0)
+        left_parent_coord = (2, 0)
         self.sut.add_symbols(left_parent_coord, left_parent_symbols)
 
         right_parent_symbols = {'Z', 'Q', 'G'}

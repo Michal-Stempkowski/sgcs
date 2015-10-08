@@ -36,7 +36,7 @@ class Environment(object):
             raise CykTableIndexError(coordinates_with_shift)
 
         row, col, shift = coordinates_with_shift
-        return len(self.get_symbols((row - shift, col)))
+        return len(self.get_symbols((shift, col)))
 
     def get_right_parent_symbol_count(self, coordinates_with_shift):
         if len(coordinates_with_shift) != 3:

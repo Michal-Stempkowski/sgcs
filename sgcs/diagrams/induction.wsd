@@ -67,7 +67,7 @@ package induction {
         CykCellExecutor ..> RulePopulation: uses
         CykCellExecutor ..> Environment: uses
         ' &dependency_executors
-        CykCellExecutor --> ProductionPool: uses
+        CykCellExecutor ..> ProductionPool: uses (factory)
         CykCellExecutor <..> CykParentCombinationExecutor: uses
         CykCellExecutor : __init__(self, row_executor, column, executor_factory)
         CykCellExecutor : parent_executor
@@ -95,7 +95,7 @@ package induction {
     }
 
     '&alt_cyk_executors CykExecutors ..> Environment: uses
-    '&alt_cyk_executors CykExecutors --> ProductionPool: creates
+    '&alt_cyk_executors CykExecutors ..> ProductionPool: creates
     '&alt_cyk_executors CykExecutors --> Production: creates
     '&alt_cyk_executors CykExecutors --> RulePopulation: uses
 
