@@ -20,11 +20,13 @@ class ExecutorSuite(unittest.TestCase):
 
         self.executor_factory = Factory(
             {
-                ExecutorTypeId.parent_combination_executor: self.child_mocker(CykSymbolPairExecutor),
-                ExecutorTypeId.cell_executor: self.child_mocker(CykParentCombinationExecutor),
-                ExecutorTypeId.row_executor: self.child_mocker(CykCellExecutor),
-                ExecutorTypeId.table_executor: self.child_mocker(CykRowExecutor),
-                ExecutorTypeId.production_pool: lambda *args: self.production_pool_mock
+                CykTypeId.parent_combination_executor: self.child_mocker(CykParentCombinationExecutor),
+                CykTypeId.cell_executor: self.child_mocker(CykCellExecutor),
+                CykTypeId.row_executor: self.child_mocker(CykRowExecutor),
+                CykTypeId.table_executor: self.child_mocker(CykTableExecutor),
+                CykTypeId.symbol_pair_executor: self.child_mocker(CykSymbolPairExecutor),
+                CykTypeId.production_pool: lambda *args: self.production_pool_mock,
+                CykTypeId.cyk_result: CykResult
             }
         )
 
@@ -219,7 +221,6 @@ class TestCykTableExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 0, self.executor_factory),
                 (self.sut, 1, self.executor_factory),
                 (self.sut, 2, self.executor_factory),
                 (self.sut, 3, self.executor_factory),
