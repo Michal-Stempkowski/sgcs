@@ -152,7 +152,8 @@ class TestCykCellExecutor(ExecutorSuite):
             [
                 (self.sut, 1, self.executor_factory),
                 (self.sut, 2, self.executor_factory),
-                (self.sut, 3, self.executor_factory)
+                (self.sut, 3, self.executor_factory),
+                (self.sut, 4, self.executor_factory)
             ]
         ))
 

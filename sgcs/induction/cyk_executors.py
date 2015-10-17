@@ -19,6 +19,10 @@ class CykResult(object):
     def __init__(self):
         self.belongs_to_grammar = False
 
+    def __str__(self):
+        props = ['belongs?:{0}'.format('Y' if self.belongs_to_grammar else 'N')]
+        return self.__class__.__name__ + '({' + '};{'.join(props) + "})"
+
 
 class CykExecutor(object):
     def __init__(self, child_level, executor_factory):
@@ -46,7 +50,8 @@ class CykTableExecutor(CykExecutor):
             child_executor = self.create_child_executor(self, row, self.executor_factory)
             child_executor.execute(environment, rule_population)
 
-        return self.executor_factory.create(CykTypeId.cyk_result)
+        result = self.executor_factory.create(CykTypeId.cyk_result)
+        return result
 
 
 class CykRowExecutor(CykExecutor):
@@ -92,7 +97,7 @@ class CykCellExecutor(CykExecutor):
 
     def execute(self, environment, rule_population):
         production_pool = self.executor_factory.create(CykTypeId.production_pool)
-        for shift in range(1, self.current_row):
+        for shift in range(1, self.current_row + 1):
             child_executor = self.create_child_executor(self, shift, self.executor_factory)
             child_executor.execute(environment, rule_population, production_pool)
 

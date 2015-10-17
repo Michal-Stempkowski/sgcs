@@ -30,8 +30,7 @@ class TestEnvironment(unittest.TestCase):
         # When/Then:
         self.sut.add_symbols((2, 2), new_symbols)
 
-        assert_that(self.sut.cyk_table[2][2].symmetric_difference(new_symbols),
-                    is_(equal_to(set())))
+        assert_that(self.sut.cyk_table[2][2], contains_inanyorder(*new_symbols))
 
         assert_that(calling(self.sut.add_symbols).with_args((-1, 2), new_symbols),
                     raises(CykTableIndexError))
@@ -49,7 +48,7 @@ class TestEnvironment(unittest.TestCase):
         self.sut.add_symbols(current_coord, current_symbols)
 
         left_parent_symbols = {'D'}
-        left_parent_coord = (2, 0)
+        left_parent_coord = (1, 0)
         self.sut.add_symbols(left_parent_coord, left_parent_symbols)
 
         right_parent_symbols = {'Z', 'Q', 'G'}
@@ -59,9 +58,7 @@ class TestEnvironment(unittest.TestCase):
         unshifted_parent_coords = (3, 0, 2)
 
         # When/Then:
-        assert_that(self.sut.get_symbols(current_coord).
-                    symmetric_difference(current_symbols),
-                    is_(equal_to(set())))
+        assert_that(self.sut.get_symbols(current_coord), contains_inanyorder(*current_symbols))
 
         assert_that(self.sut.get_left_parent_symbol_count(unshifted_parent_coords),
                     is_(equal_to(1)))
@@ -84,3 +81,17 @@ class TestEnvironment(unittest.TestCase):
         assert_that(self.sut.get_sentence_symbol(1), is_(equal_to(Symbol(1))))
         assert_that(self.sut.get_sentence_symbol(2), is_(equal_to(Symbol(2))))
         assert_that(self.sut.get_sentence_symbol(3), is_(equal_to(Symbol(3))))
+
+    def test_should_be_able_to_get_detector_symbols(self):
+        left_parent_symbols = {'D'}
+        left_parent_coord = (1, 0)
+        self.sut.add_symbols(left_parent_coord, left_parent_symbols)
+
+        right_parent_symbols = ['Z', 'Q', 'G']
+        right_parent_coord = (1, 2)
+        self.sut.add_symbols(right_parent_coord, right_parent_symbols)
+
+        unshifted_parent_coords = (3, 0, 2, 0, 1)
+
+        assert_that(self.sut.get_detector_symbols(unshifted_parent_coords),
+                    is_(equal_to(('D', 'Q'))))

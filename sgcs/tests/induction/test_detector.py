@@ -16,21 +16,22 @@ class TestDetector(unittest.TestCase):
         self.sut = Detector(self.coordinates)
 
     def generate_population_given_symbols_and_rules(self, symbols, rules):
-        self.environment_mock.get_symbols.return_value = symbols
+        self.environment_mock.get_detector_symbols.return_value = symbols
         self.rule_population_mock.get_rules_by_right.return_value = rules
 
         return self.sut.generate_production(
             self.environment_mock, self.rule_population_mock)
 
     def test_invalid_coord_should_cause_an_exception(self):
-        self.environment_mock.get_symbols.side_effect = CykTableIndexError(self.coordinates)
+        self.environment_mock.get_detector_symbols.side_effect = \
+            CykTableIndexError(self.coordinates)
 
         assert_that(
             calling(self.sut.generate_production).
                 with_args(self.environment_mock, self.rule_population_mock),
             raises(CykTableIndexError, repr(self.coordinates)))
 
-        self.environment_mock.get_symbols.assert_called_once_with(self.coordinates)
+        self.environment_mock.get_detector_symbols.assert_called_once_with(self.coordinates)
         assert_that(self.rule_population_mock.get_rules_by_right.call_count, is_(equal_to(0)))
 
     def test_on_no_rules_generate_production_should_return_empty_production(self):
@@ -47,7 +48,7 @@ class TestDetector(unittest.TestCase):
         assert_that(only_production.is_empty())
         assert_that(only_production.detector, is_(equal_to(self.sut)))
         self.rule_population_mock.get_rules_by_right.assert_called_once_with(symbols)
-        self.environment_mock.get_symbols.assert_called_once_with(self.coordinates)
+        self.environment_mock.get_detector_symbols.assert_called_once_with(self.coordinates)
 
     def test_on_many_rules_many_productions_should_be_generated(self):
         # Given:
@@ -66,4 +67,4 @@ class TestDetector(unittest.TestCase):
         assert_that(prod_a.rule, is_(equal_to(rules[0])))
         assert_that(prod_b.rule, is_(equal_to(rules[1])))
         self.rule_population_mock.get_rules_by_right.assert_called_once_with(symbols)
-        self.environment_mock.get_symbols.assert_called_once_with(self.coordinates)
+        self.environment_mock.get_detector_symbols.assert_called_once_with(self.coordinates)

@@ -27,6 +27,10 @@ class Rule(object):
 
         return res
 
+    def __str__(self):
+        props = [str(self.parent), str(self.left_child), str(self.right_child)]
+        return self.__class__.__name__ + '({' + '};{'.join(props) + "})"
+
 
 class TerminalRule(Rule):
     def __init__(self, parent, child):

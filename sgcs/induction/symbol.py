@@ -11,6 +11,9 @@ class Symbol(object):
     def __hash__(self):
         return self.symbol_id.__hash__()
 
+    def __repr__(self):
+        return self.__class__.__name__ + '({' + str(self.symbol_id) + "})"
+
 
 class Sentence(object):
     def __init__(self, symbols):
@@ -31,3 +34,6 @@ class Sentence(object):
 
     def __hash__(self):
         return self.symbols.__hash__()
+
+    def __str__(self):
+        return self.__class__.__name__ + '({' + ', '.join(x.symbol_id for x in self.symbols) + "})"

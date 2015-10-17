@@ -142,6 +142,7 @@ package induction {
     Environment : get_sentence_length(self)
     Environment : validate_absolute_coordinates(self, coordinates)
     Environment : get_sentence_symbol(self, index)
+    Environment : get_detector_symbols(self, cords)
 
     SymbolTranslator --> Symbol: translates
 

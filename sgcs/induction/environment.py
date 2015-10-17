@@ -15,7 +15,7 @@ class Environment(object):
         self.sentence = sentence
         self.cyk_table = [
             [
-                set() for _ in range(len(self.sentence))
+                list() for _ in range(len(self.sentence))
             ] for _ in range(len(self.sentence))
         ]
 
@@ -29,14 +29,22 @@ class Environment(object):
         self.validate_absolute_coordinates(absolute_coordinates)
 
         row, col = absolute_coordinates
-        self.cyk_table[row][col].update(symbols)
+        for symbol in symbols:
+            if symbol not in self.cyk_table[row][col]:
+                self.cyk_table[row][col].append(symbol)
+
+    def _left_coord(self, row, col, shift, left_id, right_id):
+        return self.get_symbols((shift - 1, col))[left_id]
+
+    def _right_coord(self, row, col, shift, left_id, right_id):
+        return self.get_symbols((row - shift, col + shift))[right_id]
 
     def get_left_parent_symbol_count(self, coordinates_with_shift):
         if len(coordinates_with_shift) != 3:
             raise CykTableIndexError(coordinates_with_shift)
 
         row, col, shift = coordinates_with_shift
-        return len(self.get_symbols((shift, col)))
+        return len(self.get_symbols((shift - 1, col)))
 
     def get_right_parent_symbol_count(self, coordinates_with_shift):
         if len(coordinates_with_shift) != 3:
@@ -59,3 +67,12 @@ class Environment(object):
 
     def get_sentence_symbol(self, index):
         return self.sentence.get_symbol(index)
+
+    def __str__(self):
+        return self.__class__.__name__ + '({' + str(self.cyk_table) + "})"
+
+    def get_detector_symbols(self, coord):
+        left = self._left_coord(*coord)
+        right = self._right_coord(*coord)
+
+        return left, right

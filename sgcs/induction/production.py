@@ -18,6 +18,10 @@ class Production(object):
     def __hash__(self):
         return (hash(self.detector) << 3) ^ hash(self.rule)
 
+    def __str__(self):
+        props = [str(self.detector), str(self.rule)]
+        return self.__class__.__name__ + '({' + '};{'.join(props) + "})"
+
 
 class EmptyProduction(Production):
     def __init__(self, detector):
