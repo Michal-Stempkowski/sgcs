@@ -19,11 +19,16 @@ package induction {
     Production : detector
     Production : rule
     Production : is_empty(self)
+    Production : is_terminal(self)
 
 
     EmptyProduction --|> Production
     EmptyProduction : __init__(self, detector)
     EmptyProduction : detector
+
+    TerminalProduction --|> Production
+    TerminalProduction : __init__(self, rule)
+    TerminalProduction : rule
 
     enum CykTypeId {
         symbol_pair_executor
@@ -100,7 +105,7 @@ package induction {
         CykFirstRowExecutor ..> RulePopulation: uses
         CykFirstRowExecutor ..> Environment: uses
         CykFirstRowExecutor : __init__(self, table_executor, row, executor_factory)
-        CykRowExecutor <..> CykTerminalCellExecutor
+        CykFirstRowExecutor <..> CykTerminalCellExecutor
 
         CykTerminalCellExecutor --|> CykCellExecutor
         CykTerminalCellExecutor ..> RulePopulation: uses
@@ -108,6 +113,7 @@ package induction {
         ' &dependency_executors
         CykTerminalCellExecutor ..> ProductionPool: uses (factory)
         CykTerminalCellExecutor : __init__(self, row_executor, column, executor_factory)
+        CykTerminalCellExecutor --> TerminalProduction: creates
 
     '&end_cyk_executors
     }
@@ -117,10 +123,12 @@ package induction {
 
     '&alt_cyk_executors CykExecutors ..> Environment: uses
     '&alt_cyk_executors CykExecutors ..> ProductionPool: creates
-    '&alt_cyk_executors CykExecutors --> Production: creates
-    '&alt_cyk_executors CykExecutors --> RulePopulation: uses
+    '&alt_cyk_executors CykExecutors ..> Production: uses
+    '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
     '&alt_cyk_executors CykExecutors --> CykResult: creates
     '&alt_cyk_executors CykExecutors --* "1" CykTypeId
+    '&alt_cyk_executors CykExecutors --> TerminalProduction: creates
+    '&alt_cyk_executors CykExecutors --> Detector: uses
 
     Environment ..* "1" Sentence
     Environment : __init__(self, sentence)
@@ -133,22 +141,33 @@ package induction {
     Environment : get_row_length(self, row)
     Environment : get_sentence_length(self)
     Environment : validate_absolute_coordinates(self, coordinates)
+    Environment : get_sentence_symbol(self, index)
 
     SymbolTranslator --> Symbol: translates
 
     Sentence --o Symbol
     Sentence : __init__(self, symbols)
     Sentence : __len__(self)
+    Sentence : get_symbol(self, index)
 
     class Symbol
     Symbol : __init__(self, symbol_id)
 
+    RulePopulation : __init__(self, previous_instance=None)
+    RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
+    RulePopulation : get_terminal_rules(self, symbol)
     RulePopulation --o Rule
 
+    Rule : __init__(self, parent, left_child, right_child)
     Rule : parent
     Rule : left_child
     Rule : right_child
+    Rule : is_terminal_rule(self)
+
+    TerminalRule --|> Rule
+    TerminalRule : __init__(self, parent, child)
+
 
     class CykService
     CykService : __init__(self, factory)

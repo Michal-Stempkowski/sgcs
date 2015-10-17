@@ -1,12 +1,13 @@
 import unittest
-from unittest.mock import create_autospec, PropertyMock
+from unittest.mock import create_autospec, PropertyMock, call
 from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import *
 from sgcs.induction.environment import Environment
-from sgcs.induction.production import ProductionPool
+from sgcs.induction.production import ProductionPool, Production, TerminalProduction
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation
+from sgcs.induction.symbol import Symbol
 from sgcs.tests.test_common import are_
 
 
@@ -274,38 +275,48 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         type(self.parent_executor).current_row = PropertyMock(return_value=0)
         self.current_col = 3
 
-    def parent_combinations_should_be_executed_scenario(self, effectors, rules):
+    def terminal_symbol_scenario(self, rules):
         # Given:
-        self.production_pool_mock.is_empty.return_value = not effectors
+        selected_rules = [x for x in rules if x.left_child == Symbol(5)]
+        effectors = [x.parent for x in selected_rules]
+
+        self.environment_mock.get_sentence_symbol.return_value = Symbol(5)
+        self.rule_population_mock.get_terminal_rules.return_value = selected_rules
         self.production_pool_mock.get_effectors.return_value = effectors
-        self.environment_mock.get_symbols.return_value = effectors
-        self.rule_population_mock.get_rules_by_right.return_value = rules
+        self.production_pool_mock.is_empty.return_value = not effectors
 
         # When:
         self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
-        assert_that(self.production_pool_mock.add_production.call_count,
-                    is_(equal_to(len(effectors) if len(effectors) > 0 else 1)))
+        self.environment_mock.get_sentence_symbol.assert_called_once_with(self.current_col)
+        self.rule_population_mock.get_terminal_rules.assert_called_once_with(Symbol(5))
 
-    def test_effectors_found(self):
+    def test_if_rules_allows_should_find_valid_executors(self):
         # Given:
-        effectors = {'A', 'B'}
-        rules = [TerminalRule('A', 'a'), TerminalRule('B', 'a')]
+        rule_1 = TerminalRule(Symbol(3), Symbol(5))
+        rule_2 = TerminalRule(Symbol(2), Symbol(5))
 
         # When:
-        self.parent_combinations_should_be_executed_scenario(effectors, rules)
+        self.terminal_symbol_scenario([rule_1, rule_2])
 
         # Then:
-        self.environment_mock.add_symbols.assert_called_once_with((0, 3), effectors)
+        self.production_pool_mock.add_production.assert_has_calls(
+            [
+                call(TerminalProduction(rule_1)),
+                call(TerminalProduction(rule_2))
+            ])
+        self.environment_mock.add_symbols.assert_called_once_with(
+            (self.sut.current_row, self.sut.current_col), [Symbol(3), Symbol(2)])
 
-    def test_effectors_not_found(self):
+    def test_if_no_matching_rules_should_find_no_executors(self):
         # Given:
-        effectors = {}
-        rules = []
+        rule_1 = TerminalRule(Symbol(3), Symbol(8))
+        rule_2 = TerminalRule(Symbol(2), Symbol(9))
 
         # When:
-        self.parent_combinations_should_be_executed_scenario(effectors, rules)
+        self.terminal_symbol_scenario([rule_1, rule_2])
 
         # Then:
+        assert_that(self.production_pool_mock.add_production.called, is_(False))
         assert_that(self.environment_mock.add_symbols.called, is_(False))

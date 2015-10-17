@@ -56,3 +56,6 @@ class Environment(object):
             or not value_in_bounds(0, coordinates[0], self.get_sentence_length()) \
                 or not value_in_bounds(0, coordinates[1], self.get_sentence_length()):
             raise CykTableIndexError(coordinates)
+
+    def get_sentence_symbol(self, index):
+        return self.sentence.get_symbol(index)

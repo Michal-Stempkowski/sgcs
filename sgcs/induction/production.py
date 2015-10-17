@@ -6,11 +6,28 @@ class Production(object):
     def is_empty(self):
         return self.rule is None
 
+    def is_terminal(self):
+        return self.detector is None
+
+    def __eq__(self, other):
+        return self.detector == other.detector and self.rule == other.rule
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return (hash(self.detector) << 3) ^ hash(self.rule)
+
 
 class EmptyProduction(Production):
     def __init__(self, detector):
         super().__init__(detector, None)
         self.detector = detector
+
+
+class TerminalProduction(Production):
+    def __init__(self, rule):
+        super().__init__(None, rule)
 
 
 class ProductionPool(object):

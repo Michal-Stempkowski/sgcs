@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.environment import Environment, CykTableIndexError
-from sgcs.induction.symbol import Sentence
+from sgcs.induction.symbol import Sentence, Symbol
 
 
 class TestEnvironment(unittest.TestCase):
@@ -77,3 +77,10 @@ class TestEnvironment(unittest.TestCase):
                     raises(CykTableIndexError))
         assert_that(calling(self.sut.get_symbols).with_args((4, 2)),
                     raises(CykTableIndexError))
+
+    def test_should_be_able_to_retrieve_any_symbol_from_sentence(self):
+        self.sentence_mock.get_symbol.side_effect = [Symbol(1), Symbol(2), Symbol(3)]
+
+        assert_that(self.sut.get_sentence_symbol(1), is_(equal_to(Symbol(1))))
+        assert_that(self.sut.get_sentence_symbol(2), is_(equal_to(Symbol(2))))
+        assert_that(self.sut.get_sentence_symbol(3), is_(equal_to(Symbol(3))))

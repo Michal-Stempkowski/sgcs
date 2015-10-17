@@ -1,7 +1,8 @@
 import unittest
 from hamcrest import *
-from sgcs.induction.rule import Rule
+from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation, RulePopulationAccessViolationError
+from sgcs.induction.symbol import Symbol
 
 
 class TestRulePopulation(unittest.TestCase):
@@ -30,3 +31,13 @@ class TestRulePopulation(unittest.TestCase):
                     raises(RulePopulationAccessViolationError))
         assert_that(calling(self.sut.get_rules_by_right).with_args(('A', 'B', 'J')),
                     raises(RulePopulationAccessViolationError))
+
+    def test_should_be_able_to_add_terminal_rule(self):
+        rule_a = TerminalRule(Symbol('A'), Symbol('a'))
+        rule_b = TerminalRule(Symbol('B'), Symbol('a'))
+        self.sut.add_rule(rule_a)
+        self.sut.add_rule(rule_b)
+
+        assert_that(self.sut.rules_by_right, is_(empty()))
+        assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a, rule_b))
+        assert_that(self.sut.get_terminal_rules(Symbol('b')), is_(empty()))

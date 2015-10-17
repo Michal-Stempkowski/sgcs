@@ -1,5 +1,6 @@
 from enum import Enum
 from sgcs.induction.detector import Detector
+from sgcs.induction.production import TerminalProduction
 
 
 class CykTypeId(Enum):
@@ -26,6 +27,12 @@ class CykExecutor(object):
 
     def create_child_executor(self, *args):
         return self.executor_factory.create(self.child_level, *args)
+
+    def __str__(self):
+        return self.__class__.__name__ + '({' + '};{'.join(self.get_coordinates()) + "})"
+
+    def get_coordinates(self):
+        return tuple()
 
 
 class CykTableExecutor(CykExecutor):
@@ -59,6 +66,9 @@ class CykRowExecutor(CykExecutor):
             child_executor = self.create_child_executor(self, col, self.executor_factory)
             child_executor.execute(environment, rule_population)
 
+    def get_coordinates(self):
+        return self.current_row,
+
 
 class CykFirstRowExecutor(CykRowExecutor):
     def __init__(self, table_executor, row, executor_factory):
@@ -91,28 +101,27 @@ class CykCellExecutor(CykExecutor):
 
         if not production_pool.is_empty():
             effectors = production_pool.get_effectors()
-            environment.add_symbols((self.current_row, self.current_col), effectors)
+            environment.add_symbols(self.get_coordinates(), effectors)
 
-
-class CykTerminalCellExecutor(CykCellExecutor):
     def get_coordinates(self):
         return self.current_row, self.current_col
 
+
+class CykTerminalCellExecutor(CykCellExecutor):
     def execute(self, environment, rule_population):
         production_pool = self.executor_factory.create(CykTypeId.production_pool)
 
-        coordinates = self.get_coordinates()
-        detector = Detector(coordinates)
+        terminal_symbol = environment.get_sentence_symbol(self.current_col)
 
-        for production in detector.generate_production(environment, rule_population):
-            production_pool.add_production(production)
+        for rule in rule_population.get_terminal_rules(terminal_symbol):
+            production_pool.add_production(TerminalProduction(rule))
 
         if production_pool.is_empty():
             pass  # If production_pool is empty, then perform some coverage
 
         if not production_pool.is_empty():
             effectors = production_pool.get_effectors()
-            environment.add_symbols((self.current_row, self.current_col), effectors)
+            environment.add_symbols(self.get_coordinates(), effectors)
 
 
 class CykParentCombinationExecutor(CykExecutor):
@@ -171,6 +180,3 @@ class CykSymbolPairExecutor(CykExecutor):
                 self.parent_executor.shift,
                 self.left_id,
                 self.right_id)
-
-    def __str__(self):
-        return self.__class__.__name__ + '({' + '};{'.join(self.get_coordinates()) + "})"
