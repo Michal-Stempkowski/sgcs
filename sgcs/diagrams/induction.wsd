@@ -34,6 +34,7 @@ package induction {
         production_pool
         environment
         cyk_result
+        cyk_terminal_cell_executor
     }
 
     package CykExecutors {
@@ -95,7 +96,18 @@ package induction {
         CykTableExecutor --> CykResult: creates
         CykTableExecutor <..> CykFirstRowExecutor: uses
 
-        CykFirstRowExecutor --|> CykExecutor
+        CykFirstRowExecutor --|> CykRowExecutor
+        CykFirstRowExecutor ..> RulePopulation: uses
+        CykFirstRowExecutor ..> Environment: uses
+        CykFirstRowExecutor : __init__(self, table_executor, row, executor_factory)
+        CykRowExecutor <..> CykTerminalCellExecutor
+
+        CykTerminalCellExecutor --|> CykCellExecutor
+        CykTerminalCellExecutor ..> RulePopulation: uses
+        CykTerminalCellExecutor ..> Environment: uses
+        ' &dependency_executors
+        CykTerminalCellExecutor ..> ProductionPool: uses (factory)
+        CykTerminalCellExecutor : __init__(self, row_executor, column, executor_factory)
 
     '&end_cyk_executors
     }

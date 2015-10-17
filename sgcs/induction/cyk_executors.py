@@ -11,6 +11,7 @@ class CykTypeId(Enum):
     production_pool = 5
     environment = 6
     cyk_result = 7
+    terminal_cell_executor = 8
 
 
 class CykResult(object):
@@ -34,7 +35,7 @@ class CykTableExecutor(CykExecutor):
     def execute(self, environment, rule_population):
         sentence_length = environment.get_sentence_length()
 
-        for row in range(1, sentence_length):
+        for row in range(0, sentence_length):
             child_executor = self.create_child_executor(self, row, self.executor_factory)
             child_executor.execute(environment, rule_population)
 
@@ -59,6 +60,12 @@ class CykRowExecutor(CykExecutor):
             child_executor.execute(environment, rule_population)
 
 
+class CykFirstRowExecutor(CykRowExecutor):
+    def __init__(self, table_executor, row, executor_factory):
+        super().__init__(table_executor, row, executor_factory)
+        self.child_level = CykTypeId.terminal_cell_executor
+
+
 class CykCellExecutor(CykExecutor):
     def __init__(self, row_executor, column, executor_factory):
         super().__init__(CykTypeId.parent_combination_executor, executor_factory)
@@ -78,6 +85,27 @@ class CykCellExecutor(CykExecutor):
         for shift in range(1, self.current_row):
             child_executor = self.create_child_executor(self, shift, self.executor_factory)
             child_executor.execute(environment, rule_population, production_pool)
+
+        if production_pool.is_empty():
+            pass  # If production_pool is empty, then perform some coverage
+
+        if not production_pool.is_empty():
+            effectors = production_pool.get_effectors()
+            environment.add_symbols((self.current_row, self.current_col), effectors)
+
+
+class CykTerminalCellExecutor(CykCellExecutor):
+    def get_coordinates(self):
+        return self.current_row, self.current_col
+
+    def execute(self, environment, rule_population):
+        production_pool = self.executor_factory.create(CykTypeId.production_pool)
+
+        coordinates = self.get_coordinates()
+        detector = Detector(coordinates)
+
+        for production in detector.generate_production(environment, rule_population):
+            production_pool.add_production(production)
 
         if production_pool.is_empty():
             pass  # If production_pool is empty, then perform some coverage

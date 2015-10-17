@@ -7,3 +7,8 @@ class Rule(object):
     @property
     def parent(self):
         return self._parent
+
+
+class TerminalRule(Rule):
+    def __init__(self, parent, child):
+        super().__init__(parent, child, None)
