@@ -154,7 +154,8 @@ package induction {
     class Symbol
     Symbol : __init__(self, symbol_id)
 
-    RulePopulation : __init__(self, previous_instance=None)
+    RulePopulation : __init__(self, starting_symbol, previous_instance=None)
+    RulePopulation : starting_symbol
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol)

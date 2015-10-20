@@ -7,9 +7,14 @@ class RulePopulationAccessViolationError(Exception):
 
 
 class RulePopulation(object):
-    def __init__(self, previous_instance=None):
+    def __init__(self, starting_symbol, previous_instance=None):
         self.rules_by_right = dict()
         self.terminal_rules = dict()
+        self._starting_symbol = starting_symbol
+
+    @property
+    def starting_symbol(self):
+        return self._starting_symbol
 
     def get_rules_by_right(self, pair):
         if len(pair) != 2:

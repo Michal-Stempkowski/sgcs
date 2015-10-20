@@ -18,6 +18,7 @@ class ExecutorSuite(unittest.TestCase):
         self.rule_population_mock = create_autospec(RulePopulation)
         self.production_pool_mock = create_autospec(ProductionPool)
         self.children_created = []
+        self.rule_population_mock.starting_symbol.return_value = Symbol('S')
 
         self.executor_factory = Factory(
             {

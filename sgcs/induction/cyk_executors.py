@@ -51,6 +51,8 @@ class CykTableExecutor(CykExecutor):
             child_executor.execute(environment, rule_population)
 
         result = self.executor_factory.create(CykTypeId.cyk_result)
+        result.belongs_to_grammar = \
+            rule_population.starting_symbol in environment.get_symbols((sentence_length - 1, 0))
         return result
 
 

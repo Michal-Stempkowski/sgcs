@@ -8,7 +8,7 @@ from sgcs.induction.symbol import Symbol
 class TestRulePopulation(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.sut = RulePopulation()
+        self.sut = RulePopulation('S')
 
         self.rules = [
             Rule('A', 'B', 'C'),
