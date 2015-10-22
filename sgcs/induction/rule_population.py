@@ -1,3 +1,6 @@
+from sgcs.induction.symbol import Symbol
+
+
 class RulePopulationAccessViolationError(Exception):
     def __init__(self, *args):
         self.args = args
@@ -15,6 +18,10 @@ class RulePopulation(object):
     @property
     def starting_symbol(self):
         return self._starting_symbol
+
+    @property
+    def max_terminal_symbols(self):
+        return 32
 
     def get_rules_by_right(self, pair):
         if len(pair) != 2:
@@ -48,3 +55,6 @@ class RulePopulation(object):
     def get_terminal_rules(self, symbol):
         packed_rules = self.terminal_rules.get(symbol)
         return packed_rules.values() if packed_rules else []
+
+    def get_random_terminal_symbol(self, randomizer):
+        return Symbol(randomizer.randint(self.max_terminal_symbols))

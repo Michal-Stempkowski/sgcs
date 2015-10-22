@@ -1,20 +1,27 @@
+from random import Random
 from unittest import TestCase
+from unittest.mock import create_autospec
 from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
+from sgcs.induction.cyk_configuration import CykConfiguration
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol, Sentence
+from sgcs.utils import Randomizer
 
 
 class TestModule(TestCase):
     def setUp(self):
         self.sut = None
+        self.random_number_generator_mock = create_autospec(Random)
+        self.randomizer = Randomizer(self.random_number_generator_mock)
+        self.cyk_configuration = CykConfiguration()
 
     def create_sut(self, factory):
-        self.sut = CykService(factory)
+        self.sut = CykService(factory, self.cyk_configuration, self.randomizer)
 
     def create_sentence(self, *sentence_seq):
         return Sentence(sentence_seq)

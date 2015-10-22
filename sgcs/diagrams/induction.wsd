@@ -156,10 +156,13 @@ package induction {
 
     RulePopulation : __init__(self, starting_symbol, previous_instance=None)
     RulePopulation : starting_symbol
+    RulePopulation : max_terminal_symbols
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol)
+    RulePopulation : get_random_terminal_symbol(self, randomizer)
     RulePopulation --o Rule
+    RulePopulation --> Symbol: creates
 
     Rule : __init__(self, parent, left_child, right_child)
     Rule : parent
@@ -172,13 +175,49 @@ package induction {
 
 
     class CykService
-    CykService : __init__(self, factory)
+    CykService : __init__(self, factory, configuration, randomizer)
+    CykService : configuration
+    CykService : randomizer
     CykService : perform_cyk(self, rule_population, sentence)
     CykService ..> CykExecutors: creates (factory)
     CykService ..> Sentence: uses
     CykService ..> CykResult: uses
     CykService ..> Environment: creates (factory)
     CykService --* "1" CykTypeId
+
+    enum CykReasoningStatus {
+        unknown_terminal_symbol
+        no_effector_found
+        no_starting_symbol
+    }
+
+    package Coverage {
+        '&begin_coverage
+
+        class CoverageOperator
+        CoverageOperator : cover(self, environment, rule_population, coordinates)
+        CoverageOperator ..> Environment: uses
+        CoverageOperator ..> RulePopulation: uses
+        CoverageOperator --> CykReasoningStatus: uses
+
+        class TerminalCoverageOperator
+        TerminalCoverageOperator --|> CoverageOperator
+
+        'class CoverageMethod
+
+        class CoverageOperations
+        CoverageOperations "0" --* "*" CoverageOperator
+        'CoverageOperations "0" --* "*" CoverageMethod
+        CoverageOperations ..> Environment: uses
+        CoverageOperations ..> RulePopulation: uses
+        CoverageOperations --> Rule: creates
+        CoverageOperations ..> CykService: uses
+        '&end_coverage
+    }
+
+    '&alt_coverage Coverage ..> Environment: uses
+    '&alt_coverage Coverage ..> RulePopulation: uses
+    '&alt_coverage Coverage --> Rule: creates
 }
 
 package datalayer {
