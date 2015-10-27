@@ -1,7 +1,12 @@
 import unittest
-from unittest.mock import create_autospec, PropertyMock
+from unittest.mock import create_autospec, PropertyMock, call
 from hamcrest import *
+from sgcs.factory import Factory
+from sgcs.induction.cyk_executors import CykTypeId
+from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment, CykTableIndexError
+from sgcs.induction.production import Production, ProductionPool
+from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.symbol import Sentence, Symbol
 
 
@@ -12,7 +17,12 @@ class TestEnvironment(unittest.TestCase):
         super().__init__(*args, **kwargs)
         self.sentence_mock = create_autospec(Sentence)
         self.sentence_mock.__len__.return_value = TestEnvironment.table_size
-        self.sut = Environment(self.sentence_mock)
+        self.production_pool_mock = create_autospec(ProductionPool)
+        self.executor_factory = Factory(
+            {
+                CykTypeId.production_pool: lambda *args: self.production_pool_mock
+            })
+        self.sut = Environment(self.sentence_mock, self.executor_factory)
 
     def test_get_sentence_length_should_work(self):
         assert_that(self.sut.get_sentence_length(), is_(equal_to(TestEnvironment.table_size)))
@@ -23,56 +33,33 @@ class TestEnvironment(unittest.TestCase):
         assert_that(self.sut.get_row_length(2), is_(2))
         assert_that(self.sut.get_row_length(3), is_(1))
 
-    def test_adding_symbols_should_work_properly(self):
+    def production_with(self, row, col, shift, left_id, right_id, effector):
+        return Production(
+            Detector((row, col, shift, left_id, right_id)),
+            Rule(effector, Symbol('A'), Symbol('B')))
+
+    def test_adding_productions_should_work_properly(self):
         # Given:
-        new_symbols = {'A', 'B'}
+        p1 = self.production_with(1, 0, 1, 0, 0, Symbol('A'))
+        p2 = self.production_with(1, 0, 1, 0, 1, Symbol('B'))
 
         # When/Then:
-        self.sut.add_symbols((2, 2), new_symbols)
+        self.sut.add_production(p1)
+        self.sut.add_production(p2)
+        self.production_pool_mock.add_production.assert_has_calls([call(p1), call(p2)])
 
-        assert_that(self.sut.cyk_table[2][2], contains_inanyorder(*new_symbols))
-
-        assert_that(calling(self.sut.add_symbols).with_args((-1, 2), new_symbols),
+        new_symbol = Symbol('D')
+        assert_that(calling(self.sut.add_production).with_args(
+            self.production_with(-1, 0, 1, 0, 0, new_symbol)),
                     raises(CykTableIndexError))
-        assert_that(calling(self.sut.add_symbols).with_args((2, -1), new_symbols),
+        assert_that(calling(self.sut.add_production).with_args(
+            self.production_with(1, -1, 1, 0, 0, new_symbol)),
                     raises(CykTableIndexError))
-        assert_that(calling(self.sut.add_symbols).with_args((2, 4), new_symbols),
+        assert_that(calling(self.sut.add_production).with_args(
+            self.production_with(2, 4, 1, 0, 0, new_symbol)),
                     raises(CykTableIndexError))
-        assert_that(calling(self.sut.add_symbols).with_args((4, 2), new_symbols),
-                    raises(CykTableIndexError))
-
-    def test_getting_symbols_should_work_properly(self):
-        # Given:
-        current_symbols = {'A', 'B'}
-        current_coord = (3, 0)
-        self.sut.add_symbols(current_coord, current_symbols)
-
-        left_parent_symbols = {'D'}
-        left_parent_coord = (1, 0)
-        self.sut.add_symbols(left_parent_coord, left_parent_symbols)
-
-        right_parent_symbols = {'Z', 'Q', 'G'}
-        right_parent_coord = (1, 2)
-        self.sut.add_symbols(right_parent_coord, right_parent_symbols)
-
-        unshifted_parent_coords = (3, 0, 2)
-
-        # When/Then:
-        assert_that(self.sut.get_symbols(current_coord), contains_inanyorder(*current_symbols))
-
-        assert_that(self.sut.get_left_parent_symbol_count(unshifted_parent_coords),
-                    is_(equal_to(1)))
-
-        assert_that(self.sut.get_right_parent_symbol_count(unshifted_parent_coords),
-                    is_(equal_to(3)))
-
-        assert_that(calling(self.sut.get_symbols).with_args((-1, 2)),
-                    raises(CykTableIndexError))
-        assert_that(calling(self.sut.get_symbols).with_args((2, -1)),
-                    raises(CykTableIndexError))
-        assert_that(calling(self.sut.get_symbols).with_args((2, 4)),
-                    raises(CykTableIndexError))
-        assert_that(calling(self.sut.get_symbols).with_args((4, 2)),
+        assert_that(calling(self.sut.add_production).with_args(
+            self.production_with(4, 2, 1, 0, 0, new_symbol)),
                     raises(CykTableIndexError))
 
     def test_should_be_able_to_retrieve_any_symbol_from_sentence(self):
@@ -83,13 +70,8 @@ class TestEnvironment(unittest.TestCase):
         assert_that(self.sut.get_sentence_symbol(3), is_(equal_to(Symbol(3))))
 
     def test_should_be_able_to_get_detector_symbols(self):
-        left_parent_symbols = {'D'}
-        left_parent_coord = (1, 0)
-        self.sut.add_symbols(left_parent_coord, left_parent_symbols)
-
-        right_parent_symbols = ['Z', 'Q', 'G']
-        right_parent_coord = (1, 2)
-        self.sut.add_symbols(right_parent_coord, right_parent_symbols)
+        self.production_pool_mock.get_effectors.side_effect = \
+            [['D'], ['E', 'Q']]
 
         unshifted_parent_coords = (3, 0, 2, 0, 1)
 

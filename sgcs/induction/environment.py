@@ -1,3 +1,6 @@
+from sgcs.induction.cyk_executors import CykTypeId
+
+
 def value_in_bounds(lower_eq, val, greater):
         return lower_eq <= val < greater
 
@@ -11,27 +14,25 @@ class CykTableIndexError(Exception):
 
 
 class Environment(object):
-    def __init__(self, sentence):
+    def __init__(self, sentence, factory):
         self.sentence = sentence
-        self.cyk_table = [
-            [
-                list() for _ in range(len(self.sentence))
-            ] for _ in range(len(self.sentence))
-        ]
+        size = self.get_sentence_length()
+        self.cyk_table = {
+            (x, y): factory.create(CykTypeId.production_pool)
+            for x in range(size) for y in range(size)
+        }
 
     def get_symbols(self, absolute_coordinates):
         self.validate_absolute_coordinates(absolute_coordinates)
 
-        row, col = absolute_coordinates
-        return self.cyk_table[row][col]
+        cords = absolute_coordinates
+        return self.cyk_table[cords].get_effectors()
 
-    def add_symbols(self, absolute_coordinates, symbols):
+    def add_production(self, production):
+        absolute_coordinates = production.get_coordinates()[:2]
         self.validate_absolute_coordinates(absolute_coordinates)
 
-        row, col = absolute_coordinates
-        for symbol in symbols:
-            if symbol not in self.cyk_table[row][col]:
-                self.cyk_table[row][col].append(symbol)
+        self.cyk_table[absolute_coordinates].add_production(production)
 
     def _left_coord(self, row, col, shift, left_id, right_id):
         return self.get_symbols((shift - 1, col))[left_id]

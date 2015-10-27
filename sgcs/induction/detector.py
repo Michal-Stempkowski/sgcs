@@ -13,5 +13,14 @@ class Detector(object):
             if len(rules) == 0 \
             else [Production(self, rule) for rule in rules]
 
+    def __eq__(self, other):
+        return self.coordinates == other.coordinates
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.coordinates)
+
     def __str__(self):
         return self.__class__.__name__ + '({' + '};{'.join(self.coordinates) + "})"

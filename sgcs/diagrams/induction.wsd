@@ -20,6 +20,7 @@ package induction {
     Production : rule
     Production : is_empty(self)
     Production : is_terminal(self)
+    Production : get_coordinates(self)
 
 
     EmptyProduction --|> Production
@@ -27,7 +28,7 @@ package induction {
     EmptyProduction : detector
 
     TerminalProduction --|> Production
-    TerminalProduction : __init__(self, rule)
+    TerminalProduction : __init__(self, rule, coordinates)
     TerminalProduction : rule
 
     enum CykTypeId {
@@ -53,10 +54,9 @@ package induction {
         CykSymbolPairExecutor --> Detector: uses
         CykSymbolPairExecutor ..> RulePopulation: uses
         CykSymbolPairExecutor ..> Environment: uses
-        CykSymbolPairExecutor ..> ProductionPool: uses
         CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
         CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, executor_factory)
-        CykSymbolPairExecutor : execute(self, environment, rule_population, production_pool)
+        CykSymbolPairExecutor : execute(self, environment, rule_population)
         CykSymbolPairExecutor : get_coordinates(self)
         CykSymbolPairExecutor : parent_executor
 
@@ -68,14 +68,12 @@ package induction {
         CykParentCombinationExecutor : current_row
         CykParentCombinationExecutor : current_col
         CykParentCombinationExecutor : shift
-        CykParentCombinationExecutor : execute(self, environment, rule_population, production_pool)
+        CykParentCombinationExecutor : execute(self, environment, rule_population)
         CykParentCombinationExecutor : get_coordinates(self)
 
         CykCellExecutor --|> CykExecutor
         CykCellExecutor ..> RulePopulation: uses
         CykCellExecutor ..> Environment: uses
-        ' &dependency_executors
-        CykCellExecutor ..> ProductionPool: uses (factory)
         CykCellExecutor <..> CykParentCombinationExecutor: uses
         CykCellExecutor : __init__(self, row_executor, column, executor_factory)
         CykCellExecutor : parent_executor
@@ -105,14 +103,14 @@ package induction {
         CykFirstRowExecutor ..> RulePopulation: uses
         CykFirstRowExecutor ..> Environment: uses
         CykFirstRowExecutor : __init__(self, table_executor, row, executor_factory)
+        CykFirstRowExecutor : execute(self, environment, rule_population)
         CykFirstRowExecutor <..> CykTerminalCellExecutor
 
         CykTerminalCellExecutor --|> CykCellExecutor
         CykTerminalCellExecutor ..> RulePopulation: uses
         CykTerminalCellExecutor ..> Environment: uses
-        ' &dependency_executors
-        CykTerminalCellExecutor ..> ProductionPool: uses (factory)
         CykTerminalCellExecutor : __init__(self, row_executor, column, executor_factory)
+        CykTerminalCellExecutor : execute(self, environment, rule_population)
         CykTerminalCellExecutor --> TerminalProduction: creates
 
     '&end_cyk_executors
@@ -122,7 +120,6 @@ package induction {
     CykResult : belongs_to_grammar
 
     '&alt_cyk_executors CykExecutors ..> Environment: uses
-    '&alt_cyk_executors CykExecutors ..> ProductionPool: creates
     '&alt_cyk_executors CykExecutors ..> Production: uses
     '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
     '&alt_cyk_executors CykExecutors --> CykResult: creates
@@ -131,11 +128,11 @@ package induction {
     '&alt_cyk_executors CykExecutors --> Detector: uses
 
     Environment ..* "1" Sentence
-    Environment : __init__(self, sentence)
+    Environment : __init__(self, sentence, factory)
     Environment : sentence
     Environment : cyk_table
     Environment : get_symbols(self, absolute_coordinates)
-    Environment : add_symbols(self, absolute_coordinates, symbols)
+    Environment : add_production(self, production)
     Environment : get_left_parent_symbol_count(self, coordinates_with_shift)
     Environment : get_right_parent_symbol_count(self, coordinates_with_shift)
     Environment : get_row_length(self, row)
@@ -143,6 +140,9 @@ package induction {
     Environment : validate_absolute_coordinates(self, coordinates)
     Environment : get_sentence_symbol(self, index)
     Environment : get_detector_symbols(self, cords)
+
+    Environment ..> ProductionPool: creates (factory)
+    Environment ..> Production: uses
 
     SymbolTranslator --> Symbol: translates
 

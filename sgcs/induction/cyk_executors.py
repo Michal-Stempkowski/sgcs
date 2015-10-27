@@ -98,17 +98,11 @@ class CykCellExecutor(CykExecutor):
         return self._column
 
     def execute(self, environment, rule_population):
-        production_pool = self.executor_factory.create(CykTypeId.production_pool)
         for shift in range(1, self.current_row + 1):
             child_executor = self.create_child_executor(self, shift, self.executor_factory)
-            child_executor.execute(environment, rule_population, production_pool)
+            child_executor.execute(environment, rule_population)
 
-        if production_pool.is_empty():
-            pass  # If production_pool is empty, then perform some coverage
-
-        if not production_pool.is_empty():
-            effectors = production_pool.get_effectors()
-            environment.add_symbols(self.get_coordinates(), effectors)
+        # If production_pool is empty, then perform some coverage
 
     def get_coordinates(self):
         return self.current_row, self.current_col
@@ -116,19 +110,15 @@ class CykCellExecutor(CykExecutor):
 
 class CykTerminalCellExecutor(CykCellExecutor):
     def execute(self, environment, rule_population):
-        production_pool = self.executor_factory.create(CykTypeId.production_pool)
-
         terminal_symbol = environment.get_sentence_symbol(self.current_col)
 
         for rule in rule_population.get_terminal_rules(terminal_symbol):
-            production_pool.add_production(TerminalProduction(rule))
-
-        if production_pool.is_empty():
-            pass  # If production_pool is empty, then perform some coverage
-
-        if not production_pool.is_empty():
-            effectors = production_pool.get_effectors()
-            environment.add_symbols(self.get_coordinates(), effectors)
+            new_production = TerminalProduction(rule, (self.current_row,
+                                                       self.current_col))
+            environment.add_production(new_production)
+        else:
+            pass
+            # If production_pool is empty, then perform some coverage
 
 
 class CykParentCombinationExecutor(CykExecutor):
@@ -149,7 +139,7 @@ class CykParentCombinationExecutor(CykExecutor):
     def shift(self):
         return self._shift
 
-    def execute(self, environment, rule_population, production_pool):
+    def execute(self, environment, rule_population):
         coordinates = self.get_coordinates()
         left_parent_symbol_count = environment.get_left_parent_symbol_count(coordinates)
         right_parent_symbol_count = environment.get_right_parent_symbol_count(coordinates)
@@ -158,7 +148,7 @@ class CykParentCombinationExecutor(CykExecutor):
             for right_id in range(right_parent_symbol_count):
                 child_executor = self.create_child_executor(self, left_id, right_id,
                                                             self.executor_factory)
-                child_executor.execute(environment, rule_population, production_pool)
+                child_executor.execute(environment, rule_population)
 
     def get_coordinates(self):
         return (self.parent_executor.current_row,
@@ -173,13 +163,13 @@ class CykSymbolPairExecutor(CykExecutor):
         self.left_id = left_id
         self.right_id = right_id
 
-    def execute(self, environment, rule_population, production_pool):
+    def execute(self, environment, rule_population):
         coordinates = self.get_coordinates()
 
         detector = Detector(coordinates)
 
         for production in detector.generate_production(environment, rule_population):
-            production_pool.add_production(production)
+            environment.add_production(production)
 
     def get_coordinates(self):
         return (self.parent_executor.current_row,

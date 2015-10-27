@@ -11,7 +11,7 @@ class CykService(object):
         self._randomizer = randomizer
 
     def perform_cyk(self, rules_population, sentence):
-        environment = self.factory.create(CykTypeId.environment, sentence)
+        environment = self.factory.create(CykTypeId.environment, sentence, self.factory)
         result = self.table_executor.execute(environment, rules_population)
         return result
 

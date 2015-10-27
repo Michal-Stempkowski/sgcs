@@ -43,7 +43,7 @@ class TestCykSymbolPairExecutor(ExecutorSuite):
         super().__init__(*args, **kwargs)
         self.initialize_mocks(CykParentCombinationExecutor)
 
-        self.production_pool_mock.add_production.side_effect = self.capture_production
+        self.environment_mock.add_production.side_effect = self.capture_production
         self.captured_productions = []
 
         self.initialize_coordinates()
@@ -70,8 +70,7 @@ class TestCykSymbolPairExecutor(ExecutorSuite):
         self.rule_population_mock.get_rules_by_right.return_value = rules
 
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.captured_productions, has_length(2))
@@ -99,8 +98,7 @@ class TestCykParentCombinationExecutor(ExecutorSuite):
         self.environment_mock.get_right_parent_symbol_count.return_value = 3
 
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.children_created, are_(
@@ -120,8 +118,7 @@ class TestCykParentCombinationExecutor(ExecutorSuite):
         self.environment_mock.get_right_parent_symbol_count.return_value = 0
 
         # When:
-        self.sut.execute(self.environment_mock, self.rule_population_mock,
-                         self.production_pool_mock)
+        self.sut.execute(self.environment_mock, self.rule_population_mock)
 
         # Then:
         assert_that(self.children_created, is_(empty()))
@@ -140,11 +137,7 @@ class TestCykCellExecutor(ExecutorSuite):
         type(self.parent_executor).current_row = PropertyMock(return_value=4)
         self.current_col = 3
 
-    def parent_combinations_should_be_executed_scenario(self, effectors):
-        # Given:
-        self.production_pool_mock.is_empty.return_value = not effectors
-        self.production_pool_mock.get_effectors.return_value = effectors
-
+    def test_parent_combinations_should_be_executed(self):
         # When:
         self.sut.execute(self.environment_mock, self.rule_population_mock)
 
@@ -157,26 +150,6 @@ class TestCykCellExecutor(ExecutorSuite):
                 (self.sut, 4, self.executor_factory)
             ]
         ))
-
-    def test_effectors_found(self):
-        # Given:
-        effectors = {'A', 'B', 'C'}
-
-        # When:
-        self.parent_combinations_should_be_executed_scenario(effectors)
-
-        # Then:
-        self.environment_mock.add_symbols.assert_called_once_with((4, 3), effectors)
-
-    def test_effectors_not_found(self):
-        # Given:
-        effectors = {}
-
-        # When:
-        self.parent_combinations_should_be_executed_scenario(effectors)
-
-        # Then:
-        assert_that(self.environment_mock.add_symbols.called, is_(False))
 
 
 class TestCykRowExecutor(ExecutorSuite):
@@ -280,12 +253,9 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
     def terminal_symbol_scenario(self, rules):
         # Given:
         selected_rules = [x for x in rules if x.left_child == Symbol(5)]
-        effectors = [x.parent for x in selected_rules]
 
         self.environment_mock.get_sentence_symbol.return_value = Symbol(5)
         self.rule_population_mock.get_terminal_rules.return_value = selected_rules
-        self.production_pool_mock.get_effectors.return_value = effectors
-        self.production_pool_mock.is_empty.return_value = not effectors
 
         # When:
         self.sut.execute(self.environment_mock, self.rule_population_mock)
@@ -303,13 +273,11 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         self.terminal_symbol_scenario([rule_1, rule_2])
 
         # Then:
-        self.production_pool_mock.add_production.assert_has_calls(
+        self.environment_mock.add_production.assert_has_calls(
             [
-                call(TerminalProduction(rule_1)),
-                call(TerminalProduction(rule_2))
+                call(TerminalProduction(rule_1, (0, 0))),
+                call(TerminalProduction(rule_2, (0, 1)))
             ])
-        self.environment_mock.add_symbols.assert_called_once_with(
-            (self.sut.current_row, self.sut.current_col), [Symbol(3), Symbol(2)])
 
     def test_if_no_matching_rules_should_find_no_executors(self):
         # Given:
@@ -320,5 +288,4 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         self.terminal_symbol_scenario([rule_1, rule_2])
 
         # Then:
-        assert_that(self.production_pool_mock.add_production.called, is_(False))
-        assert_that(self.environment_mock.add_symbols.called, is_(False))
+        assert_that(self.environment_mock.add_production.called, is_(False))

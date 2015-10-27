@@ -9,6 +9,9 @@ class Production(object):
     def is_terminal(self):
         return self.detector is None
 
+    def get_coordinates(self):
+        return self.detector.coordinates
+
     def __eq__(self, other):
         return self.detector == other.detector and self.rule == other.rule
 
@@ -30,25 +33,37 @@ class EmptyProduction(Production):
 
 
 class TerminalProduction(Production):
-    def __init__(self, rule):
+    def __init__(self, rule, coordinates):
         super().__init__(None, rule)
+        self.coordinates = coordinates
+
+    def get_coordinates(self):
+        return self.coordinates
 
 
 class ProductionPool(object):
     def __init__(self):
         self.non_empty_productions = []
         self.empty_productions = []
-        self.effectors = set()
+        self.effectors = list()
 
     def add_production(self, production):
         if production.is_empty():
             self.empty_productions.append(production)
         else:
             self.non_empty_productions.append(production)
-            self.effectors.add(production.rule.parent)
+            effector = production.rule.parent
+            if effector not in self.effectors:
+                self.effectors.append(effector)
 
     def is_empty(self):
         return not self.non_empty_productions
 
     def get_effectors(self):
         return self.effectors
+
+    def __str__(self):
+        return "PP[" + "; ".join(map(lambda x: repr(x), self.get_effectors())) + "]"
+
+    def __repr__(self):
+        return self.__str__()
