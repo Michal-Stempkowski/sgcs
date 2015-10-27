@@ -196,6 +196,7 @@ package induction {
 
         class CoverageOperator
         CoverageOperator : cover(self, environment, rule_population, coordinates)
+        CoverageOperator : cover_impl(self, environment, rule_population, coordinates)
         CoverageOperator ..> Environment: uses
         CoverageOperator ..> RulePopulation: uses
         CoverageOperator --> CykReasoningStatus: uses
