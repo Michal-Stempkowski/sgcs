@@ -16,8 +16,9 @@ class Symbol(object):
 
 
 class Sentence(object):
-    def __init__(self, symbols):
+    def __init__(self, symbols, is_positive_sentence=None):
         self.symbols = symbols
+        self.is_positive_sentence = is_positive_sentence
 
     def __len__(self):
         return len(self.symbols)

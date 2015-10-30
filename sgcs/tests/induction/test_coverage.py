@@ -37,13 +37,18 @@ class CoverageOperatorTestCommon(unittest.TestCase):
 
         type(self.rule_population_mock).universal_symbol = \
             PropertyMock(Symbol, return_value=Symbol(hash('U')))
+        type(self.rule_population_mock).starting_symbol = \
+            PropertyMock(Symbol, return_value=Symbol(hash('S')))
 
         self.coordinates = 0, 2
 
         self.sut = None
 
     def operator_executes_with_some_chance_scenario(self):
+        # Given:
         self.cyk_service_mock.randomizer.perform_with_chance.side_effect = [False, True]
+
+        # When/Then:
         assert_that(
             self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates),
             is_(None))
@@ -66,7 +71,10 @@ class TestTerminalCoverageOperator(CoverageOperatorTestCommon):
         self.operator_executes_with_some_chance_scenario()
 
     def test_given_unknown_terminal_symbol_should_cover_it(self):
+        # When:
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
         assert_that(
             result,
             is_(equal_to(TerminalRule(Symbol(hash('A')), Symbol(hash('a'))))))
@@ -84,7 +92,10 @@ class TestUniversalCoverageOperator(CoverageOperatorTestCommon):
         self.operator_executes_with_some_chance_scenario()
 
     def test_given_unknown_terminal_symbol_should_cover_it(self):
+        # When:
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
         assert_that(
             result,
             is_(equal_to(TerminalRule(Symbol(hash('U')), Symbol(hash('a'))))))
@@ -96,11 +107,55 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
 
         self.sut = StartingCoverageOperator(self.cyk_service_mock)
 
-        # self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
-        # self.rule_population_mock.get_random_terminal_symbol.return_value = Symbol(hash('A'))
-
     def test_operators_execute_with_some_chance(self):
+        # Given:
+        self.environment_mock.get_sentence_length.return_value = 1
+        self.environment_mock.is_sentence_positive.return_value = True
+
+        # When/Then:
         self.operator_executes_with_some_chance_scenario()
 
-    # def test_given_sentence_of_length_greater_than_1_should_not_cover_it(self):
-    #     self.environment_mock.ge
+    def test_given_sentence_of_length_greater_than_1_should_not_cover_it(self):
+        # Given:
+        self.environment_mock.get_sentence_length.return_value = 5
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(None))
+
+    def test_given_positivity_of_sentence_unknown__no_coverage_should_occur(self):
+        # Given:
+        self.environment_mock.get_sentence_length.return_value = 1
+        self.environment_mock.is_sentence_positive.return_value = None
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(None))
+
+    def test_given_negative_sentence__no_coverage_should_occur(self):
+        # Given:
+        self.environment_mock.get_sentence_length.return_value = 1
+        self.environment_mock.is_sentence_positive.return_value = False
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(None))
+
+    def test_given_positive_sentence_of_length_1__coverage_should_occur(self):
+        # Given:
+        self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
+        self.environment_mock.get_sentence_length.return_value = 1
+        self.environment_mock.is_sentence_positive.return_value = True
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(equal_to(
+            TerminalRule(self.rule_population_mock.starting_symbol, Symbol(hash('a'))))))

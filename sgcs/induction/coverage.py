@@ -44,4 +44,8 @@ class StartingCoverageOperator(CoverageOperator):
                          cyk_service.configuration.coverage.operators.terminal.chance)
 
     def cover_impl(self, environment, rule_population, coordinates):
-        return True
+        if environment.get_sentence_length() == 1 and environment.is_sentence_positive():
+            only_symbol = environment.get_sentence_symbol(0)
+            return TerminalRule(rule_population.starting_symbol, only_symbol)
+        else:
+            return None

@@ -60,6 +60,9 @@ class Environment(object):
     def get_sentence_length(self):
         return len(self.sentence)
 
+    def is_sentence_positive(self):
+        return self.sentence.is_positive_sentence
+
     def validate_absolute_coordinates(self, coordinates):
         if len(coordinates) != 2 \
             or not value_in_bounds(0, coordinates[0], self.get_sentence_length()) \
