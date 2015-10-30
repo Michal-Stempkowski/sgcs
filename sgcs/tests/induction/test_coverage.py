@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
-    StartingCoverageOperator
+    StartingCoverageOperator, AggressiveCoverageOperator
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperators
 from sgcs.induction.cyk_service import CykService
@@ -159,3 +159,51 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
         # Then:
         assert_that(result, is_(equal_to(
             TerminalRule(self.rule_population_mock.starting_symbol, Symbol(hash('a'))))))
+
+
+class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = AggressiveCoverageOperator(self.cyk_service_mock)
+
+        # self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
+
+    def test_operators_execute_with_some_chance(self):
+        self.operator_executes_with_some_chance_scenario()
+
+    def test_given_sentence_of_unknown_positivity__coverage_should_not_occur(self):
+        self.environment_mock.is_sentence_positive.return_value = None
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(None))
+
+    def test_given_negative_sentence__coverage_should_not_occur(self):
+        self.environment_mock.is_sentence_positive.return_value = False
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(None))
+
+    # def test_given_positive_sentence__coverage_should_occur(self):
+    #     self.environment_mock.is_sentence_positive.return_value = True
+    #
+    #     # When:
+    #     result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+    #
+    #     # Then:
+    #     assert_that(result, is_(None))
+
+    # def test_given_unknown_terminal_symbol_should_cover_it(self):
+    #     # When:
+    #     result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+    #
+    #     # Then:
+    #     assert_that(
+    #         result,
+    #         is_(equal_to(TerminalRule(Symbol(hash('U')), Symbol(hash('a'))))))

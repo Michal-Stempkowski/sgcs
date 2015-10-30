@@ -49,3 +49,15 @@ class StartingCoverageOperator(CoverageOperator):
             return TerminalRule(rule_population.starting_symbol, only_symbol)
         else:
             return None
+
+
+class AggressiveCoverageOperator(CoverageOperator):
+    def __init__(self, cyk_service):
+        super().__init__(cyk_service,
+                         cyk_service.configuration.coverage.operators.terminal.chance)
+
+    def cover_impl(self, environment, rule_population, coordinates):
+        if environment.is_sentence_positive():
+            return True
+        else:
+            return None

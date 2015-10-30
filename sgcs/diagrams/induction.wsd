@@ -213,6 +213,9 @@ package induction {
         class StartingCoverageOperator
         StartingCoverageOperator --|> CoverageOperator
 
+        class AggressiveCoverageOperator
+        AggressiveCoverageOperator --|> CoverageOperator
+
         'class CoverageMethod
 
         class CoverageOperations
