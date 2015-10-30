@@ -34,7 +34,8 @@ class UniversalCoverageOperator(CoverageOperator):
                          cyk_service.configuration.coverage.operators.terminal.chance)
 
     def cover_impl(self, environment, rule_population, coordinates):
-        return True
+        child = environment.get_sentence_symbol(coordinates[1])
+        return TerminalRule(rule_population.universal_symbol, child)
 
 
 class StartingCoverageOperator(CoverageOperator):

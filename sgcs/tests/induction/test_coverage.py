@@ -1,6 +1,6 @@
 from enum import Enum
 import unittest
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import MagicMock, create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
     StartingCoverageOperator
@@ -34,6 +34,9 @@ class CoverageOperatorTestCommon(unittest.TestCase):
         self.environment_mock = create_autospec(Environment)
 
         self.rule_population_mock = create_autospec(RulePopulation)
+
+        type(self.rule_population_mock).universal_symbol = \
+            PropertyMock(Symbol, return_value=Symbol(hash('U')))
 
         self.coordinates = 0, 2
 
@@ -75,13 +78,16 @@ class TestUniversalCoverageOperator(CoverageOperatorTestCommon):
 
         self.sut = UniversalCoverageOperator(self.cyk_service_mock)
 
-        # self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
-        # self.rule_population_mock.get_random_terminal_symbol.return_value = Symbol(hash('A'))
+        self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
 
     def test_operators_execute_with_some_chance(self):
         self.operator_executes_with_some_chance_scenario()
 
-    # def test_given_unknown_terminal_symbol_should_cover_it(self):
+    def test_given_unknown_terminal_symbol_should_cover_it(self):
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+        assert_that(
+            result,
+            is_(equal_to(TerminalRule(Symbol(hash('U')), Symbol(hash('a'))))))
 
 
 class TestStartingCoverageOperator(CoverageOperatorTestCommon):
@@ -96,4 +102,5 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
     def test_operators_execute_with_some_chance(self):
         self.operator_executes_with_some_chance_scenario()
 
-    # def test_given_sentence_of_length_1_should_cover_it(self):
+    # def test_given_sentence_of_length_greater_than_1_should_not_cover_it(self):
+    #     self.environment_mock.ge

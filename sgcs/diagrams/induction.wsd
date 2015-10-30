@@ -154,8 +154,9 @@ package induction {
     class Symbol
     Symbol : __init__(self, symbol_id)
 
-    RulePopulation : __init__(self, starting_symbol, previous_instance=None)
+    RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None)
     RulePopulation : starting_symbol
+    RulePopulation : universal_symbol
     RulePopulation : max_terminal_symbols
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
@@ -203,6 +204,9 @@ package induction {
 
         class TerminalCoverageOperator
         TerminalCoverageOperator --|> CoverageOperator
+
+        class UniversalCoverageOperator
+        UniversalCoverageOperator --|> CoverageOperator
 
         'class CoverageMethod
 

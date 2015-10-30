@@ -10,14 +10,19 @@ class RulePopulationAccessViolationError(Exception):
 
 
 class RulePopulation(object):
-    def __init__(self, starting_symbol, previous_instance=None):
+    def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None):
         self.rules_by_right = dict()
         self.terminal_rules = dict()
         self._starting_symbol = starting_symbol
+        self._universal_symbol = universal_symbol
 
     @property
     def starting_symbol(self):
         return self._starting_symbol
+
+    @property
+    def universal_symbol(self):
+        return self._universal_symbol
 
     @property
     def max_terminal_symbols(self):
