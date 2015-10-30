@@ -13,7 +13,10 @@ class Production(object):
         return self.detector.coordinates
 
     def __eq__(self, other):
-        return self.detector == other.detector and self.rule == other.rule
+        return other is not None and \
+               self.detector == other.detector and \
+               self.rule == other.rule and \
+               self.get_coordinates() == other.get_coordinates()
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -22,8 +25,11 @@ class Production(object):
         return (hash(self.detector) << 3) ^ hash(self.rule)
 
     def __str__(self):
-        props = [str(self.detector), str(self.rule)]
+        props = [str(self.get_coordinates()), str(self.rule)]
         return self.__class__.__name__ + '({' + '};{'.join(props) + "})"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class EmptyProduction(Production):

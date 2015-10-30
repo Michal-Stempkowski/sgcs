@@ -22,7 +22,8 @@ class ExecutorSuite(unittest.TestCase):
 
         self.executor_factory = Factory(
             {
-                CykTypeId.parent_combination_executor: self.child_mocker(CykParentCombinationExecutor),
+                CykTypeId.parent_combination_executor:
+                    self.child_mocker(CykParentCombinationExecutor),
                 CykTypeId.cell_executor: self.child_mocker(CykCellExecutor),
                 CykTypeId.row_executor: self.child_mocker(CykRowExecutor),
                 CykTypeId.table_executor: self.child_mocker(CykTableExecutor),
@@ -66,6 +67,7 @@ class TestCykSymbolPairExecutor(ExecutorSuite):
         # Given:
         symbols = ('B', 'C')
         rules = [Rule('A', 'B', 'C'), Rule('D', 'B', 'C')]
+        self.environment_mock.get_detector_symbols.return_value = symbols
         self.environment_mock.get_symbols.return_value = symbols
         self.rule_population_mock.get_rules_by_right.return_value = rules
 
@@ -275,8 +277,8 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         # Then:
         self.environment_mock.add_production.assert_has_calls(
             [
-                call(TerminalProduction(rule_1, (0, 0))),
-                call(TerminalProduction(rule_2, (0, 1)))
+                call(TerminalProduction(rule_1, (0, 3))),
+                call(TerminalProduction(rule_2, (0, 3)))
             ])
 
     def test_if_no_matching_rules_should_find_no_executors(self):
