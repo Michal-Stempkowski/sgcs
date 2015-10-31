@@ -186,7 +186,7 @@ package induction {
     CykService ..> Environment: creates (factory)
     CykService --* "1" CykTypeId
 
-    enum CykReasoningStatus {
+    enum CoverageType {
         unknown_terminal_symbol
         no_effector_found
         no_starting_symbol
@@ -196,11 +196,13 @@ package induction {
         '&begin_coverage
 
         class CoverageOperator
+        CoverageOperator : chance
+        CoverageOperator : coverage_type
         CoverageOperator : cover(self, environment, rule_population, coordinates)
         CoverageOperator : cover_impl(self, environment, rule_population, coordinates)
         CoverageOperator ..> Environment: uses
         CoverageOperator ..> RulePopulation: uses
-        CoverageOperator --> CykReasoningStatus: uses
+        CoverageOperator --> CoverageType: uses
 
         class TerminalCoverageOperator
         TerminalCoverageOperator --|> CoverageOperator
@@ -220,6 +222,8 @@ package induction {
         'class CoverageMethod
 
         class CoverageOperations
+        CoverageOperations : __init__(self)
+        CoverageOperations : perform_coverage(self, coverage_type, environment, rule_population, coordinates)
         CoverageOperations "0" --* "*" CoverageOperator
         'CoverageOperations "0" --* "*" CoverageMethod
         CoverageOperations ..> Environment: uses

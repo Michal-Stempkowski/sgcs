@@ -1,9 +1,11 @@
 from enum import Enum
+from random import shuffle
 import unittest
 from unittest.mock import MagicMock, create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
-    StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator
+    StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
+    CoverageOperator, CoverageType
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperators
 from sgcs.induction.cyk_service import CykService
@@ -14,12 +16,6 @@ from sgcs.induction.rule import TerminalRule, Rule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
 from sgcs.utils import Randomizer
-
-
-class CykReasoningStatus(Enum):
-    unknown_terminal_symbol = 0
-    no_effector_found = 1
-    no_starting_symbol = 2
 
 
 class CoverageOperatorTestCommon(unittest.TestCase):
@@ -277,3 +273,94 @@ class TestFullCoverageOperator(CoverageOperatorTestCommon):
             Rule(Symbol(hash('S')), Symbol(hash('A')), Symbol(hash('B'))))))
         self.environment_mock.get_detector_symbols.assert_called_once_with(
             selected_detector.coordinates)
+
+
+class TestCoverageOperations(CoverageOperatorTestCommon):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = CoverageOperations()
+
+        self.create_operators_mock()
+        self.sut.operators = self.all_operators
+
+    @staticmethod
+    def create_operator_mock(coverage_type):
+        operator_mock = create_autospec(CoverageOperator)
+        operator_mock.configure_mock(coverage_type=coverage_type)
+        return operator_mock
+
+    def create_operators_mock(self):
+        self.terminal_operator_1 = self.create_operator_mock(CoverageType.unknown_terminal_symbol)
+        self.terminal_operator_2 = self.create_operator_mock(CoverageType.unknown_terminal_symbol)
+
+        self.effector_operator_1 = self.create_operator_mock(CoverageType.no_effector_found)
+        self.effector_operator_2 = self.create_operator_mock(CoverageType.no_effector_found)
+
+        self.starting_operator_1 = self.create_operator_mock(CoverageType.no_starting_symbol)
+        self.starting_operator_2 = self.create_operator_mock(CoverageType.no_starting_symbol)
+
+        self.terminal_operators = [self.terminal_operator_1, self.terminal_operator_2]
+        self.effector_operators = [self.effector_operator_1, self.effector_operator_2]
+        self.starting_operators = [self.starting_operator_1, self.starting_operator_2]
+
+        self.all_operators = self.terminal_operators + \
+                             self.effector_operators + \
+                             self.starting_operators
+        shuffle(self.all_operators)
+
+    def clean_all_calls(self):
+        for operator in self.all_operators:
+            operator.reset_mock()
+
+    def assert_called_times(self, *operator_call_pairs):
+        for pair in operator_call_pairs:
+            assert_that(pair[0].cover.call_count, is_(equal_to(pair[1])))
+
+        self.clean_all_calls()
+
+    def test_only_operators_of_given_type_should_be_called(self):
+        self.sut.perform_coverage(
+            CoverageType.unknown_terminal_symbol,
+            self.environment_mock,
+            self.rule_population_mock,
+            self.coordinates)
+
+        self.assert_called_times(
+            (self.terminal_operator_1, 1),
+            (self.terminal_operator_2, 1),
+            (self.effector_operator_1, 0),
+            (self.effector_operator_2, 0),
+            (self.starting_operator_1, 0),
+            (self.starting_operator_2, 0)
+        )
+
+        self.sut.perform_coverage(
+            CoverageType.no_effector_found,
+            self.environment_mock,
+            self.rule_population_mock,
+            self.coordinates)
+
+        self.assert_called_times(
+            (self.terminal_operator_1, 0),
+            (self.terminal_operator_2, 0),
+            (self.effector_operator_1, 1),
+            (self.effector_operator_2, 1),
+            (self.starting_operator_1, 0),
+            (self.starting_operator_2, 0)
+        )
+
+        self.sut.perform_coverage(
+            CoverageType.no_starting_symbol,
+            self.environment_mock,
+            self.rule_population_mock,
+            self.coordinates)
+
+        self.assert_called_times(
+            (self.terminal_operator_1, 0),
+            (self.terminal_operator_2, 0),
+            (self.effector_operator_1, 0),
+            (self.effector_operator_2, 0),
+            (self.starting_operator_1, 1),
+            (self.starting_operator_2, 1)
+        )
