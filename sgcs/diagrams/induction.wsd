@@ -14,6 +14,7 @@ package induction {
     ProductionPool : add_production(self, production)
     ProductionPool : is_empty(self)
     ProductionPool : get_effectors(self)
+    ProductionPool : get_unsatisfied_detectors(self)
 
     Production : __init__(self, detector, rule)
     Production : detector
@@ -137,6 +138,7 @@ package induction {
     Environment : get_sentence_symbol(self, index)
     Environment : get_detector_symbols(self, cords)
     Environment : is_sentence_positive(self)
+    Environment : get_unsatisfied_detectors(self, coordinates)
 
     Environment ..> ProductionPool: creates (factory)
     Environment ..> Production: uses
@@ -159,7 +161,7 @@ package induction {
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol)
-    RulePopulation : get_random_terminal_symbol(self, randomizer)
+    RulePopulation : get_random_non_terminal_symbol(self, randomizer)
     RulePopulation --o Rule
     RulePopulation --> Symbol: creates
 
@@ -211,6 +213,9 @@ package induction {
 
         class AggressiveCoverageOperator
         AggressiveCoverageOperator --|> CoverageOperator
+
+        class FullCoverageOperator
+        FullCoverageOperator --|> CoverageOperator
 
         'class CoverageMethod
 
