@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import MagicMock, create_autospec, PropertyMock
 from hamcrest import *
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
-    StartingCoverageOperator, AggressiveCoverageOperator
+    StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperators
 from sgcs.induction.cyk_service import CykService
@@ -171,8 +171,6 @@ class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
 
         self.sut = AggressiveCoverageOperator(self.cyk_service_mock)
 
-        # self.environment_mock.get_sentence_symbol.return_value = Symbol(hash('a'))
-
     def setup_system_for_successful_rule_selection(self):
         detectors = [Detector((2, 2, 1, 0, 1)), Detector((2, 2, 2, 0, 1))]
         selected_detector = detectors[1]
@@ -221,5 +219,61 @@ class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
         assert_that(result, is_(Production(
             selected_detector,
             Rule(Symbol(hash('C')), Symbol(hash('A')), Symbol(hash('B'))))))
+        self.environment_mock.get_detector_symbols.assert_called_once_with(
+            selected_detector.coordinates)
+
+
+class TestFullCoverageOperator(CoverageOperatorTestCommon):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = FullCoverageOperator(self.cyk_service_mock)
+
+    def setup_system_for_successful_rule_selection(self):
+        detectors = [Detector((2, 2, 1, 0, 1)), Detector((2, 2, 2, 0, 1))]
+        selected_detector = detectors[1]
+        self.environment_mock.get_unsatisfied_detectors.return_value = detectors
+        self.cyk_service_mock.randomizer.choice.return_value = selected_detector
+        self.environment_mock.get_detector_symbols.return_value = \
+            Symbol(hash('A')), Symbol(hash('B'))
+
+        return selected_detector
+
+    def test_operators_execute_with_some_chance(self):
+        self.setup_system_for_successful_rule_selection()
+        self.operator_executes_with_some_chance_scenario()
+
+    def test_given_sentence_of_unknown_positivity__coverage_should_not_occur(self):
+        self.environment_mock.is_sentence_positive.return_value = None
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
+
+    def test_given_negative_sentence__coverage_should_not_occur(self):
+        self.environment_mock.is_sentence_positive.return_value = False
+
+        # When:
+        result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
+
+        # Then:
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
+
+    def test_given_positive_sentence__coverage_should_occur(self):
+        # Given:
+        selected_detector = self.setup_system_for_successful_rule_selection()
+
+        # When:
+        result = self.sut.cover(
+            self.environment_mock,
+            self.rule_population_mock,
+            selected_detector.coordinates[:2])
+
+        # Then:
+        assert_that(result, is_(Production(
+            selected_detector,
+            Rule(Symbol(hash('S')), Symbol(hash('A')), Symbol(hash('B'))))))
         self.environment_mock.get_detector_symbols.assert_called_once_with(
             selected_detector.coordinates)

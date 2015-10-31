@@ -1,10 +1,10 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
 
 
-class CoverageOperator(object):
+class CoverageOperator(object, metaclass=ABCMeta):
     @staticmethod
     def empty_production(coordinates):
         return EmptyProduction(Detector(coordinates))
@@ -91,3 +91,13 @@ class AggressiveCoverageOperator(CoverageOperator):
                 Rule(parent, *children))
         else:
             return self.empty_production(coordinates)
+
+
+# noinspection PyAbstractClass
+class FullCoverageOperator(AggressiveCoverageOperator):
+    def __init__(self, cyk_service):
+        super().__init__(cyk_service)
+        self.chance = cyk_service.configuration.coverage.operators.terminal.chance
+
+    def select_parent(self, rule_population):
+        return rule_population.starting_symbol
