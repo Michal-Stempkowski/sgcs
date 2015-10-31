@@ -41,11 +41,24 @@ package induction {
         cyk_terminal_cell_executor
     }
 
+    class CykService
+    CykService : __init__(self, factory, configuration, randomizer)
+    CykService : coverage_operations
+    CykService : configuration
+    CykService : randomizer
+    CykService : perform_cyk(self, rule_population, sentence)
+    CykService ..> CykExecutors: creates (factory)
+    CykService ..> Sentence: uses
+    CykService ..> CykResult: uses
+    CykService ..> Environment: creates (factory)
+    CykService --* "1" CykTypeId
+
     package CykExecutors {
     '&begin_cyk_executors
 
         CykExecutor --* "1" CykTypeId
-        CykExecutor : __init__(self, child_level, executor_factory)
+        CykExecutor ..> CykService: uses
+        CykExecutor : __init__(self, child_level, cyk_service)
         CykExecutor : create_child_executor(self, *args)
 
         CykSymbolPairExecutor --|> CykExecutor
@@ -53,7 +66,7 @@ package induction {
         CykSymbolPairExecutor ..> RulePopulation: uses
         CykSymbolPairExecutor ..> Environment: uses
         CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
-        CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, executor_factory)
+        CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, cyk_service)
         CykSymbolPairExecutor : execute(self, environment, rule_population)
         CykSymbolPairExecutor : get_coordinates(self)
         CykSymbolPairExecutor : parent_executor
@@ -61,7 +74,7 @@ package induction {
         CykParentCombinationExecutor --|> CykExecutor
         CykParentCombinationExecutor ..> RulePopulation: uses
         CykParentCombinationExecutor ..> Environment: uses
-        CykParentCombinationExecutor : __init__(self, cell_executor, shift, executor_factory)
+        CykParentCombinationExecutor : __init__(self, cell_executor, shift, cyk_service)
         CykParentCombinationExecutor : parent_executor
         CykParentCombinationExecutor : current_row
         CykParentCombinationExecutor : current_col
@@ -70,10 +83,11 @@ package induction {
         CykParentCombinationExecutor : get_coordinates(self)
 
         CykCellExecutor --|> CykExecutor
+        CykCellExecutor ..> CykService: uses
         CykCellExecutor ..> RulePopulation: uses
         CykCellExecutor ..> Environment: uses
         CykCellExecutor <..> CykParentCombinationExecutor: uses
-        CykCellExecutor : __init__(self, row_executor, column, executor_factory)
+        CykCellExecutor : __init__(self, row_executor, column, cyk_service)
         CykCellExecutor : parent_executor
         CykCellExecutor : current_row
         CykCellExecutor : current_col
@@ -83,16 +97,17 @@ package induction {
         CykRowExecutor ..> RulePopulation: uses
         CykRowExecutor ..> Environment: uses
         CykRowExecutor <..> CykCellExecutor
-        CykRowExecutor : __init__(self, table_executor, row, executor_factory)
+        CykRowExecutor : __init__(self, table_executor, row, cyk_service)
         CykRowExecutor : parent_executor
         CykRowExecutor : current_row
         CykRowExecutor : execute(self, environment, rule_population)
 
         CykTableExecutor --|> CykExecutor
+        CykTableExecutor <..> CykService: uses
         CykTableExecutor ..> RulePopulation: uses
         CykTableExecutor ..> Environment: uses
         CykTableExecutor <..> CykRowExecutor: uses
-        CykTableExecutor : __init__(self, executor_factory)
+        CykTableExecutor : __init__(self, cyk_service)
         CykTableExecutor : execute(self, environment, rule_population)
         CykTableExecutor --> CykResult: creates
         CykTableExecutor <..> CykFirstRowExecutor: uses
@@ -100,14 +115,15 @@ package induction {
         CykFirstRowExecutor --|> CykRowExecutor
         CykFirstRowExecutor ..> RulePopulation: uses
         CykFirstRowExecutor ..> Environment: uses
-        CykFirstRowExecutor : __init__(self, table_executor, row, executor_factory)
+        CykFirstRowExecutor : __init__(self, table_executor, row, cyk_service)
         CykFirstRowExecutor : execute(self, environment, rule_population)
         CykFirstRowExecutor <..> CykTerminalCellExecutor
 
         CykTerminalCellExecutor --|> CykCellExecutor
+        CykTerminalCellExecutor ..> CykService: uses
         CykTerminalCellExecutor ..> RulePopulation: uses
         CykTerminalCellExecutor ..> Environment: uses
-        CykTerminalCellExecutor : __init__(self, row_executor, column, executor_factory)
+        CykTerminalCellExecutor : __init__(self, row_executor, column, cyk_service)
         CykTerminalCellExecutor : execute(self, environment, rule_population)
         CykTerminalCellExecutor --> Detector: creates
 
@@ -118,6 +134,7 @@ package induction {
     CykResult : belongs_to_grammar
 
     '&alt_cyk_executors CykExecutors ..> Environment: uses
+    '&alt_cyk_executors CykExecutors ..> CykService: uses
     '&alt_cyk_executors CykExecutors ..> Production: uses
     '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
     '&alt_cyk_executors CykExecutors --> CykResult: creates
@@ -174,18 +191,6 @@ package induction {
     TerminalRule --|> Rule
     TerminalRule : __init__(self, parent, child)
 
-
-    class CykService
-    CykService : __init__(self, factory, configuration, randomizer)
-    CykService : configuration
-    CykService : randomizer
-    CykService : perform_cyk(self, rule_population, sentence)
-    CykService ..> CykExecutors: creates (factory)
-    CykService ..> Sentence: uses
-    CykService ..> CykResult: uses
-    CykService ..> Environment: creates (factory)
-    CykService --* "1" CykTypeId
-
     enum CoverageType {
         unknown_terminal_symbol
         no_effector_found
@@ -219,13 +224,10 @@ package induction {
         class FullCoverageOperator
         FullCoverageOperator --|> CoverageOperator
 
-        'class CoverageMethod
-
         class CoverageOperations
         CoverageOperations : __init__(self)
         CoverageOperations : perform_coverage(self, coverage_type, environment, rule_population, coordinates)
         CoverageOperations "0" --* "*" CoverageOperator
-        'CoverageOperations "0" --* "*" CoverageMethod
         CoverageOperations ..> Environment: uses
         CoverageOperations ..> RulePopulation: uses
         CoverageOperations --> Rule: creates
@@ -236,6 +238,7 @@ package induction {
     '&alt_coverage Coverage ..> Environment: uses
     '&alt_coverage Coverage ..> RulePopulation: uses
     '&alt_coverage Coverage --> Rule: creates
+    '&alt_coverage Coverage ..> CykService: uses
 }
 
 package datalayer {

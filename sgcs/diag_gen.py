@@ -116,7 +116,9 @@ def get_filters():
     """
 
     lean = InlineFilter('lean1', '..')
-    h1 = ZoomOutFilter('h1', 'cyk_executors')
+    h1 = AndFilter('h1',
+                   ZoomOutFilter('cyk_executors', 'cyk_executors'),
+                   ZoomOutFilter('coverage', 'coverage'))
 
     return [
         lean,

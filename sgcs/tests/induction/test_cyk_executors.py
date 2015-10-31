@@ -3,6 +3,7 @@ from unittest.mock import create_autospec, PropertyMock, call
 from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import *
+from sgcs.induction.cyk_service import CykService
 from sgcs.induction.environment import Environment
 from sgcs.induction.production import ProductionPool, Production, EmptyProduction
 from sgcs.induction.rule import Rule, TerminalRule
@@ -34,6 +35,9 @@ class ExecutorSuite(unittest.TestCase):
             }
         )
 
+        self.cyk_service_mock = create_autospec(CykService)
+        self.cyk_service_mock.configure_mock(factory=self.executor_factory)
+
     def child_mocker(self, mock_spec):
         return lambda *args: \
             self.children_created.append(args) or create_autospec(mock_spec)
@@ -50,7 +54,7 @@ class TestCykSymbolPairExecutor(ExecutorSuite):
         self.initialize_coordinates()
 
         self.sut = CykSymbolPairExecutor(self.parent_executor, self.left_id, self.right_id,
-                                         self.executor_factory)
+                                         self.cyk_service_mock)
 
     def initialize_coordinates(self):
         self.left_id = 0
@@ -86,7 +90,7 @@ class TestCykParentCombinationExecutor(ExecutorSuite):
         self.initialize_coordinates()
 
         self.sut = CykParentCombinationExecutor(self.parent_executor, self.shift,
-                                                self.executor_factory)
+                                                self.cyk_service_mock)
 
     def initialize_coordinates(self):
         self.shift = 1
@@ -105,12 +109,12 @@ class TestCykParentCombinationExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 0, 0, self.executor_factory),
-                (self.sut, 0, 1, self.executor_factory),
-                (self.sut, 0, 2, self.executor_factory),
-                (self.sut, 1, 0, self.executor_factory),
-                (self.sut, 1, 1, self.executor_factory),
-                (self.sut, 1, 2, self.executor_factory)
+                (self.sut, 0, 0, self.cyk_service_mock),
+                (self.sut, 0, 1, self.cyk_service_mock),
+                (self.sut, 0, 2, self.cyk_service_mock),
+                (self.sut, 1, 0, self.cyk_service_mock),
+                (self.sut, 1, 1, self.cyk_service_mock),
+                (self.sut, 1, 2, self.cyk_service_mock)
             ]
         ))
 
@@ -133,7 +137,7 @@ class TestCykCellExecutor(ExecutorSuite):
         self.initialize_mocks(CykRowExecutor)
         self.initialize_coordinates()
 
-        self.sut = CykCellExecutor(self.parent_executor, self.current_col, self.executor_factory)
+        self.sut = CykCellExecutor(self.parent_executor, self.current_col, self.cyk_service_mock)
 
     def initialize_coordinates(self):
         type(self.parent_executor).current_row = PropertyMock(return_value=4)
@@ -146,10 +150,10 @@ class TestCykCellExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 1, self.executor_factory),
-                (self.sut, 2, self.executor_factory),
-                (self.sut, 3, self.executor_factory),
-                (self.sut, 4, self.executor_factory)
+                (self.sut, 1, self.cyk_service_mock),
+                (self.sut, 2, self.cyk_service_mock),
+                (self.sut, 3, self.cyk_service_mock),
+                (self.sut, 4, self.cyk_service_mock)
             ]
         ))
 
@@ -161,7 +165,7 @@ class TestCykRowExecutor(ExecutorSuite):
         self.initialize_mocks(CykTableExecutor)
         self.initialize_coordinates()
 
-        self.sut = CykRowExecutor(self.parent_executor, self.current_row, self.executor_factory)
+        self.sut = CykRowExecutor(self.parent_executor, self.current_row, self.cyk_service_mock)
 
     def initialize_coordinates(self):
         self.current_row = 2
@@ -176,8 +180,8 @@ class TestCykRowExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 0, self.executor_factory),
-                (self.sut, 1, self.executor_factory)
+                (self.sut, 0, self.cyk_service_mock),
+                (self.sut, 1, self.cyk_service_mock)
             ]
         ))
 
@@ -188,7 +192,7 @@ class TestCykTableExecutor(ExecutorSuite):
 
         self.initialize_mocks(None)
 
-        self.sut = CykTableExecutor(self.executor_factory)
+        self.sut = CykTableExecutor(self.cyk_service_mock)
 
     def test_cells_in_row_should_be_executed(self):
         # Given:
@@ -200,11 +204,11 @@ class TestCykTableExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 0, self.executor_factory),
-                (self.sut, 1, self.executor_factory),
-                (self.sut, 2, self.executor_factory),
-                (self.sut, 3, self.executor_factory),
-                (self.sut, 4, self.executor_factory)
+                (self.sut, 0, self.cyk_service_mock),
+                (self.sut, 1, self.cyk_service_mock),
+                (self.sut, 2, self.cyk_service_mock),
+                (self.sut, 3, self.cyk_service_mock),
+                (self.sut, 4, self.cyk_service_mock)
             ]
         ))
 
@@ -216,7 +220,8 @@ class TestCykFirstRowExecutor(ExecutorSuite):
         self.initialize_mocks(CykTableExecutor)
         self.initialize_coordinates()
 
-        self.sut = CykFirstRowExecutor(self.parent_executor, self.current_row, self.executor_factory)
+        self.sut = CykFirstRowExecutor(
+            self.parent_executor, self.current_row, self.cyk_service_mock)
 
     def initialize_coordinates(self):
         self.current_row = 0
@@ -231,9 +236,9 @@ class TestCykFirstRowExecutor(ExecutorSuite):
         # Then:
         assert_that(self.children_created, are_(
             [
-                (self.sut, 0, self.executor_factory),
-                (self.sut, 1, self.executor_factory),
-                (self.sut, 2, self.executor_factory)
+                (self.sut, 0, self.cyk_service_mock),
+                (self.sut, 1, self.cyk_service_mock),
+                (self.sut, 2, self.cyk_service_mock)
             ]
         ))
 
@@ -246,7 +251,7 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         self.initialize_coordinates()
 
         self.sut = CykTerminalCellExecutor(self.parent_executor, self.current_col,
-                                           self.executor_factory)
+                                           self.cyk_service_mock)
 
     def initialize_coordinates(self):
         type(self.parent_executor).current_row = PropertyMock(return_value=0)

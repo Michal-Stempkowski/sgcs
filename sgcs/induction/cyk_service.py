@@ -1,14 +1,17 @@
 from enum import Enum
 from sgcs.factory import Factory
+from sgcs.induction.coverage import CoverageOperations
 from sgcs.induction.cyk_executors import CykTypeId
 
 
 class CykService(object):
-    def __init__(self, factory, configuration, randomizer):
+    def __init__(self, factory, configuration, randomizer, coverage_operations=None):
         self.factory = factory
-        self.table_executor = self.factory.create(CykTypeId.table_executor, self.factory)
+        self.table_executor = self.factory.create(CykTypeId.table_executor, self)
         self._configuration = configuration
         self._randomizer = randomizer
+        self._coverage_operations = coverage_operations \
+            if coverage_operations else CoverageOperations()
 
     def perform_cyk(self, rules_population, sentence):
         environment = self.factory.create(CykTypeId.environment, sentence, self.factory)
@@ -26,3 +29,7 @@ class CykService(object):
     @property
     def randomizer(self):
         return self._randomizer
+
+    @property
+    def coverage_operations(self):
+        return self._coverage_operations

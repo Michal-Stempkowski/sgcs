@@ -1,4 +1,5 @@
 from enum import Enum
+from sgcs.induction.coverage import CoverageType
 from sgcs.induction.detector import Detector
 
 
@@ -24,12 +25,12 @@ class CykResult(object):
 
 
 class CykExecutor(object):
-    def __init__(self, child_level, executor_factory):
+    def __init__(self, child_level, cyk_service):
         self.child_level = child_level
-        self.executor_factory = executor_factory
+        self.cyk_service = cyk_service
 
     def create_child_executor(self, *args):
-        return self.executor_factory.create(self.child_level, *args)
+        return self.cyk_service.factory.create(self.child_level, *args)
 
     def __str__(self):
         return self.__class__.__name__ + '({' + '};{'.join(self.get_coordinates()) + "})"
@@ -42,22 +43,35 @@ class CykTableExecutor(CykExecutor):
     def __init__(self, executor_factory):
         super().__init__(CykTypeId.row_executor, executor_factory)
 
+    @staticmethod
+    def _belongs_to_grammar(rule_population, environment):
+        last_cell_coordinates = environment.get_sentence_length() - 1, 0
+        return rule_population.starting_symbol in \
+            environment.get_symbols(last_cell_coordinates)
+
     def execute(self, environment, rule_population):
         sentence_length = environment.get_sentence_length()
 
         for row in range(0, sentence_length):
-            child_executor = self.create_child_executor(self, row, self.executor_factory)
+            child_executor = self.create_child_executor(self, row, self.cyk_service)
             child_executor.execute(environment, rule_population)
 
-        result = self.executor_factory.create(CykTypeId.cyk_result)
-        result.belongs_to_grammar = \
-            rule_population.starting_symbol in environment.get_symbols((sentence_length - 1, 0))
+        if not self._belongs_to_grammar(rule_population, environment):
+            last_cell_coordinates = sentence_length - 1, 0
+            self.cyk_service.coverage_operations.perform_coverage(
+                CoverageType.no_starting_symbol,
+                environment,
+                rule_population,
+                last_cell_coordinates)
+
+        result = self.cyk_service.factory.create(CykTypeId.cyk_result)
+        result.belongs_to_grammar = self._belongs_to_grammar(rule_population, environment)
         return result
 
 
 class CykRowExecutor(CykExecutor):
-    def __init__(self, table_executor, row, executor_factory):
-        super().__init__(CykTypeId.cell_executor, executor_factory)
+    def __init__(self, table_executor, row, cyk_service):
+        super().__init__(CykTypeId.cell_executor, cyk_service)
         self._row = row
         self.parent_executor = table_executor
 
@@ -69,7 +83,7 @@ class CykRowExecutor(CykExecutor):
         row_length = environment.get_row_length(self.current_row)
 
         for col in range(0, row_length):
-            child_executor = self.create_child_executor(self, col, self.executor_factory)
+            child_executor = self.create_child_executor(self, col, self.cyk_service)
             child_executor.execute(environment, rule_population)
 
     def get_coordinates(self):
@@ -77,14 +91,14 @@ class CykRowExecutor(CykExecutor):
 
 
 class CykFirstRowExecutor(CykRowExecutor):
-    def __init__(self, table_executor, row, executor_factory):
-        super().__init__(table_executor, row, executor_factory)
+    def __init__(self, table_executor, row, cyk_service):
+        super().__init__(table_executor, row, cyk_service)
         self.child_level = CykTypeId.terminal_cell_executor
 
 
 class CykCellExecutor(CykExecutor):
-    def __init__(self, row_executor, column, executor_factory):
-        super().__init__(CykTypeId.parent_combination_executor, executor_factory)
+    def __init__(self, row_executor, column, cyk_service):
+        super().__init__(CykTypeId.parent_combination_executor, cyk_service)
         self.parent_executor = row_executor
         self._column = column
 
@@ -98,10 +112,17 @@ class CykCellExecutor(CykExecutor):
 
     def execute(self, environment, rule_population):
         for shift in range(1, self.current_row + 1):
-            child_executor = self.create_child_executor(self, shift, self.executor_factory)
+            child_executor = self.create_child_executor(self, shift, self.cyk_service)
             child_executor.execute(environment, rule_population)
 
         # If production_pool is empty, then perform some coverage
+        if not environment.get_symbols(self.get_coordinates()):
+            self.cyk_service.coverage_operations.perform_coverage(
+                CoverageType.no_effector_found,
+                environment,
+                rule_population,
+                self.get_coordinates()
+            )
 
     def get_coordinates(self):
         return self.current_row, self.current_col
@@ -119,13 +140,18 @@ class CykTerminalCellExecutor(CykCellExecutor):
             #                                            self.current_col))
             environment.add_production(production)
         else:
-            pass
             # If production_pool is empty, then perform some coverage
+            self.cyk_service.coverage_operations.perform_coverage(
+                CoverageType.unknown_terminal_symbol,
+                environment,
+                rule_population,
+                self.get_coordinates()
+            )
 
 
 class CykParentCombinationExecutor(CykExecutor):
-    def __init__(self, cell_executor, shift, executor_factory):
-        super().__init__(CykTypeId.symbol_pair_executor, executor_factory)
+    def __init__(self, cell_executor, shift, cyk_service):
+        super().__init__(CykTypeId.symbol_pair_executor, cyk_service)
         self.parent_executor = cell_executor
         self._shift = shift
 
@@ -149,7 +175,7 @@ class CykParentCombinationExecutor(CykExecutor):
         for left_id in range(left_parent_symbol_count):
             for right_id in range(right_parent_symbol_count):
                 child_executor = self.create_child_executor(self, left_id, right_id,
-                                                            self.executor_factory)
+                                                            self.cyk_service)
                 child_executor.execute(environment, rule_population)
 
     def get_coordinates(self):
@@ -159,8 +185,8 @@ class CykParentCombinationExecutor(CykExecutor):
 
 
 class CykSymbolPairExecutor(CykExecutor):
-    def __init__(self, parent_executor, left_id, right_id, executor_factory):
-        super().__init__(None, executor_factory)
+    def __init__(self, parent_executor, left_id, right_id, cyk_service):
+        super().__init__(None, cyk_service)
         self.parent_executor = parent_executor
         self.left_id = left_id
         self.right_id = right_id
