@@ -80,3 +80,7 @@ class Environment(object):
         right = self._right_coord(*coord)
 
         return left, right
+
+    def get_unsatisfied_detectors(self, coordinates):
+        production_pool = self.cyk_table[coordinates]
+        return production_pool.get_unsatisfied_detectors()

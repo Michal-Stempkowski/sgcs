@@ -24,3 +24,11 @@ class TestRandomizer(unittest.TestCase):
         self.generator_mock.random.return_value = self.low
 
         assert_that(self.sut.perform_with_chance(self.chance), is_(True))
+
+    def test_should_be_able_to_choose_random_element_from_sequence(self):
+        # Given
+        sequence = [1, 2, 3]
+        self.generator_mock.choice.return_value = 2
+
+        # When/Then:
+        assert_that(self.sut.choice(sequence), is_(equal_to(2)))

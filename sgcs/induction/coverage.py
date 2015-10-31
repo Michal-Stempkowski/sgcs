@@ -34,7 +34,7 @@ class TerminalCoverageOperator(CoverageOperator):
                          cyk_service.configuration.coverage.operators.terminal.chance)
 
     def cover_impl(self, environment, rule_population, coordinates):
-        parent = rule_population.get_random_terminal_symbol(self.cyk_service.randomizer)
+        parent = rule_population.get_random_non_terminal_symbol(self.cyk_service.randomizer)
         return self.production(
             coordinates,
             TerminalRule(parent, environment.get_sentence_symbol(coordinates[1])))
@@ -72,10 +72,22 @@ class AggressiveCoverageOperator(CoverageOperator):
         super().__init__(cyk_service,
                          cyk_service.configuration.coverage.operators.terminal.chance)
 
+    def select_detector(self, environment, rule_population, coordinates):
+        unsatisfied_detectors = environment.get_unsatisfied_detectors(coordinates)
+        return self.cyk_service.randomizer.choice(unsatisfied_detectors)
+
+    def select_parent(self, rule_population):
+        return rule_population.get_random_non_terminal_symbol(self.cyk_service.randomizer)
+
     def cover_impl(self, environment, rule_population, coordinates):
         if environment.is_sentence_positive():
-            return self.production(
-                coordinates,
-                Rule(None, None, None))
+            selected_detector = self.select_detector(environment, rule_population, coordinates)
+
+            children = environment.get_detector_symbols(selected_detector.coordinates)
+
+            parent = self.select_parent(rule_population)
+            return Production(
+                selected_detector,
+                Rule(parent, *children))
         else:
             return self.empty_production(coordinates)

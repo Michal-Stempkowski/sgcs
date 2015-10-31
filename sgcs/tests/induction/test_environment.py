@@ -77,3 +77,14 @@ class TestEnvironment(unittest.TestCase):
 
         assert_that(self.sut.get_detector_symbols(unshifted_parent_coords),
                     is_(equal_to(('D', 'Q'))))
+
+    def test_should_be_able_to_get_unsatisfied_detectors(self):
+        # Given:
+        coordinates = (2, 2)
+        self.production_pool_mock.get_unsatisfied_detectors.return_value = [Detector(coordinates)]
+
+        # When:
+        result = self.sut.get_unsatisfied_detectors(coordinates)
+
+        # Then:
+        assert_that(result, only_contains(Detector(coordinates)))

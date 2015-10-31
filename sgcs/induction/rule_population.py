@@ -25,7 +25,7 @@ class RulePopulation(object):
         return self._universal_symbol
 
     @property
-    def max_terminal_symbols(self):
+    def max_non_terminal_symbols(self):
         return 32
 
     def get_rules_by_right(self, pair):
@@ -61,5 +61,5 @@ class RulePopulation(object):
         packed_rules = self.terminal_rules.get(symbol)
         return packed_rules.values() if packed_rules else []
 
-    def get_random_terminal_symbol(self, randomizer):
-        return Symbol(randomizer.randint(self.max_terminal_symbols))
+    def get_random_non_terminal_symbol(self, randomizer):
+        return Symbol(randomizer.randint(self.max_non_terminal_symbols))

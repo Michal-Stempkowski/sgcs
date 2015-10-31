@@ -4,3 +4,6 @@ class Randomizer(object):
 
     def perform_with_chance(self, chance):
         return False if self.generator.random() > chance else True
+
+    def choice(self, sequence):
+        return self.generator.choice(sequence)

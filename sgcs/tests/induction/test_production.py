@@ -40,3 +40,18 @@ class TestProductionPool(unittest.TestCase):
         assert_that(self.sut.is_empty(), is_(equal_to(True)))
         assert_that(self.sut.get_effectors(), is_(empty()))
 
+    def test_should_be_able_to_get_unsatisfied_detectors(self):
+        # Given:
+        empty_detector = create_autospec(Detector)
+        empty_production = EmptyProduction(empty_detector)
+        self.sut.add_production(empty_production)
+
+        production = Production(self.detector, self.rule)
+        self.sut.add_production(production)
+
+        # When:
+        result = self.sut.get_unsatisfied_detectors()
+
+        # Then:
+        assert_that(result, only_contains(empty_detector))
+

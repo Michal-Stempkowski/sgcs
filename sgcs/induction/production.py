@@ -58,6 +58,9 @@ class ProductionPool(object):
     def get_effectors(self):
         return self.effectors
 
+    def get_unsatisfied_detectors(self):
+        return list(map(lambda prod: prod.detector, self.empty_productions))
+
     def __str__(self):
         return "PP[" + "; ".join(map(lambda x: repr(x), self.get_effectors())) + "]"
 
