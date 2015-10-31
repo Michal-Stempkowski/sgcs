@@ -1,9 +1,18 @@
 from abc import abstractmethod
-from sgcs.induction.production import TerminalProduction
-from sgcs.induction.rule import TerminalRule
+from sgcs.induction.detector import Detector
+from sgcs.induction.production import Production, EmptyProduction
+from sgcs.induction.rule import TerminalRule, Rule
 
 
 class CoverageOperator(object):
+    @staticmethod
+    def empty_production(coordinates):
+        return EmptyProduction(Detector(coordinates))
+
+    @staticmethod
+    def production(coordinates, rule):
+        return Production(Detector(coordinates), rule)
+
     def __init__(self, cyk_service, chance):
         self.cyk_service = cyk_service
         self.chance = chance
@@ -12,7 +21,7 @@ class CoverageOperator(object):
         if self.cyk_service.randomizer.perform_with_chance(self.chance):
             return self.cover_impl(environment, rule_population, coordinates)
 
-        return TerminalProduction(None, coordinates)
+        return self.empty_production(coordinates)
 
     @abstractmethod
     def cover_impl(self, environment, rule_population, coordinates):
@@ -26,9 +35,9 @@ class TerminalCoverageOperator(CoverageOperator):
 
     def cover_impl(self, environment, rule_population, coordinates):
         parent = rule_population.get_random_terminal_symbol(self.cyk_service.randomizer)
-        return TerminalProduction(
-            TerminalRule(parent, environment.get_sentence_symbol(coordinates[1])),
-            coordinates)
+        return self.production(
+            coordinates,
+            TerminalRule(parent, environment.get_sentence_symbol(coordinates[1])))
 
 
 class UniversalCoverageOperator(CoverageOperator):
@@ -38,9 +47,9 @@ class UniversalCoverageOperator(CoverageOperator):
 
     def cover_impl(self, environment, rule_population, coordinates):
         child = environment.get_sentence_symbol(coordinates[1])
-        return TerminalProduction(
-            TerminalRule(rule_population.universal_symbol, child),
-            coordinates)
+        return self.production(
+            coordinates,
+            TerminalRule(rule_population.universal_symbol, child))
 
 
 class StartingCoverageOperator(CoverageOperator):
@@ -51,11 +60,11 @@ class StartingCoverageOperator(CoverageOperator):
     def cover_impl(self, environment, rule_population, coordinates):
         if environment.get_sentence_length() == 1 and environment.is_sentence_positive():
             only_symbol = environment.get_sentence_symbol(0)
-            return TerminalProduction(
-                TerminalRule(rule_population.starting_symbol, only_symbol),
-                coordinates)
+            return self.production(
+                coordinates,
+                TerminalRule(rule_population.starting_symbol, only_symbol))
         else:
-            return TerminalProduction(None, coordinates)
+            return self.empty_production(coordinates)
 
 
 class AggressiveCoverageOperator(CoverageOperator):
@@ -65,6 +74,8 @@ class AggressiveCoverageOperator(CoverageOperator):
 
     def cover_impl(self, environment, rule_population, coordinates):
         if environment.is_sentence_positive():
-            return True
+            return self.production(
+                coordinates,
+                Rule(None, None, None))
         else:
-            return TerminalProduction(None, coordinates)
+            return self.empty_production(coordinates)

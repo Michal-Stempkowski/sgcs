@@ -15,8 +15,7 @@ class Production(object):
     def __eq__(self, other):
         return other is not None and \
                self.detector == other.detector and \
-               self.rule == other.rule and \
-               self.get_coordinates() == other.get_coordinates()
+               self.rule == other.rule
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -36,15 +35,6 @@ class EmptyProduction(Production):
     def __init__(self, detector):
         super().__init__(detector, None)
         self.detector = detector
-
-
-class TerminalProduction(Production):
-    def __init__(self, rule, coordinates):
-        super().__init__(None, rule)
-        self.coordinates = coordinates
-
-    def get_coordinates(self):
-        return self.coordinates
 
 
 class ProductionPool(object):

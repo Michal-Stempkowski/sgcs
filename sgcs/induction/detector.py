@@ -6,15 +6,21 @@ class Detector(object):
         self.coordinates = coordinates
 
     def generate_production(self, environment, rule_population):
-        symbols = environment.get_detector_symbols(self.coordinates)
-        rules = rule_population.get_rules_by_right(symbols)
+        row, col, *_ = self.coordinates
+
+        if row > 0:
+            symbols = environment.get_detector_symbols(self.coordinates)
+            rules = rule_population.get_rules_by_right(symbols)
+        else:
+            symbol = environment.get_sentence_symbol(col)
+            rules = rule_population.get_terminal_rules(symbol)
 
         return [EmptyProduction(self)] \
             if len(rules) == 0 \
             else [Production(self, rule) for rule in rules]
 
     def __eq__(self, other):
-        return self.coordinates == other.coordinates
+        return other is not None and self.coordinates == other.coordinates
 
     def __ne__(self, other):
         return not self.__eq__(other)

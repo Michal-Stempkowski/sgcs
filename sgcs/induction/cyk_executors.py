@@ -1,6 +1,5 @@
 from enum import Enum
 from sgcs.induction.detector import Detector
-from sgcs.induction.production import TerminalProduction
 
 
 class CykTypeId(Enum):
@@ -110,12 +109,15 @@ class CykCellExecutor(CykExecutor):
 
 class CykTerminalCellExecutor(CykCellExecutor):
     def execute(self, environment, rule_population):
-        terminal_symbol = environment.get_sentence_symbol(self.current_col)
+        detector = Detector(self.get_coordinates())
+        productions = detector.generate_production(environment, rule_population)
+        # terminal_symbol = environment.get_sentence_symbol(self.current_col)
 
-        for rule in rule_population.get_terminal_rules(terminal_symbol):
-            new_production = TerminalProduction(rule, (self.current_row,
-                                                       self.current_col))
-            environment.add_production(new_production)
+        # for rule in rule_population.get_terminal_rules(terminal_symbol):
+        for production in productions:
+            # new_production = TerminalProduction(rule, (self.current_row,
+            #                                            self.current_col))
+            environment.add_production(production)
         else:
             pass
             # If production_pool is empty, then perform some coverage

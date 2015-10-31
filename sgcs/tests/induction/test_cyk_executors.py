@@ -4,7 +4,7 @@ from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import *
 from sgcs.induction.environment import Environment
-from sgcs.induction.production import ProductionPool, Production, TerminalProduction
+from sgcs.induction.production import ProductionPool, Production, EmptyProduction
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
@@ -277,8 +277,8 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         # Then:
         self.environment_mock.add_production.assert_has_calls(
             [
-                call(TerminalProduction(rule_1, (0, 3))),
-                call(TerminalProduction(rule_2, (0, 3)))
+                call(Production(Detector(self.sut.get_coordinates()), rule_1)),
+                call(Production(Detector(self.sut.get_coordinates()), rule_2))
             ])
 
     def test_if_no_matching_rules_should_find_no_executors(self):
@@ -290,4 +290,6 @@ class TestCykTerminalCellExecutor(ExecutorSuite):
         self.terminal_symbol_scenario([rule_1, rule_2])
 
         # Then:
-        assert_that(self.environment_mock.add_production.called, is_(False))
+        self.environment_mock.add_production.assert_has_calls([
+            call(EmptyProduction(Detector(self.sut.get_coordinates())))
+        ])

@@ -27,9 +27,6 @@ package induction {
     EmptyProduction : __init__(self, detector)
     EmptyProduction : detector
 
-    TerminalProduction --|> Production
-    TerminalProduction : __init__(self, rule, coordinates)
-    TerminalProduction : rule
 
     enum CykTypeId {
         symbol_pair_executor
@@ -51,7 +48,7 @@ package induction {
         CykExecutor : create_child_executor(self, *args)
 
         CykSymbolPairExecutor --|> CykExecutor
-        CykSymbolPairExecutor --> Detector: uses
+        CykSymbolPairExecutor --> Detector: creates
         CykSymbolPairExecutor ..> RulePopulation: uses
         CykSymbolPairExecutor ..> Environment: uses
         CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
@@ -111,7 +108,7 @@ package induction {
         CykTerminalCellExecutor ..> Environment: uses
         CykTerminalCellExecutor : __init__(self, row_executor, column, executor_factory)
         CykTerminalCellExecutor : execute(self, environment, rule_population)
-        CykTerminalCellExecutor --> TerminalProduction: creates
+        CykTerminalCellExecutor --> Detector: creates
 
     '&end_cyk_executors
     }
@@ -124,8 +121,7 @@ package induction {
     '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
     '&alt_cyk_executors CykExecutors --> CykResult: creates
     '&alt_cyk_executors CykExecutors --* "1" CykTypeId
-    '&alt_cyk_executors CykExecutors --> TerminalProduction: creates
-    '&alt_cyk_executors CykExecutors --> Detector: uses
+    '&alt_cyk_executors CykExecutors --> Detector: creates
 
     Environment ..* "1" Sentence
     Environment : __init__(self, sentence, factory)

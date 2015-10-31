@@ -7,8 +7,9 @@ from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageO
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperators
 from sgcs.induction.cyk_service import CykService
+from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment
-from sgcs.induction.production import TerminalProduction
+from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
@@ -52,11 +53,11 @@ class CoverageOperatorTestCommon(unittest.TestCase):
         # When/Then:
         assert_that(
             self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates),
-            is_(TerminalProduction(None, self.coordinates)))
+            is_(EmptyProduction(Detector(self.coordinates))))
 
         assert_that(
             self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates),
-            is_not(None))
+            is_not(EmptyProduction(Detector(self.coordinates))))
 
 
 class TestTerminalCoverageOperator(CoverageOperatorTestCommon):
@@ -76,8 +77,9 @@ class TestTerminalCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(equal_to(TerminalProduction(
-            TerminalRule(Symbol(hash('A')), Symbol(hash('a'))), self.coordinates))))
+        assert_that(result, is_(equal_to(Production(
+            Detector(self.coordinates),
+            TerminalRule(Symbol(hash('A')), Symbol(hash('a')))))))
 
 
 class TestUniversalCoverageOperator(CoverageOperatorTestCommon):
@@ -96,8 +98,9 @@ class TestUniversalCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(equal_to(TerminalProduction(
-            TerminalRule(Symbol(hash('U')), Symbol(hash('a'))), self.coordinates))))
+        assert_that(result, is_(equal_to(Production(
+            Detector(self.coordinates),
+            TerminalRule(Symbol(hash('U')), Symbol(hash('a')))))))
 
 
 class TestStartingCoverageOperator(CoverageOperatorTestCommon):
@@ -122,7 +125,7 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(TerminalProduction(None, self.coordinates)))
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
 
     def test_given_positivity_of_sentence_unknown__no_coverage_should_occur(self):
         # Given:
@@ -133,7 +136,7 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(TerminalProduction(None, self.coordinates)))
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
 
     def test_given_negative_sentence__no_coverage_should_occur(self):
         # Given:
@@ -144,7 +147,7 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(TerminalProduction(None, self.coordinates)))
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
 
     def test_given_positive_sentence_of_length_1__coverage_should_occur(self):
         # Given:
@@ -156,9 +159,9 @@ class TestStartingCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(equal_to(TerminalProduction(
-            TerminalRule(self.rule_population_mock.starting_symbol, Symbol(hash('a'))),
-            self.coordinates))))
+        assert_that(result, is_(equal_to(Production(
+            Detector(self.coordinates),
+            TerminalRule(self.rule_population_mock.starting_symbol, Symbol(hash('a')))))))
 
 
 class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
@@ -179,7 +182,7 @@ class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(TerminalProduction(None, self.coordinates)))
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
 
     def test_given_negative_sentence__coverage_should_not_occur(self):
         self.environment_mock.is_sentence_positive.return_value = False
@@ -188,7 +191,7 @@ class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
         result = self.sut.cover(self.environment_mock, self.rule_population_mock, self.coordinates)
 
         # Then:
-        assert_that(result, is_(TerminalProduction(None, self.coordinates)))
+        assert_that(result, is_(EmptyProduction(Detector(self.coordinates))))
 
     # def test_given_positive_sentence__coverage_should_occur(self):
     #     self.environment_mock.is_sentence_positive.return_value = True
