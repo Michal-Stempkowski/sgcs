@@ -33,9 +33,8 @@ class CoverageOperator(object, metaclass=ABCMeta):
     def production(coordinates, rule):
         return Production(Detector(coordinates), rule)
 
-    def __init__(self, cyk_service, chance, coverage_type):
+    def __init__(self, cyk_service, coverage_type):
         self.cyk_service = cyk_service
-        self.chance = chance
         self._coverage_type = coverage_type
 
     @property
@@ -43,7 +42,7 @@ class CoverageOperator(object, metaclass=ABCMeta):
         return self._coverage_type
 
     def cover(self, environment, rule_population, coordinates):
-        if self.cyk_service.randomizer.perform_with_chance(self.chance):
+        if self.cyk_service.randomizer.perform_with_chance(self.get_chance(self.cyk_service)):
             return self.cover_impl(environment, rule_population, coordinates)
 
         return self.empty_production(coordinates)
@@ -52,11 +51,14 @@ class CoverageOperator(object, metaclass=ABCMeta):
     def cover_impl(self, environment, rule_population, coordinates):
         pass
 
+    @abstractmethod
+    def get_chance(self, cyk_service):
+        pass
+
 
 class TerminalCoverageOperator(CoverageOperator):
     def __init__(self, cyk_service):
         super().__init__(cyk_service,
-                         cyk_service.configuration.coverage.operators.terminal.chance,
                          CoverageType.unknown_terminal_symbol)
 
     def cover_impl(self, environment, rule_population, coordinates):
@@ -65,11 +67,13 @@ class TerminalCoverageOperator(CoverageOperator):
             coordinates,
             TerminalRule(parent, environment.get_sentence_symbol(coordinates[1])))
 
+    def get_chance(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.terminal.chance
+
 
 class UniversalCoverageOperator(CoverageOperator):
     def __init__(self, cyk_service):
         super().__init__(cyk_service,
-                         cyk_service.configuration.coverage.operators.universal.chance,
                          CoverageType.unknown_terminal_symbol)
 
     def cover_impl(self, environment, rule_population, coordinates):
@@ -78,11 +82,13 @@ class UniversalCoverageOperator(CoverageOperator):
             coordinates,
             TerminalRule(rule_population.universal_symbol, child))
 
+    def get_chance(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.universal.chance
+
 
 class StartingCoverageOperator(CoverageOperator):
     def __init__(self, cyk_service):
         super().__init__(cyk_service,
-                         cyk_service.configuration.coverage.operators.starting.chance,
                          CoverageType.no_starting_symbol)
 
     def cover_impl(self, environment, rule_population, coordinates):
@@ -94,11 +100,13 @@ class StartingCoverageOperator(CoverageOperator):
         else:
             return self.empty_production(coordinates)
 
+    def get_chance(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.starting.chance
+
 
 class AggressiveCoverageOperator(CoverageOperator):
     def __init__(self, cyk_service):
         super().__init__(cyk_service,
-                         cyk_service.configuration.coverage.operators.aggressive.chance,
                          CoverageType.no_effector_found)
 
     def select_detector(self, environment, rule_population, coordinates):
@@ -121,6 +129,9 @@ class AggressiveCoverageOperator(CoverageOperator):
         else:
             return self.empty_production(coordinates)
 
+    def get_chance(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.aggressive.chance
+
 
 # noinspection PyAbstractClass
 class FullCoverageOperator(AggressiveCoverageOperator):
@@ -131,3 +142,6 @@ class FullCoverageOperator(AggressiveCoverageOperator):
 
     def select_parent(self, rule_population):
         return rule_population.starting_symbol
+
+    def get_chance(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.full.chance
