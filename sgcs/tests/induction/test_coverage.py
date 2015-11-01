@@ -7,7 +7,7 @@ from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageO
     StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
     CoverageOperator, CoverageType
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperators
+    CoverageOperatorsConfiguration
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment

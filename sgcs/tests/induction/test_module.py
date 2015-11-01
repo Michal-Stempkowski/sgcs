@@ -4,7 +4,10 @@ from unittest.mock import create_autospec
 from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
-from sgcs.induction.cyk_configuration import CykConfiguration
+from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
+    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator
+from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
+    CoverageOperatorsConfiguration, CoverageOperatorConfiguration
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.rule import Rule, TerminalRule
@@ -16,15 +19,25 @@ from sgcs.utils import Randomizer
 class TestModule(TestCase):
     def setUp(self):
         self.sut = None
-        self.random_number_generator_mock = create_autospec(Random)
-        self.randomizer = Randomizer(self.random_number_generator_mock)
+        # self.random_number_generator_mock = create_autospec(Random)
+        # self.randomizer = Randomizer(self.random_number_generator_mock)
+        self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
+
+        self.grammar_sentence = self.create_sentence(
+            Symbol('she'),
+            Symbol('eats'),
+            Symbol('a'),
+            Symbol('fish'),
+            Symbol('with'),
+            Symbol('a'),
+            Symbol('fork'))
 
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration, self.randomizer)
 
-    def create_sentence(self, *sentence_seq):
-        return Sentence(sentence_seq)
+    def create_sentence(self, *sentence_seq, is_positive_sentence=True):
+        return Sentence(sentence_seq, is_positive_sentence)
 
     def create_rules(self, rules):
         rule_population = RulePopulation(Symbol('S'))
@@ -87,15 +100,6 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(sentence, rules_population, True)
 
     def test_another_ok_scenario(self):
-        sentence = self.create_sentence(
-            Symbol('she'),
-            Symbol('eats'),
-            Symbol('a'),
-            Symbol('fish'),
-            Symbol('with'),
-            Symbol('a'),
-            Symbol('fork'))
-
         rules_population = self.create_rules([
             Rule(Symbol('S'), Symbol('NP'), Symbol('VP')),
             Rule(Symbol('VP'), Symbol('VP'), Symbol('PP')),
@@ -111,7 +115,7 @@ class TestModule(TestCase):
             TerminalRule(Symbol('Det'), Symbol('a'))
         ])
 
-        self.perform_cyk_scenario(sentence, rules_population, True)
+        self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)
 
     def test_another_big_ok_scenario(self):
         sentence = self.create_sentence(
@@ -144,3 +148,46 @@ class TestModule(TestCase):
         ])
 
         self.perform_cyk_scenario(sentence, rules_population, True)
+
+    def prepare_coverage_module(self):
+        self.sut.coverage_operations.operators = [
+            TerminalCoverageOperator(self.sut),
+            UniversalCoverageOperator(self.sut),
+            AggressiveCoverageOperator(self.sut),
+            StartingCoverageOperator(self.sut),
+            FullCoverageOperator(self.sut)
+        ]
+
+        terminal_configuration = self.default_coverage_operator_configuration()
+        universal_configuration = self.default_coverage_operator_configuration()
+        aggressive_configuration = self.default_coverage_operator_configuration()
+        starting_configuration = self.default_coverage_operator_configuration()
+        full_configuration = self.default_coverage_operator_configuration()
+
+        self.cyk_configuration.coverage = CoverageConfiguration()
+        self.cyk_configuration.coverage.operators = CoverageOperatorsConfiguration()
+
+        self.cyk_configuration.coverage.operators.terminal = terminal_configuration
+        self.cyk_configuration.coverage.operators.universal = universal_configuration
+        self.cyk_configuration.coverage.operators.aggressive = aggressive_configuration
+        self.cyk_configuration.coverage.operators.starting = starting_configuration
+        self.cyk_configuration.coverage.operators.full = full_configuration
+
+    def default_coverage_operator_configuration(self):
+        configuration = CoverageOperatorConfiguration()
+        configuration.chance = 0
+        return configuration
+
+    # def test_adding_coverage_module_should_change_nothing_if_chances_not_set(self):
+    #     self.prepare_coverage_module()
+    #
+    #     self.test_another_ok_scenario()
+
+    # def test_terminal_coverage_operator_should_work(self):
+    #     self.prepare_coverage_module()
+    #     self.cyk_configuration.coverage.operators.terminal.chance = 1
+    #
+    #     rules_population = self.create_rules([])
+    #     assert_that(rules_population.rules_by_right, is_(empty()))
+    #     self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+    #     assert_that(rules_population.rules_by_right, is_not(empty()))
