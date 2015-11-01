@@ -59,6 +59,7 @@ class CykTableExecutor(CykExecutor):
         if not self._belongs_to_grammar(rule_population, environment):
             last_cell_coordinates = sentence_length - 1, 0
             self.cyk_service.coverage_operations.perform_coverage(
+                self.cyk_service,
                 CoverageType.no_starting_symbol,
                 environment,
                 rule_population,
@@ -118,6 +119,7 @@ class CykCellExecutor(CykExecutor):
         # If production_pool is empty, then perform some coverage
         if not environment.get_symbols(self.get_coordinates()):
             self.cyk_service.coverage_operations.perform_coverage(
+                self.cyk_service,
                 CoverageType.no_effector_found,
                 environment,
                 rule_population,
@@ -142,6 +144,7 @@ class CykTerminalCellExecutor(CykCellExecutor):
         else:
             # If production_pool is empty, then perform some coverage
             self.cyk_service.coverage_operations.perform_coverage(
+                self.cyk_service,
                 CoverageType.unknown_terminal_symbol,
                 environment,
                 rule_population,

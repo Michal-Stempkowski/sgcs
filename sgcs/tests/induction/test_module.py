@@ -5,7 +5,7 @@ from hamcrest import *
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
-    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator
+    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperatorsConfiguration, CoverageOperatorConfiguration
 from sgcs.induction.cyk_executors import CykTypeId
@@ -23,6 +23,7 @@ class TestModule(TestCase):
         # self.randomizer = Randomizer(self.random_number_generator_mock)
         self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
+        self.coverage_operations = CoverageOperations()
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -34,7 +35,8 @@ class TestModule(TestCase):
             Symbol('fork'))
 
     def create_sut(self, factory):
-        self.sut = CykService(factory, self.cyk_configuration, self.randomizer)
+        self.sut = CykService(factory, self.cyk_configuration,
+                              self.randomizer, self.coverage_operations)
 
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):
         return Sentence(sentence_seq, is_positive_sentence)
@@ -150,12 +152,12 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(sentence, rules_population, True)
 
     def prepare_coverage_module(self):
-        self.sut.coverage_operations.operators = [
-            TerminalCoverageOperator(self.sut),
-            UniversalCoverageOperator(self.sut),
-            AggressiveCoverageOperator(self.sut),
-            StartingCoverageOperator(self.sut),
-            FullCoverageOperator(self.sut)
+        self.coverage_operations.operators = [
+            TerminalCoverageOperator(),
+            UniversalCoverageOperator(),
+            AggressiveCoverageOperator(),
+            StartingCoverageOperator(),
+            FullCoverageOperator()
         ]
 
         terminal_configuration = self.default_coverage_operator_configuration()
@@ -178,10 +180,10 @@ class TestModule(TestCase):
         configuration.chance = 0
         return configuration
 
-    # def test_adding_coverage_module_should_change_nothing_if_chances_not_set(self):
-    #     self.prepare_coverage_module()
-    #
-    #     self.test_another_ok_scenario()
+    def test_adding_coverage_module_should_change_nothing_if_chances_not_set(self):
+        self.prepare_coverage_module()
+
+        self.test_another_ok_scenario()
 
     # def test_terminal_coverage_operator_should_work(self):
     #     self.prepare_coverage_module()
