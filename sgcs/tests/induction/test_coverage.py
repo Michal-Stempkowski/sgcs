@@ -284,10 +284,10 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
         self.create_operators_mock()
         self.sut.operators = self.all_operators
 
-    @staticmethod
-    def create_operator_mock(coverage_type):
+    def create_operator_mock(self, coverage_type):
         operator_mock = create_autospec(CoverageOperator)
         operator_mock.configure_mock(coverage_type=coverage_type)
+        operator_mock.cover.return_value = EmptyProduction(Detector(self.coordinates))
         return operator_mock
 
     def create_operators_mock(self):
@@ -364,3 +364,19 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
             (self.starting_operator_1, 1),
             (self.starting_operator_2, 1)
         )
+
+        assert_that(self.rule_population_mock.add_rule.called, is_(False))
+        assert_that(self.environment_mock.add_production.called, is_(False))
+
+        expected_rule = TerminalRule(Symbol(hash('A')), Symbol(hash('a')))
+        expected_production = Production(Detector(self.coordinates), expected_rule)
+        self.terminal_operator_1.cover.return_value = expected_production
+
+        self.sut.perform_coverage(
+            CoverageType.unknown_terminal_symbol,
+            self.environment_mock,
+            self.rule_population_mock,
+            self.coordinates)
+
+        self.rule_population_mock.add_rule.assert_called_once_with(expected_rule)
+        self.environment_mock.add_production.assert_called_once_with(expected_production)

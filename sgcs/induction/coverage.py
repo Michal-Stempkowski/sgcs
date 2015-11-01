@@ -18,7 +18,10 @@ class CoverageOperations(object):
     def perform_coverage(self, coverage_type, environment, rule_population, coordinates):
         for operator in self.operators:
             if operator.coverage_type == coverage_type:
-                operator.cover(environment, rule_population, coordinates)
+                production = operator.cover(environment, rule_population, coordinates)
+                if not production.is_empty():
+                    rule_population.add_rule(production.rule)
+                    environment.add_production(production)
 
 
 class CoverageOperator(object, metaclass=ABCMeta):
