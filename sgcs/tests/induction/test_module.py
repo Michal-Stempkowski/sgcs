@@ -19,8 +19,6 @@ from sgcs.utils import Randomizer
 class TestModule(TestCase):
     def setUp(self):
         self.sut = None
-        # self.random_number_generator_mock = create_autospec(Random)
-        # self.randomizer = Randomizer(self.random_number_generator_mock)
         self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
         self.coverage_operations = CoverageOperations()
@@ -42,7 +40,7 @@ class TestModule(TestCase):
         return Sentence(sentence_seq, is_positive_sentence)
 
     def create_rules(self, rules):
-        rule_population = RulePopulation(Symbol('S'))
+        rule_population = RulePopulation(Symbol('S'), universal_symbol=Symbol('U'))
         for rule in rules:
             rule_population.add_rule(rule)
 
@@ -185,11 +183,28 @@ class TestModule(TestCase):
 
         self.test_another_ok_scenario()
 
-    # def test_terminal_coverage_operator_should_work(self):
-    #     self.prepare_coverage_module()
-    #     self.cyk_configuration.coverage.operators.terminal.chance = 1
-    #
-    #     rules_population = self.create_rules([])
-    #     assert_that(rules_population.rules_by_right, is_(empty()))
-    #     self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
-    #     assert_that(rules_population.rules_by_right, is_not(empty()))
+    def test_terminal_coverage_operator_should_work(self):
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.terminal.chance = 1
+
+        rules_population = self.create_rules([])
+        assert_that(rules_population.terminal_rules, is_(empty()))
+        self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+        assert_that(len(rules_population.terminal_rules), is_(equal_to(6)))
+
+    def test_universal_coverage_operator_should_work(self):
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.universal.chance = 1
+
+        rules_population = self.create_rules([])
+        assert_that(rules_population.terminal_rules, is_(empty()))
+        self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+        d = rules_population.terminal_rules
+        assert_that([d[k] for k in d], only_contains(
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('fork'))},
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('she'))},
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('eats'))},
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('a'))},
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('fish'))},
+            {Symbol('U'): TerminalRule(Symbol('U'), Symbol('with'))}
+        ))

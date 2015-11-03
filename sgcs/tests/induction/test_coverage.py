@@ -7,7 +7,7 @@ from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageO
     StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
     CoverageOperator, CoverageType
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperatorsConfiguration
+    CoverageOperatorsConfiguration, InvalidCykConfigurationError
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment
@@ -102,6 +102,15 @@ class TestUniversalCoverageOperator(CoverageOperatorTestCommon):
         assert_that(result, is_(equal_to(Production(
             Detector(self.coordinates),
             TerminalRule(Symbol(hash('U')), Symbol(hash('a')))))))
+
+    def test_if_universal_symbol_unset_in_rule_population_error_should_be_raised(self):
+        type(self.rule_population_mock).universal_symbol = PropertyMock(Symbol, return_value=None)
+
+        assert_that(calling(self.sut.cover).with_args(
+            self.cyk_service_mock,
+            self.environment_mock,
+            self.rule_population_mock,
+            self.coordinates), raises(InvalidCykConfigurationError))
 
 
 class TestStartingCoverageOperator(CoverageOperatorTestCommon):

@@ -141,7 +141,8 @@ class CykTerminalCellExecutor(CykCellExecutor):
             # new_production = TerminalProduction(rule, (self.current_row,
             #                                            self.current_col))
             environment.add_production(production)
-        else:
+
+        if environment.has_no_productions(self.get_coordinates()):
             # If production_pool is empty, then perform some coverage
             self.cyk_service.coverage_operations.perform_coverage(
                 self.cyk_service,

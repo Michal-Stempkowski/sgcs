@@ -84,3 +84,11 @@ class CoverageOperatorConfiguration(object):
     @chance.setter
     def chance(self, value):
         self._chance = value
+
+
+class InvalidCykConfigurationError(Exception):
+    def __init__(self, error):
+        self.error = error
+
+    def __str__(self):
+        return repr(self.error)

@@ -84,3 +84,7 @@ class Environment(object):
     def get_unsatisfied_detectors(self, coordinates):
         production_pool = self.cyk_table[coordinates]
         return production_pool.get_unsatisfied_detectors()
+
+    def has_no_productions(self, coordinates):
+        production_pool = self.cyk_table[coordinates]
+        return production_pool.is_empty()

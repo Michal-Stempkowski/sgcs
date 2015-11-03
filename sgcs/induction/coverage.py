@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABCMeta
 from enum import Enum
+from sgcs.induction.cyk_configuration import InvalidCykConfigurationError
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
@@ -75,6 +76,12 @@ class UniversalCoverageOperator(CoverageOperator):
 
     def cover_impl(self, cyk_service, environment, rule_population, coordinates):
         child = environment.get_sentence_symbol(coordinates[1])
+
+        if rule_population.universal_symbol is None:
+            raise InvalidCykConfigurationError(
+                'Universal symbol coverage triggered;' +
+                ' yet universal_symbol unset in rule_population')
+
         return self.production(
             coordinates,
             TerminalRule(rule_population.universal_symbol, child))

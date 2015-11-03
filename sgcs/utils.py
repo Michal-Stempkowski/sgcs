@@ -7,3 +7,6 @@ class Randomizer(object):
 
     def choice(self, sequence):
         return self.generator.choice(sequence)
+
+    def randint(self, min_val, max_val):
+        return self.generator.randint(min_val, max_val)

@@ -62,4 +62,4 @@ class RulePopulation(object):
         return packed_rules.values() if packed_rules else []
 
     def get_random_non_terminal_symbol(self, randomizer):
-        return Symbol(randomizer.randint(self.max_non_terminal_symbols))
+        return Symbol(randomizer.randint(1, self.max_non_terminal_symbols))
