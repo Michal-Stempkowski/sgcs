@@ -238,6 +238,21 @@ class TestAggressiveCoverageOperator(CoverageOperatorTestCommon):
         self.environment_mock.get_detector_symbols.assert_called_once_with(
             selected_detector.coordinates)
 
+    def test_given_positive_sentence_but_no_valid_detector_coverage_should_not_occur(self):
+        # Given:
+        selected_detector = self.setup_system_for_successful_rule_selection()
+        self.environment_mock.get_unsatisfied_detectors.return_value = []
+
+        # When:
+        result = self.sut.cover(
+            self.cyk_service_mock,
+            self.environment_mock,
+            self.rule_population_mock,
+            selected_detector.coordinates)
+
+        # Then:
+        assert_that(result, is_(EmptyProduction(selected_detector)))
+
 
 class TestFullCoverageOperator(CoverageOperatorTestCommon):
     def __init__(self, *args, **kwargs):

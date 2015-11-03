@@ -241,3 +241,16 @@ class TestModule(TestCase):
         assert_that([d[k] for k in d], only_contains(
             {Symbol('S'): TerminalRule(Symbol('S'), Symbol('fork'))}
         ))
+
+    def test_aggressive_coverage_operator_should_work(self):
+        # Given:
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.terminal.chance = 1
+        self.cyk_configuration.coverage.operators.aggressive.chance = 1
+        rules_population = self.empty_rule_population
+
+        # When:
+        self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+
+        # Then:
+        assert_that(len(list(rules_population.rules_by_right.values())), is_(greater_than(0)))

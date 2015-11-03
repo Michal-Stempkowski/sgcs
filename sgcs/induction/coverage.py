@@ -114,7 +114,8 @@ class AggressiveCoverageOperator(CoverageOperator):
     @staticmethod
     def select_detector(cyk_service, environment, rule_population, coordinates):
         unsatisfied_detectors = environment.get_unsatisfied_detectors(coordinates)
-        return cyk_service.randomizer.choice(unsatisfied_detectors)
+        return cyk_service.randomizer.choice(unsatisfied_detectors) if unsatisfied_detectors \
+            else None
 
     def select_parent(self, cyk_service, rule_population):
         return rule_population.get_random_non_terminal_symbol(cyk_service.randomizer)
@@ -124,14 +125,15 @@ class AggressiveCoverageOperator(CoverageOperator):
             selected_detector = self.select_detector(
                 cyk_service, environment, rule_population, coordinates)
 
-            children = environment.get_detector_symbols(selected_detector.coordinates)
+            if selected_detector:
+                children = environment.get_detector_symbols(selected_detector.coordinates)
 
-            parent = self.select_parent(cyk_service, rule_population)
-            return Production(
-                selected_detector,
-                Rule(parent, *children))
-        else:
-            return self.empty_production(coordinates)
+                parent = self.select_parent(cyk_service, rule_population)
+                return Production(
+                    selected_detector,
+                    Rule(parent, *children))
+
+        return self.empty_production(coordinates)
 
     def get_chance(self, cyk_service):
         return cyk_service.configuration.coverage.operators.aggressive.chance
