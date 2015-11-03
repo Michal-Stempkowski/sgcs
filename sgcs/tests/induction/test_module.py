@@ -32,6 +32,8 @@ class TestModule(TestCase):
             Symbol('a'),
             Symbol('fork'))
 
+        self.empty_rule_population = self.create_rules([])
+
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration,
                               self.randomizer, self.coverage_operations)
@@ -47,6 +49,7 @@ class TestModule(TestCase):
         return rule_population
 
     def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
+        # Given:
         factory = Factory({
             CykTypeId.symbol_pair_executor: cyk_executors.CykSymbolPairExecutor,
             CykTypeId.parent_combination_executor: cyk_executors.CykParentCombinationExecutor,
@@ -63,7 +66,10 @@ class TestModule(TestCase):
         })
         self.create_sut(factory)
 
+        # When:
         cyk_result = self.sut.perform_cyk(rules_population, sentence)
+
+        # Then:
         assert_that(cyk_result.belongs_to_grammar, is_(equal_to(belongs_to_grammar)))
 
     def test_nok_scenario(self):
@@ -76,11 +82,10 @@ class TestModule(TestCase):
             Symbol(0),
             Symbol(0))
 
-        rules_population = self.create_rules([])
-
-        self.perform_cyk_scenario(sentence, rules_population, False)
+        self.perform_cyk_scenario(sentence, self.empty_rule_population, False)
 
     def test_ok_scenario(self):
+        # Given:
         sentence = self.create_sentence(
             Symbol('a'),
             Symbol('a'),
@@ -97,6 +102,7 @@ class TestModule(TestCase):
             TerminalRule(Symbol('A'), Symbol('a'))
         ])
 
+        # When/Then:
         self.perform_cyk_scenario(sentence, rules_population, True)
 
     def test_another_ok_scenario(self):
@@ -118,6 +124,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)
 
     def test_another_big_ok_scenario(self):
+        # Given:
         sentence = self.create_sentence(
             Symbol('1'),
             Symbol('0'),
@@ -147,6 +154,7 @@ class TestModule(TestCase):
             Rule(Symbol('Y**'), Symbol('Y*'), Symbol('Y*'))
         ])
 
+        # When/Then:
         self.perform_cyk_scenario(sentence, rules_population, True)
 
     def prepare_coverage_module(self):
@@ -184,21 +192,27 @@ class TestModule(TestCase):
         self.test_another_ok_scenario()
 
     def test_terminal_coverage_operator_should_work(self):
+        # Given:
         self.prepare_coverage_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
+        rules_population = self.empty_rule_population
 
-        rules_population = self.create_rules([])
-        assert_that(rules_population.terminal_rules, is_(empty()))
+        # When:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+
+        # Then:
         assert_that(len(rules_population.terminal_rules), is_(equal_to(6)))
 
     def test_universal_coverage_operator_should_work(self):
+        # Given:
         self.prepare_coverage_module()
         self.cyk_configuration.coverage.operators.universal.chance = 1
+        rules_population = self.empty_rule_population
 
-        rules_population = self.create_rules([])
-        assert_that(rules_population.terminal_rules, is_(empty()))
+        # When:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
+
+        # Then:
         d = rules_population.terminal_rules
         assert_that([d[k] for k in d], only_contains(
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('fork'))},
@@ -207,4 +221,23 @@ class TestModule(TestCase):
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('a'))},
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('fish'))},
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('with'))}
+        ))
+
+    def test_starting_coverage_operator_should_work(self):
+        # Given:
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.starting.chance = 1
+        sentence = Sentence(
+            [Symbol('fork')],
+            is_positive_sentence=True
+        )
+        rules_population = self.empty_rule_population
+
+        # When:
+        self.perform_cyk_scenario(sentence, rules_population, True)
+
+        # Then:
+        d = rules_population.terminal_rules
+        assert_that([d[k] for k in d], only_contains(
+            {Symbol('S'): TerminalRule(Symbol('S'), Symbol('fork'))}
         ))
