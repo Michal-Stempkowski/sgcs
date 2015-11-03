@@ -254,3 +254,14 @@ class TestModule(TestCase):
 
         # Then:
         assert_that(len(list(rules_population.rules_by_right.values())), is_(greater_than(0)))
+
+    def test_full_coverage_operator_should_work(self):
+        # Given:
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.terminal.chance = 1
+        self.cyk_configuration.coverage.operators.aggressive.chance = 1
+        self.cyk_configuration.coverage.operators.full.chance = 1
+        rules_population = self.empty_rule_population
+
+        # When:
+        self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)
