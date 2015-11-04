@@ -45,6 +45,7 @@ package induction {
     CykService : coverage_operations
     CykService : configuration
     CykService : randomizer
+    CykService : rule_adding_supervisor
     CykService : perform_cyk(self, rule_population, sentence)
     CykService ..> CykExecutors: creates (factory)
     CykService ..> Sentence: uses
@@ -191,6 +192,43 @@ package induction {
     TerminalRule --|> Rule
     TerminalRule : __init__(self, parent, child)
 
+    enum AddingRuleStrategyRecommendation {
+        expand_population
+        control_population_size
+    }
+
+    package RuleAdding {
+        '&begin_rule_adding
+
+        class AddingRuleStrategy
+        AddingRuleStrategy : is_applicable(self, strategy_recommendation)
+        AddingRuleStrategy : apply(self, rule, rule_population)
+        AddingRuleStrategy ..> RulePopulation: uses
+        AddingRuleStrategy ..> Rule: uses
+
+        class SimpleAddingRuleStrategy
+        SimpleAddingRuleStrategy --|> AddingRuleStrategy
+
+        class AddingRuleWithCrowdingStrategy
+        AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
+
+        class AddingRuleSupervisor
+        AddingRuleSupervisor : adding_rule_strategies
+        AddingRuleSupervisor : add_rule(self, rule, rule_population, strategy_recommendation=expand_population)
+        AddingRuleSupervisor ..* "1..*" AddingRuleStrategy
+        AddingRuleSupervisor ..> AddingRuleStrategyRecommendation: uses
+        AddingRuleSupervisor "1" *.. CykService
+
+        '&end_rule_adding
+    }
+
+    '&alt_rule_adding RuleAdding ..> RulePopulation: uses
+    '&alt_rule_adding RuleAdding ..> Rule: uses
+    '&alt_rule_adding RuleAdding ..> AddingRuleStrategyRecommendation: uses
+    '&alt_rule_adding RuleAdding "1" *.. CykService
+
+
+
     enum CoverageType {
         unknown_terminal_symbol
         no_effector_found
@@ -228,12 +266,14 @@ package induction {
 
         class CoverageOperations
         CoverageOperations : __init__(self)
+        CoverageOperations : operators
         CoverageOperations : perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates)
         CoverageOperations "0" --* "*" CoverageOperator
         CoverageOperations ..> Environment: uses
         CoverageOperations ..> RulePopulation: uses
         CoverageOperations --> Rule: creates
         CoverageOperations ..> CykService: uses
+        CoverageOperations "1" *.. CykService
         '&end_coverage
     }
 
@@ -241,6 +281,7 @@ package induction {
     '&alt_coverage Coverage ..> RulePopulation: uses
     '&alt_coverage Coverage --> Rule: creates
     '&alt_coverage Coverage ..> CykService: uses
+    '&alt_coverage Coverage "1" *.. CykService
 }
 
 package datalayer {
