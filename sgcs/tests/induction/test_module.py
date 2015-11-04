@@ -263,5 +263,5 @@ class TestModule(TestCase):
         self.cyk_configuration.coverage.operators.full.chance = 1
         rules_population = self.empty_rule_population
 
-        # When:
+        # When/Then:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)

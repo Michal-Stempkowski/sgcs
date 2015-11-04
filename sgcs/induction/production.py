@@ -6,9 +6,6 @@ class Production(object):
     def is_empty(self):
         return self.rule is None
 
-    def is_terminal(self):
-        return self.detector is None
-
     def get_coordinates(self):
         return self.detector.coordinates
 
