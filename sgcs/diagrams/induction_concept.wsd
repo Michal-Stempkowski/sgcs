@@ -3,7 +3,6 @@ package induction {
 
     Detector ..> RulePopulation: uses
     Detector "1" --> "[1;*]" Production: creates
-    Detector ..> Environment: uses
     Detector : __init__(self, coordinates)
     Detector : generate_production(self, environment, rule_population): list<Production>
     Detector : coordinates: tuple
@@ -48,7 +47,6 @@ package induction {
     CykService : rule_adding_supervisor
     CykService : perform_cyk(self, rule_population, sentence)
     CykService ..> CykExecutors: creates (factory)
-    CykService ..> Sentence: uses
     CykService ..> CykResult: uses
     CykService ..> Environment: creates (factory)
     CykService --* "1" CykTypeId
@@ -57,14 +55,11 @@ package induction {
     '&begin_cyk_executors
 
         CykExecutor --* "1" CykTypeId
-        CykExecutor ..> CykService: uses
         CykExecutor : __init__(self, child_level, cyk_service)
         CykExecutor : create_child_executor(self, *args)
 
         CykSymbolPairExecutor --|> CykExecutor
         CykSymbolPairExecutor --> Detector: creates
-        CykSymbolPairExecutor ..> RulePopulation: uses
-        CykSymbolPairExecutor ..> Environment: uses
         CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
         CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, cyk_service)
         CykSymbolPairExecutor : execute(self, environment, rule_population)
@@ -72,8 +67,6 @@ package induction {
         CykSymbolPairExecutor : parent_executor
 
         CykParentCombinationExecutor --|> CykExecutor
-        CykParentCombinationExecutor ..> RulePopulation: uses
-        CykParentCombinationExecutor ..> Environment: uses
         CykParentCombinationExecutor : __init__(self, cell_executor, shift, cyk_service)
         CykParentCombinationExecutor : parent_executor
         CykParentCombinationExecutor : current_row
@@ -83,9 +76,6 @@ package induction {
         CykParentCombinationExecutor : get_coordinates(self)
 
         CykCellExecutor --|> CykExecutor
-        CykCellExecutor ..> CykService: uses
-        CykCellExecutor ..> RulePopulation: uses
-        CykCellExecutor ..> Environment: uses
         CykCellExecutor <..> CykParentCombinationExecutor: uses
         CykCellExecutor : __init__(self, row_executor, column, cyk_service)
         CykCellExecutor : parent_executor
@@ -94,8 +84,6 @@ package induction {
         CykCellExecutor : execute(self, environment, rule_population)
 
         CykRowExecutor --|> CykExecutor
-        CykRowExecutor ..> RulePopulation: uses
-        CykRowExecutor ..> Environment: uses
         CykRowExecutor <..> CykCellExecutor
         CykRowExecutor : __init__(self, table_executor, row, cyk_service)
         CykRowExecutor : parent_executor
@@ -103,9 +91,6 @@ package induction {
         CykRowExecutor : execute(self, environment, rule_population)
 
         CykTableExecutor --|> CykExecutor
-        CykTableExecutor <..> CykService: uses
-        CykTableExecutor ..> RulePopulation: uses
-        CykTableExecutor ..> Environment: uses
         CykTableExecutor <..> CykRowExecutor: uses
         CykTableExecutor : __init__(self, cyk_service)
         CykTableExecutor : execute(self, environment, rule_population)
@@ -113,16 +98,11 @@ package induction {
         CykTableExecutor <..> CykFirstRowExecutor: uses
 
         CykFirstRowExecutor --|> CykRowExecutor
-        CykFirstRowExecutor ..> RulePopulation: uses
-        CykFirstRowExecutor ..> Environment: uses
         CykFirstRowExecutor : __init__(self, table_executor, row, cyk_service)
         CykFirstRowExecutor : execute(self, environment, rule_population)
         CykFirstRowExecutor <..> CykTerminalCellExecutor
 
         CykTerminalCellExecutor --|> CykCellExecutor
-        CykTerminalCellExecutor ..> CykService: uses
-        CykTerminalCellExecutor ..> RulePopulation: uses
-        CykTerminalCellExecutor ..> Environment: uses
         CykTerminalCellExecutor : __init__(self, row_executor, column, cyk_service)
         CykTerminalCellExecutor : execute(self, environment, rule_population)
         CykTerminalCellExecutor --> Detector: creates
@@ -133,10 +113,10 @@ package induction {
     class CykResult
     CykResult : belongs_to_grammar
 
-    '&alt_cyk_executors CykExecutors ..> Environment: uses
-    '&alt_cyk_executors CykExecutors ..> CykService: uses
-    '&alt_cyk_executors CykExecutors ..> Production: uses
-    '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
+    CykExecutors ..> Environment: uses
+    CykExecutors ..> CykService: uses
+    CykExecutors ..> Production: uses
+    CykExecutors ..> RulePopulation: uses
     '&alt_cyk_executors CykExecutors --> CykResult: creates
     '&alt_cyk_executors CykExecutors --* "1" CykTypeId
     '&alt_cyk_executors CykExecutors --> Detector: creates
@@ -245,8 +225,6 @@ package induction {
         CoverageOperator : cover(self, cyk_service, environment, rule_population, coordinates)
         CoverageOperator : cover_impl(self, cyk_service, environment, rule_population, coordinates)
         CoverageOperator : get_chance(self, cyk_service)
-        CoverageOperator ..> Environment: uses
-        CoverageOperator ..> RulePopulation: uses
         CoverageOperator --> CoverageType: uses
 
         class TerminalCoverageOperator
@@ -269,8 +247,6 @@ package induction {
         CoverageOperations : operators
         CoverageOperations : perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates)
         CoverageOperations "0" --* "*" CoverageOperator
-        CoverageOperations ..> Environment: uses
-        CoverageOperations ..> RulePopulation: uses
         CoverageOperations --> Rule: creates
         CoverageOperations ..> CykService: uses
         CoverageOperations "1" *.. CykService

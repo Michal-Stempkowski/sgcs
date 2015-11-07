@@ -253,7 +253,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
 
         # Then:
-        assert_that(len(list(rules_population.rules_by_right.values())), is_(greater_than(0)))
+        assert_that(len(list(rules_population.rules_by_right.values())), is_(greater_than(6)))
 
     def test_full_coverage_operator_should_work(self):
         # Given:
