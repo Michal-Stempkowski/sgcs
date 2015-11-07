@@ -94,4 +94,4 @@ class TestPasiekaFitness(unittest.TestCase):
         left_side_info.left_side_usage = 5
 
         self.statistics_mock.get_rule_statistics.return_value = rule_info, left_side_info
-        assert_that(self.sut.calculate_value(self.cyk_service_mock, self.rule), is_(equal_to(0.8)))
+        assert_that(self.sut.calculate(self.cyk_service_mock, self.rule), is_(equal_to(4)))

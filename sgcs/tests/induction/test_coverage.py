@@ -422,3 +422,4 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
 
         self.rule_population_mock.add_rule.assert_called_once_with(expected_rule)
         self.environment_mock.add_production.assert_called_once_with(expected_production)
+        self.cyk_service_mock.statistics.on_added_new_rule.assert_called_once_with(expected_rule)

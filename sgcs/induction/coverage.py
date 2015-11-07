@@ -22,6 +22,7 @@ class CoverageOperations(object):
                 production = operator.cover(cyk_service, environment, rule_population, coordinates)
                 if not production.is_empty():
                     rule_population.add_rule(production.rule)
+                    cyk_service.statistics.on_added_new_rule(production.rule)
                     environment.add_production(production)
 
 

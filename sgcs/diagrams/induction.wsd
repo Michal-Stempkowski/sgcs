@@ -227,10 +227,12 @@ package induction {
     '&alt_rule_adding RuleAdding ..> AddingRuleStrategyHint: uses
     '&alt_rule_adding RuleAdding "1" *.. CykService
 
-    class Fitness
-
     package CykStatistics {
         '&begin_cyk_statistics
+
+        class PasiekaFitnessOperator
+        PasiekaFitnessOperator : get_current_value(self, cyk_service, rule)
+        PasiekaFitnessOperator : calculate_new_value(self, cyk_service, rule)
 
         class CykStatistics
         CykStatistics : get_rule_statistics(self, rule)
@@ -238,10 +240,10 @@ package induction {
         CykStatistics : on_rule_usage(self, rule)
 
         class RuleInfo
-        RuleInfo <-- Fitness: uses
+        RuleInfo <-- PasiekaFitnessOperator: uses
 
         class LeftSideInfo
-        LeftSideInfo <-- Fitness: uses
+        LeftSideInfo <-- PasiekaFitnessOperator: uses
 
         class RuleStatistics
         RuleStatistics : added_new_rule(self, rule)
@@ -254,9 +256,6 @@ package induction {
 
         '&end_cyk_statistics
     }
-
-    Fitness : calculate_value(self, cyk_service, rule)
-    '&alt_cyk_statistics Fitness --> CykStatistics: uses
 
 
 

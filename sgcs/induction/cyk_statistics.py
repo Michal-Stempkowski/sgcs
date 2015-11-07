@@ -1,3 +1,6 @@
+from abc import ABCMeta, abstractmethod
+
+
 class RuleInfo(object):
     def __init__(self):
         self.rule_usage = 0
@@ -54,6 +57,6 @@ class CykStatistics(DummyCykStatistics):
 
 
 class PasiekaFitness(object):
-    def calculate_value(self, cyk_service, rule):
-        rule_info, left_side_info = cyk_service.statistics.get_rule_statistics(rule)
-        return rule_info.rule_usage / left_side_info.left_side_usage
+    def calculate(self, cyk_service, rule):
+        rule_info, _ = cyk_service.statistics.get_rule_statistics(rule)
+        return rule_info.rule_usage
