@@ -227,6 +227,37 @@ package induction {
     '&alt_rule_adding RuleAdding ..> AddingRuleStrategyHint: uses
     '&alt_rule_adding RuleAdding "1" *.. CykService
 
+    class Fitness
+
+    package CykStatistics {
+        '&begin_cyk_statistics
+
+        class CykStatistics
+        CykStatistics : get_rule_statistics(self, rule)
+        CykStatistics : on_added_new_rule(self, rule)
+        CykStatistics : on_rule_usage(self, rule)
+
+        class RuleInfo
+        RuleInfo <-- Fitness: uses
+
+        class LeftSideInfo
+        LeftSideInfo <-- Fitness: uses
+
+        class RuleStatistics
+        RuleStatistics : added_new_rule(self, rule)
+        RuleStatistics : rule_used(self, rule)
+        RuleStatistics : get_rule_statistics(self, rule)
+        RuleStatistics "0..1" o-- "1" CykStatistics
+        RuleStatistics --> RuleInfo: creates
+        RuleStatistics --> LeftSideInfo: creates
+
+
+        '&end_cyk_statistics
+    }
+
+    Fitness : calculate_value(self, cyk_service, rule)
+    '&alt_cyk_statistics Fitness --> CykStatistics: uses
+
 
 
     enum CoverageType {

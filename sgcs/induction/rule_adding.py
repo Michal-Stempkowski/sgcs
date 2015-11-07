@@ -21,3 +21,12 @@ class SimpleAddingRuleStrategy(AddingRuleStrategy):
 
     def apply(self, rule, rule_population):
         rule_population.add_rule(rule)
+
+
+class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
+    def __init__(self):
+        super().__init__()
+        self.hints.append(AddingRuleStrategyHint.control_population_size)
+
+    def apply(self, rule, rule_population):
+        rule_population.add_rule(rule)
