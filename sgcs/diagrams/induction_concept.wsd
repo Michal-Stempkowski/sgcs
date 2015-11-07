@@ -172,7 +172,7 @@ package induction {
     TerminalRule --|> Rule
     TerminalRule : __init__(self, parent, child)
 
-    enum AddingRuleStrategyRecommendation {
+    enum AddingRuleStrategyHint {
         expand_population
         control_population_size
     }
@@ -181,7 +181,7 @@ package induction {
         '&begin_rule_adding
 
         class AddingRuleStrategy
-        AddingRuleStrategy : is_applicable(self, strategy_recommendation)
+        AddingRuleStrategy : is_applicable(self, strategy_hint)
         AddingRuleStrategy : apply(self, rule, rule_population)
         AddingRuleStrategy ..> RulePopulation: uses
         AddingRuleStrategy ..> Rule: uses
@@ -194,9 +194,9 @@ package induction {
 
         class AddingRuleSupervisor
         AddingRuleSupervisor : adding_rule_strategies
-        AddingRuleSupervisor : add_rule(self, rule, rule_population, strategy_recommendation=expand_population)
+        AddingRuleSupervisor : add_rule(self, rule, rule_population, strategy_hint=expand_population)
         AddingRuleSupervisor ..* "1..*" AddingRuleStrategy
-        AddingRuleSupervisor ..> AddingRuleStrategyRecommendation: uses
+        AddingRuleSupervisor ..> AddingRuleStrategyHint: uses
         AddingRuleSupervisor "1" *.. CykService
 
         '&end_rule_adding
@@ -204,7 +204,7 @@ package induction {
 
     '&alt_rule_adding RuleAdding ..> RulePopulation: uses
     '&alt_rule_adding RuleAdding ..> Rule: uses
-    '&alt_rule_adding RuleAdding ..> AddingRuleStrategyRecommendation: uses
+    '&alt_rule_adding RuleAdding ..> AddingRuleStrategyHint: uses
     '&alt_rule_adding RuleAdding "1" *.. CykService
 
 
