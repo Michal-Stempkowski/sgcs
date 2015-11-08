@@ -8,7 +8,7 @@ from sgcs.induction.cyk_service import CykService
 from sgcs.induction.cyk_statistics import PasiekaFitness, CykStatistics
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
-    AddingRuleWithCrowdingStrategy
+    AddingRuleWithCrowdingStrategy, AddingRuleSupervisor, AddingRuleStrategy
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
 
@@ -70,15 +70,15 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
 
     def fitness_get_keyfunc_dummy(self, _):
         return lambda r: 0 \
-            if r.parent == Symbol(hash('A')) and r.left_child == Symbol(hash('G')) \
-            else abs(r.left_child.symbol_id)
+            if r == self.mk_rule('A', 'G', 'C') \
+            else 1000
 
     def test_should_be_able_to_apply_strategy_for_terminal_production(self):
         # Given:
         rule_to_be_replaced = self.mk_rule('A', 'G', 'C')
         self.rule_population_mock.get_random_rules.side_effect = [
-            [rule_to_be_replaced, self.mk_rule('T', 'B', 'C'), self.mk_rule('A', 'E', 'C')],
-            [self.mk_rule('A', 'W', 'C'), self.mk_rule('T', 'B', 'W'), self.mk_rule('A', 'W', 'C')]
+            [rule_to_be_replaced, self.mk_rule('T', 'E', 'C'), self.mk_rule('A', 'E', 'W')],
+            [self.mk_rule('A', 'W', 'H'), self.mk_rule('T', 'B', 'W'), self.mk_rule('G', 'W', 'C')]
         ]
         self.fitness_mock.get_keyfunc.side_effect = self.fitness_get_keyfunc_dummy
 
@@ -91,3 +91,29 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
         self.cyk_service_mock.statistics.on_rule_removed.\
             assert_called_once_with(rule_to_be_replaced)
         self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+
+
+class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.expanding_strategy_mock = create_autospec(AddingRuleStrategy)
+        self.expanding_strategy_mock.is_applicable.side_effect = \
+            lambda x: x == AddingRuleStrategyHint.expand_population
+
+        self.controlling_strategy_mock = create_autospec(AddingRuleStrategy)
+        self.controlling_strategy_mock.is_applicable.side_effect = \
+            lambda x: x == AddingRuleStrategyHint.control_population_size
+
+        self.sut = AddingRuleSupervisor()
+        self.sut.strategies = [self.expanding_strategy_mock, self.controlling_strategy_mock]
+
+    def test_valid_rule_strategies_should_be_used(self):
+        self.sut.add_rule(self.rule, self.rule_population_mock, self.cyk_service_mock)
+        self.expanding_strategy_mock.apply.assert_called_once_with(
+            self.cyk_service_mock, self.rule, self.rule_population_mock)
+
+        self.sut.add_rule(self.rule, self.rule_population_mock, self.cyk_service_mock,
+                          AddingRuleStrategyHint.control_population_size)
+        self.controlling_strategy_mock.apply.assert_called_once_with(
+            self.cyk_service_mock, self.rule, self.rule_population_mock)

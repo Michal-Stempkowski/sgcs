@@ -3,6 +3,7 @@ from sgcs.factory import Factory
 from sgcs.induction.coverage import CoverageOperations
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness
+from sgcs.induction.rule_adding import AddingRuleSupervisor
 
 
 class CykService(object):
@@ -16,6 +17,7 @@ class CykService(object):
             if coverage_operations else CoverageOperations()
         self._statistics = statistics if statistics else DummyCykStatistics()
         self._fitness = fitness if fitness else PasiekaFitness()
+        self._rule_adding = AddingRuleSupervisor()
 
     def perform_cyk(self, rules_population, sentence):
         environment = self.factory.create(CykTypeId.environment, sentence, self.factory)

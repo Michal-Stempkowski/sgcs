@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from enum import Enum
 
 
@@ -6,9 +7,13 @@ class AddingRuleStrategyHint(Enum):
     control_population_size = 1
 
 
-class AddingRuleStrategy(object):
+class AddingRuleStrategy(object, metaclass=ABCMeta):
     def __init__(self):
         self.hints = []
+
+    @abstractmethod
+    def apply(self, cyk_service, rule, rule_population):
+        pass
 
     def is_applicable(self, strategy_hint):
         return strategy_hint in self.hints
@@ -53,3 +58,15 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
 
         most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
         self.replace_rule(most_related_rule, rule, rule_population, cyk_service)
+
+
+class AddingRuleSupervisor(object):
+    def __init__(self):
+        self.strategies = []
+
+    def add_rule(self, rule, rule_population, cyk_service,
+                 strategy_hint=AddingRuleStrategyHint.expand_population):
+        strategy_to_be_used = next(filter(
+            lambda strategy: strategy.is_applicable(strategy_hint), self.strategies))
+
+        strategy_to_be_used.apply(cyk_service, rule, rule_population)

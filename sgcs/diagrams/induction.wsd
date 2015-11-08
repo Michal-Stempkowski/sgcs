@@ -219,7 +219,7 @@ package induction {
 
         class AddingRuleSupervisor
         AddingRuleSupervisor : adding_rule_strategies
-        AddingRuleSupervisor : add_rule(self, rule, rule_population, strategy_hint=expand_population)
+        AddingRuleSupervisor : add_rule(self, rule, rule_population, cyk_service, strategy_hint=expand_population)
         AddingRuleSupervisor ..* "1..*" AddingRuleStrategy
         AddingRuleSupervisor ..> AddingRuleStrategyHint: uses
         AddingRuleSupervisor "1" *.. CykService
