@@ -45,7 +45,8 @@ package induction {
     CykService : coverage_operations
     CykService : configuration
     CykService : randomizer
-    CykService : rule_adding_supervisor
+    CykService : rule_adding
+    CykService : fitness
     CykService : perform_cyk(self, rule_population, sentence)
     CykService ..> CykExecutors: creates (factory)
     CykService ..> Sentence: uses
@@ -284,7 +285,8 @@ package induction {
         class CoverageOperator
         CoverageOperator : chance
         CoverageOperator : coverage_type
-        CoverageOperator : __init__(self, coverage_type)
+        CoverageOperator : adding_rule_strategy_type
+        CoverageOperator : __init__(self, coverage_type, adding_rule_strategy_type=expand_population)
         CoverageOperator : cover(self, cyk_service, environment, rule_population, coordinates)
         CoverageOperator : cover_impl(self, cyk_service, environment, rule_population, coordinates)
         CoverageOperator : get_chance(self, cyk_service)

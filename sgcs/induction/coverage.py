@@ -4,6 +4,7 @@ from sgcs.induction.cyk_configuration import InvalidCykConfigurationError
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
+from sgcs.induction.rule_adding import AddingRuleStrategyHint
 
 
 class CoverageType(Enum):
@@ -21,8 +22,10 @@ class CoverageOperations(object):
             if operator.coverage_type == coverage_type:
                 production = operator.cover(cyk_service, environment, rule_population, coordinates)
                 if not production.is_empty():
-                    rule_population.add_rule(production.rule)
-                    cyk_service.statistics.on_added_new_rule(production.rule)
+                    # rule_population.add_rule(production.rule)
+                    # cyk_service.statistics.on_added_new_rule(production.rule)
+                    cyk_service.rule_adding.add_rule(production.rule, rule_population, cyk_service,
+                                                     operator.adding_rule_strategy_type)
                     environment.add_production(production)
 
 
@@ -35,12 +38,18 @@ class CoverageOperator(object, metaclass=ABCMeta):
     def production(coordinates, rule):
         return Production(Detector(coordinates), rule)
 
-    def __init__(self, coverage_type):
+    def __init__(self, coverage_type,
+                 adding_rule_strategy_type=AddingRuleStrategyHint.expand_population):
         self._coverage_type = coverage_type
+        self._adding_rule_strategy_type = adding_rule_strategy_type
 
     @property
     def coverage_type(self):
         return self._coverage_type
+
+    @property
+    def adding_rule_strategy_type(self):
+        return self._adding_rule_strategy_type
 
     def cover(self, cyk_service, environment, rule_population, coordinates):
         if cyk_service.randomizer.perform_with_chance(self.get_chance(cyk_service)):
@@ -93,7 +102,8 @@ class UniversalCoverageOperator(CoverageOperator):
 
 class StartingCoverageOperator(CoverageOperator):
     def __init__(self):
-        super().__init__(CoverageType.no_starting_symbol)
+        super().__init__(CoverageType.no_starting_symbol,
+                         AddingRuleStrategyHint.control_population_size)
 
     def cover_impl(self, cyk_service, environment, rule_population, coordinates):
         if environment.get_sentence_length() == 1 and environment.is_sentence_positive():
@@ -110,7 +120,8 @@ class StartingCoverageOperator(CoverageOperator):
 
 class AggressiveCoverageOperator(CoverageOperator):
     def __init__(self):
-        super().__init__(CoverageType.no_effector_found)
+        super().__init__(CoverageType.no_effector_found,
+                         AddingRuleStrategyHint.control_population_size)
 
     @staticmethod
     def _select_detector(cyk_service, environment, rule_population, coordinates):

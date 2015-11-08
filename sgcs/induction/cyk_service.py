@@ -43,3 +43,15 @@ class CykService(object):
     @property
     def statistics(self):
         return self._statistics
+
+    @property
+    def rule_adding(self):
+        return self._rule_adding
+
+    @property
+    def fitness(self):
+        return self._fitness
+
+    @fitness.setter
+    def fitness(self, value):
+        self._fitness = value

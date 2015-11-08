@@ -7,10 +7,13 @@ from sgcs.induction import cyk_executors, production, environment
 from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
     AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperatorsConfiguration, CoverageOperatorConfiguration
+    CoverageOperatorsConfiguration, CoverageOperatorConfiguration, AddingRulesConfiguration, \
+    CrowdingConfiguration
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
+from sgcs.induction.cyk_statistics import RuleStatistics, CykStatistics
 from sgcs.induction.rule import Rule, TerminalRule
+from sgcs.induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol, Sentence
 from sgcs.utils import Randomizer
@@ -22,6 +25,7 @@ class TestModule(TestCase):
         self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
         self.coverage_operations = CoverageOperations()
+        self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -33,10 +37,18 @@ class TestModule(TestCase):
             Symbol('fork'))
 
         self.empty_rule_population = self.create_rules([])
+        self.example_rule_population = self.create_rules([
+            Rule(Symbol('S'), Symbol('A'), Symbol('B')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('C')),
+            Rule(Symbol('C'), Symbol('S'), Symbol('B')),
+            Rule(Symbol('B'), Symbol('B'), Symbol('B'))
+        ])
 
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration,
-                              self.randomizer, self.coverage_operations)
+                              self.randomizer, self.coverage_operations,
+                              statistics=CykStatistics(RuleStatistics()))
+        self.sut.rule_adding.strategies = self.rule_adding_strategies
 
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):
         return Sentence(sentence_seq, is_positive_sentence)
@@ -65,6 +77,9 @@ class TestModule(TestCase):
             CykTypeId.terminal_cell_executor: cyk_executors.CykTerminalCellExecutor
         })
         self.create_sut(factory)
+
+        for rule in rules_population.all_non_terminal_rules:
+            self.sut.statistics.on_added_new_rule(rule)
 
         # When:
         cyk_result = self.sut.perform_cyk(rules_population, sentence)
@@ -181,6 +196,14 @@ class TestModule(TestCase):
         self.cyk_configuration.coverage.operators.starting = starting_configuration
         self.cyk_configuration.coverage.operators.full = full_configuration
 
+        self.prepare_rule_adding_module()
+
+    def prepare_rule_adding_module(self):
+        self.cyk_configuration.rule_adding = AddingRulesConfiguration()
+        self.cyk_configuration.rule_adding.crowding = CrowdingConfiguration()
+        self.cyk_configuration.rule_adding.crowding.factor = 2
+        self.cyk_configuration.rule_adding.crowding.size = 3
+
     def default_coverage_operator_configuration(self):
         configuration = CoverageOperatorConfiguration()
         configuration.chance = 0
@@ -231,7 +254,7 @@ class TestModule(TestCase):
             [Symbol('fork')],
             is_positive_sentence=True
         )
-        rules_population = self.empty_rule_population
+        rules_population = self.example_rule_population
 
         # When:
         self.perform_cyk_scenario(sentence, rules_population, True)
@@ -247,13 +270,19 @@ class TestModule(TestCase):
         self.prepare_coverage_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.aggressive.chance = 1
-        rules_population = self.empty_rule_population
+        rules_population = self.example_rule_population
+        old_rules = list(rules_population.all_non_terminal_rules.copy())
 
         # When:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
 
         # Then:
-        assert_that(len(list(rules_population.rules_by_right.values())), is_(greater_than(6)))
+        assert_that(rules_population.all_non_terminal_rules, has_length(4))
+
+        d = rules_population.terminal_rules
+        assert_that([d[k] for k in d], has_length(6))
+        assert_that(list(rules_population.all_non_terminal_rules),
+                    is_not(contains_inanyorder(*old_rules)))
 
     def test_full_coverage_operator_should_work(self):
         # Given:
@@ -261,7 +290,7 @@ class TestModule(TestCase):
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.aggressive.chance = 1
         self.cyk_configuration.coverage.operators.full.chance = 1
-        rules_population = self.empty_rule_population
+        rules_population = self.example_rule_population
 
         # When/Then:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)

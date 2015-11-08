@@ -26,6 +26,7 @@ class SimpleAddingRuleStrategy(AddingRuleStrategy):
 
     def apply(self, cyk_service, rule, rule_population):
         rule_population.add_rule(rule)
+        cyk_service.statistics.on_added_new_rule(rule)
 
 
 class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
@@ -35,10 +36,14 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
 
     @staticmethod
     def rule_affinity(left, right):
-        return \
-            (1 if left.parent == right.parent else 0) + \
-            (1 if left.left_child == right.left_child else 0) + \
-            (1 if left.right_child == right.right_child else 0)
+        if left.is_terminal_rule() and right.is_terminal_rule() or \
+                not (left.is_terminal_rule() or right.is_terminal_rule()):
+            return \
+                (1 if left and right and left.parent == right.parent else 0) + \
+                (1 if left and right and left.left_child == right.left_child else 0) + \
+                (1 if left and right and left.right_child == right.right_child else 0)
+        else:
+            return -1
 
     @staticmethod
     def replace_rule(old, new, rule_population, cyk_service):
@@ -46,12 +51,15 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
         cyk_service.statistics.on_rule_removed(old)
 
         rule_population.add_rule(new)
+        cyk_service.statistics.on_added_new_rule(new)
 
     def apply(self, cyk_service, rule, rule_population):
         weak_rules = set()
         for _ in range(cyk_service.configuration.rule_adding.crowding.factor):
             subpopulation = rule_population.get_random_rules(
                 cyk_service.randomizer, False, cyk_service.configuration.rule_adding.crowding.size)
+
+            cyk_service.randomizer.shuffle(subpopulation)
 
             worst_rule = min(subpopulation, key=cyk_service.fitness.get_keyfunc(cyk_service))
             weak_rules.add(worst_rule)

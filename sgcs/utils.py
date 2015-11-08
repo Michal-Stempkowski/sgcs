@@ -13,3 +13,6 @@ class Randomizer(object):
 
     def sample(self, sequence, size):
         return self.generator.sample(sequence, size)
+
+    def shuffle(self, sequence):
+        return self.generator.shuffle(sequence)

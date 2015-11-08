@@ -13,6 +13,7 @@ from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
+from sgcs.induction.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
 from sgcs.utils import Randomizer
@@ -22,7 +23,10 @@ class CoverageOperatorTestCommon(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.adding_rule_supervisor_mock = create_autospec(AddingRuleSupervisor)
+
         self.cyk_service_mock = create_autospec(CykService)
+        self.cyk_service_mock.configure_mock(rule_adding=self.adding_rule_supervisor_mock)
 
         self.cyk_configuration_mock = create_autospec(CykConfiguration)
 
@@ -322,21 +326,28 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
         self.create_operators_mock()
         self.sut.operators = self.all_operators
 
-    def create_operator_mock(self, coverage_type):
+    def create_operator_mock(self, coverage_type, adding_strategy):
         operator_mock = create_autospec(CoverageOperator)
-        operator_mock.configure_mock(coverage_type=coverage_type)
+        operator_mock.configure_mock(
+            coverage_type=coverage_type, adding_rule_strategy_type=adding_strategy)
         operator_mock.cover.return_value = EmptyProduction(Detector(self.coordinates))
         return operator_mock
 
     def create_operators_mock(self):
-        self.terminal_operator_1 = self.create_operator_mock(CoverageType.unknown_terminal_symbol)
-        self.terminal_operator_2 = self.create_operator_mock(CoverageType.unknown_terminal_symbol)
+        self.terminal_operator_1 = self.create_operator_mock(
+            CoverageType.unknown_terminal_symbol, AddingRuleStrategyHint.expand_population)
+        self.terminal_operator_2 = self.create_operator_mock(
+            CoverageType.unknown_terminal_symbol, AddingRuleStrategyHint.expand_population)
 
-        self.effector_operator_1 = self.create_operator_mock(CoverageType.no_effector_found)
-        self.effector_operator_2 = self.create_operator_mock(CoverageType.no_effector_found)
+        self.effector_operator_1 = self.create_operator_mock(
+            CoverageType.no_effector_found, AddingRuleStrategyHint.expand_population)
+        self.effector_operator_2 = self.create_operator_mock(
+            CoverageType.no_effector_found, AddingRuleStrategyHint.expand_population)
 
-        self.starting_operator_1 = self.create_operator_mock(CoverageType.no_starting_symbol)
-        self.starting_operator_2 = self.create_operator_mock(CoverageType.no_starting_symbol)
+        self.starting_operator_1 = self.create_operator_mock(
+            CoverageType.no_starting_symbol, AddingRuleStrategyHint.control_population_size)
+        self.starting_operator_2 = self.create_operator_mock(
+            CoverageType.no_starting_symbol, AddingRuleStrategyHint.control_population_size)
 
         self.terminal_operators = [self.terminal_operator_1, self.terminal_operator_2]
         self.effector_operators = [self.effector_operator_1, self.effector_operator_2]
@@ -420,6 +431,7 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
             self.rule_population_mock,
             self.coordinates)
 
-        self.rule_population_mock.add_rule.assert_called_once_with(expected_rule)
+        self.adding_rule_supervisor_mock.add_rule.assert_called_once_with(
+            expected_rule, self.rule_population_mock, self.cyk_service_mock,
+            AddingRuleStrategyHint.expand_population)
         self.environment_mock.add_production.assert_called_once_with(expected_production)
-        self.cyk_service_mock.statistics.on_added_new_rule.assert_called_once_with(expected_rule)

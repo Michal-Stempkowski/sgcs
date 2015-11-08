@@ -55,6 +55,8 @@ class TestSimpleAddingRuleStrategy(TestAddingRuleStrategyCommon):
     def test_should_be_able_to_apply_strategy(self):
         self.sut.apply(self.cyk_service_mock, self.rule, self.rule_population_mock)
         self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.cyk_service_mock.statistics.on_added_new_rule.\
+            assert_called_once_with(self.rule)
 
 
 class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
@@ -91,6 +93,8 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
         self.cyk_service_mock.statistics.on_rule_removed.\
             assert_called_once_with(rule_to_be_replaced)
         self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.cyk_service_mock.statistics.on_added_new_rule.\
+            assert_called_once_with(self.rule)
 
 
 class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
