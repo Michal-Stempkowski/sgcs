@@ -1,10 +1,11 @@
 from abc import abstractmethod, ABCMeta
 from enum import Enum
+
+from sgcs.induction.coverage.rule_adding import AddingRuleStrategyHint
 from sgcs.induction.cyk_configuration import InvalidCykConfigurationError
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
-from sgcs.induction.rule_adding import AddingRuleStrategyHint
 
 
 class CoverageType(Enum):

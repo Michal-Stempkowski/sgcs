@@ -1,19 +1,19 @@
-from enum import Enum
-from random import shuffle
 import unittest
-from unittest.mock import MagicMock, create_autospec, PropertyMock
+from random import shuffle
+from unittest.mock import create_autospec, PropertyMock
+
 from hamcrest import *
-from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
+
+from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
     CoverageOperator, CoverageType
-from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperatorsConfiguration, InvalidCykConfigurationError
+from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
+from sgcs.induction.cyk_configuration import CykConfiguration, InvalidCykConfigurationError
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment
 from sgcs.induction.production import Production, EmptyProduction
 from sgcs.induction.rule import TerminalRule, Rule
-from sgcs.induction.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
 from sgcs.utils import Randomizer

@@ -1,11 +1,13 @@
 from random import Random
 from unittest import TestCase
-from unittest.mock import create_autospec
+
 from hamcrest import *
+
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
-from sgcs.induction.coverage import TerminalCoverageOperator, UniversalCoverageOperator, \
+from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
+from sgcs.induction.coverage.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperatorsConfiguration, CoverageOperatorConfiguration, AddingRulesConfiguration, \
     CrowdingConfiguration
@@ -13,7 +15,6 @@ from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.cyk_statistics import RuleStatistics, CykStatistics
 from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol, Sentence
 from sgcs.utils import Randomizer

@@ -119,7 +119,6 @@ def get_filters():
     h1 = AndFilter('h1',
                    ZoomOutFilter('cyk_executors', 'cyk_executors'),
                    ZoomOutFilter('coverage', 'coverage'),
-                   ZoomOutFilter('rule_adding', 'rule_adding'),
                    ZoomOutFilter('cyk_statistics', 'cyk_statistics'))
 
     return [

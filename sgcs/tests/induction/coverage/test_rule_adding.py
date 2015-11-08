@@ -1,14 +1,15 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec, PropertyMock
+from unittest.mock import create_autospec
+
 from hamcrest import *
 
+from sgcs.induction.coverage.rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
+    AddingRuleWithCrowdingStrategy, AddingRuleSupervisor, AddingRuleStrategy
 from sgcs.induction.cyk_configuration import CrowdingConfiguration, AddingRulesConfiguration, \
     CykConfiguration
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.cyk_statistics import PasiekaFitness, CykStatistics
 from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
-    AddingRuleWithCrowdingStrategy, AddingRuleSupervisor, AddingRuleStrategy
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol
 

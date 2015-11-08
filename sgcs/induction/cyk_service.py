@@ -1,9 +1,7 @@
-from enum import Enum
-from sgcs.factory import Factory
-from sgcs.induction.coverage import CoverageOperations
+from sgcs.induction.coverage.coverage_operators import CoverageOperations
+from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness
-from sgcs.induction.rule_adding import AddingRuleSupervisor
 
 
 class CykService(object):
