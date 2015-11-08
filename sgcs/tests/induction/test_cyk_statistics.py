@@ -31,16 +31,22 @@ class TestRuleStatistics(unittest.TestCase):
         assert_that(rule_info[0].rule_usage, is_(equal_to(0)))
         assert_that(rule_info[1].left_side_usage, is_(equal_to(0)))
 
-    def test_should_be_able_to_count_rule_usage(self):
+    def two_rules_with_common_parent_setup(self, rule, another_rule):
         # Given:
-        self.sut.added_new_rule(self.rule)
-        another_rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('G')))
+        self.sut.added_new_rule(rule)
         self.sut.added_new_rule(another_rule)
 
         # When:
-        self.sut.rule_used(self.rule)
-        self.sut.rule_used(self.rule)
+        self.sut.rule_used(rule)
+        self.sut.rule_used(rule)
         self.sut.rule_used(another_rule)
+
+    def test_should_be_able_to_count_rule_usage(self):
+        # Given:
+        another_rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('G')))
+
+        # When:
+        self.two_rules_with_common_parent_setup(self.rule, another_rule)
 
         # Then:
         rule_info = self.sut.get_rule_statistics(self.rule)
@@ -52,6 +58,23 @@ class TestRuleStatistics(unittest.TestCase):
         assert_that(another_rule_info, is_not(None))
         assert_that(another_rule_info[0].rule_usage, is_(equal_to(1)))
         assert_that(another_rule_info[1].left_side_usage, is_(equal_to(3)))
+
+    def test_should_be_able_to_remove_rule(self):
+        # Given:
+        another_rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('G')))
+        self.two_rules_with_common_parent_setup(self.rule, another_rule)
+
+        # When:
+        self.sut.removed_rule(self.rule)
+
+        # Then:
+        rule_info = self.sut.get_rule_statistics(self.rule)
+        assert_that(rule_info, is_(None))
+
+        another_rule_info = self.sut.get_rule_statistics(another_rule)
+        assert_that(another_rule_info, is_not(None))
+        assert_that(another_rule_info[0].rule_usage, is_(equal_to(1)))
+        assert_that(another_rule_info[1].left_side_usage, is_(equal_to(1)))
 
 
 class TestCykStatistics(unittest.TestCase):
@@ -73,6 +96,10 @@ class TestCykStatistics(unittest.TestCase):
     def test_should_be_able_to_add_rule_usage(self):
         self.sut.on_rule_usage(self.rule)
         self.rule_statistics_mock.rule_used.assert_called_once_with(self.rule)
+
+    def test_should_be_able_to_remove_rule(self):
+        self.sut.on_rule_removed(self.rule)
+        self.rule_statistics_mock.removed_rule.assert_called_once_with(self.rule)
 
 
 class TestPasiekaFitness(unittest.TestCase):

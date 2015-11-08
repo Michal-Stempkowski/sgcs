@@ -30,6 +30,11 @@ class RuleStatistics(object):
         self._left_side_info[rule.parent].left_side_usage += 1
         self._rule_info[rule].rule_usage += 1
 
+    def removed_rule(self, rule):
+        removed_usage = self._rule_info[rule].rule_usage
+        self._left_side_info[rule.parent].left_side_usage -= removed_usage
+        del self._rule_info[rule]
+
 
 class DummyCykStatistics(object):
     def get_rule_statistics(self, rule):
@@ -39,6 +44,9 @@ class DummyCykStatistics(object):
         pass
 
     def on_rule_usage(self, rule):
+        pass
+
+    def on_rule_removed(self, rule):
         pass
 
 
@@ -54,6 +62,9 @@ class CykStatistics(DummyCykStatistics):
 
     def on_rule_usage(self, rule):
         self.rule_statistics.rule_used(rule)
+
+    def on_rule_removed(self, rule):
+        self.rule_statistics.removed_rule(rule)
 
 
 class PasiekaFitness(object):

@@ -35,6 +35,13 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
             (1 if left.left_child == right.left_child else 0) + \
             (1 if left.right_child == right.right_child else 0)
 
+    @staticmethod
+    def replace_rule(old, new, rule_population, cyk_service):
+        rule_population.remove_rule(old)
+        cyk_service.statistics.on_rule_removed(old)
+
+        rule_population.add_rule(new)
+
     def apply(self, cyk_service, rule, rule_population):
         weak_rules = set()
         for _ in range(cyk_service.configuration.rule_adding.crowding.factor):
@@ -45,4 +52,4 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
             weak_rules.add(worst_rule)
 
         most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
-        rule_population.add_rule(rule)
+        self.replace_rule(most_related_rule, rule, rule_population, cyk_service)

@@ -68,3 +68,9 @@ class RulePopulation(object):
 
     def get_random_rules(self, randomizer, terminal, size):
         return randomizer.sample(self.all_non_terminal_rules, size)
+
+    def remove_rule(self, rule):
+        right_key = rule.left_child, rule.right_child \
+            if not rule.is_terminal_rule() \
+            else rule.left_child
+        del self.rules_by_right[right_key][rule.parent]

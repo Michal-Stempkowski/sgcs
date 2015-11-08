@@ -5,7 +5,7 @@ from hamcrest import *
 from sgcs.induction.cyk_configuration import CrowdingConfiguration, AddingRulesConfiguration, \
     CykConfiguration
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import PasiekaFitness
+from sgcs.induction.cyk_statistics import PasiekaFitness, CykStatistics
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
     AddingRuleWithCrowdingStrategy
@@ -29,7 +29,8 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
 
         self.cyk_service_mock = create_autospec(CykService)
         self.cyk_service_mock.configure_mock(configuration=create_autospec(CykConfiguration),
-                                             fitness=self.fitness_mock)
+                                             fitness=self.fitness_mock,
+                                             statistics=create_autospec(CykStatistics))
         self.cyk_service_mock.configuration.configure_mock(
             rule_adding=create_autospec(AddingRulesConfiguration))
         self.cyk_service_mock.configuration.rule_adding.configure_mock(
@@ -74,8 +75,9 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
 
     def test_should_be_able_to_apply_strategy_for_terminal_production(self):
         # Given:
+        rule_to_be_replaced = self.mk_rule('A', 'G', 'C')
         self.rule_population_mock.get_random_rules.side_effect = [
-            [self.mk_rule('A', 'G', 'C'), self.mk_rule('T', 'B', 'C'), self.mk_rule('A', 'E', 'C')],
+            [rule_to_be_replaced, self.mk_rule('T', 'B', 'C'), self.mk_rule('A', 'E', 'C')],
             [self.mk_rule('A', 'W', 'C'), self.mk_rule('T', 'B', 'W'), self.mk_rule('A', 'W', 'C')]
         ]
         self.fitness_mock.get_keyfunc.side_effect = self.fitness_get_keyfunc_dummy
@@ -85,3 +87,7 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
 
         # Then:
         assert_that(self.rule_population_mock.get_random_rules.call_count, is_(equal_to(2)))
+        self.rule_population_mock.remove_rule.assert_called_once_with(rule_to_be_replaced)
+        self.cyk_service_mock.statistics.on_rule_removed.\
+            assert_called_once_with(rule_to_be_replaced)
+        self.rule_population_mock.add_rule.assert_called_once_with(self.rule)

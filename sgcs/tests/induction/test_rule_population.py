@@ -20,10 +20,13 @@ class TestRulePopulation(unittest.TestCase):
             Rule('A', 'B', 'J')
         ]
 
-    def test_adding_production_should_result_in_storing_it(self):
-        # Given:
+    def add_rules(self):
         for rule in self.rules:
             self.sut.add_rule(rule)
+
+    def test_adding_rule_should_result_in_storing_it(self):
+        # Given:
+        self.add_rules()
 
         # When/Then:
         assert_that(self.sut.get_rules_by_right(('B', 'C')),
@@ -61,8 +64,7 @@ class TestRulePopulation(unittest.TestCase):
 
     def test_should_be_able_to_obtain_random_population(self):
         # Given:
-        for rule in self.rules:
-            self.sut.add_rule(rule)
+        self.add_rules()
 
         randomizer_mock = create_autospec(Randomizer)
         randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
@@ -73,3 +75,21 @@ class TestRulePopulation(unittest.TestCase):
         # Then:
         assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
         assert_that(randomizer_mock.sample.called)
+
+    def test_should_be_able_to_remove_a_rule(self):
+        # Given:
+        self.add_rules()
+        assert_that(
+            self.sut.get_rules_by_right((self.rules[0].left_child, self.rules[0].right_child)),
+            only_contains(self.rules[0], self.rules[1])
+        )
+
+        # When:
+        self.sut.remove_rule(self.rules[0])
+
+        # Then:
+        assert_that(
+            self.sut.get_rules_by_right((self.rules[0].left_child, self.rules[0].right_child)),
+            only_contains(self.rules[1])
+        )
+

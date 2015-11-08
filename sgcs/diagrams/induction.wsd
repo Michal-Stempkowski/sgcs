@@ -182,6 +182,7 @@ package induction {
     RulePopulation : get_terminal_rules(self, symbol)
     RulePopulation : get_random_non_terminal_symbol(self, randomizer)
     RulePopulation : get_random_rules(self, randomizer, terminal, size)
+    RulePopulation : remove_rule(self, rule)
     RulePopulation --o Rule
     RulePopulation --> Symbol: creates
 
@@ -213,6 +214,7 @@ package induction {
 
         class AddingRuleWithCrowdingStrategy
         AddingRuleWithCrowdingStrategy : rule_affinity(left, right)
+        AddingRuleWithCrowdingStrategy : replace_rule(old, new, rule_population, cyk_service)
         AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
 
         class AddingRuleSupervisor
@@ -237,10 +239,15 @@ package induction {
         PasiekaFitnessOperator : get_current_value(self, cyk_service, rule)
         PasiekaFitnessOperator : calculate_new_value(self, cyk_service, rule)
 
+        class DummyCykStatistics
+        DummyCykStatistics : get_rule_statistics(self, rule)
+        DummyCykStatistics : on_added_new_rule(self, rule)
+        DummyCykStatistics : on_rule_usage(self, rule)
+        DummyCykStatistics : on_rule_removed(self, rule)
+        DummyCykStatistics <-- CykService: uses
+
         class CykStatistics
-        CykStatistics : get_rule_statistics(self, rule)
-        CykStatistics : on_added_new_rule(self, rule)
-        CykStatistics : on_rule_usage(self, rule)
+        CykStatistics --|> DummyCykStatistics
 
         class RuleInfo
         RuleInfo <-- PasiekaFitnessOperator: uses
@@ -252,6 +259,7 @@ package induction {
         RuleStatistics : added_new_rule(self, rule)
         RuleStatistics : rule_used(self, rule)
         RuleStatistics : get_rule_statistics(self, rule)
+        RuleStatistics : removed_rule(self, rule)
         RuleStatistics "0..1" o-- "1" CykStatistics
         RuleStatistics --> RuleInfo: creates
         RuleStatistics --> LeftSideInfo: creates
@@ -259,6 +267,8 @@ package induction {
 
         '&end_cyk_statistics
     }
+
+    '&alt_cyk_statistics CykStatistics <-- CykService: uses
 
 
 
