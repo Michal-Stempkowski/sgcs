@@ -32,3 +32,11 @@ class TestRandomizer(unittest.TestCase):
 
         # When/Then:
         assert_that(self.sut.choice(sequence), is_(equal_to(2)))
+
+    def test_should_be_able_to_choose_random_sample_from_sequence(self):
+        # Given
+        sequence = [1, 2, 3, 4, 5]
+        self.generator_mock.sample.return_value = [3, 4, 5]
+
+        # When/Then:
+        assert_that(self.sut.sample(sequence, 3), contains(3, 4, 5))

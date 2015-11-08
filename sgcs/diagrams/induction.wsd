@@ -172,6 +172,7 @@ package induction {
     class Symbol
     Symbol : __init__(self, symbol_id)
 
+    class RulePopulation
     RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None)
     RulePopulation : starting_symbol
     RulePopulation : universal_symbol
@@ -180,6 +181,7 @@ package induction {
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol)
     RulePopulation : get_random_non_terminal_symbol(self, randomizer)
+    RulePopulation : get_random_rules(self, randomizer, terminal, size)
     RulePopulation --o Rule
     RulePopulation --> Symbol: creates
 
@@ -202,7 +204,7 @@ package induction {
 
         class AddingRuleStrategy
         AddingRuleStrategy : is_applicable(self, strategy_hint)
-        AddingRuleStrategy : apply(self, rule, rule_population)
+        AddingRuleStrategy : apply(self, cyk_service, rule, rule_population)
         AddingRuleStrategy ..> RulePopulation: uses
         AddingRuleStrategy ..> Rule: uses
 
@@ -210,6 +212,7 @@ package induction {
         SimpleAddingRuleStrategy --|> AddingRuleStrategy
 
         class AddingRuleWithCrowdingStrategy
+        AddingRuleWithCrowdingStrategy : rule_affinity(left, right)
         AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
 
         class AddingRuleSupervisor

@@ -1,8 +1,11 @@
 import unittest
 from hamcrest import *
+from unittest.mock import create_autospec
+
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation, RulePopulationAccessViolationError
 from sgcs.induction.symbol import Symbol
+from sgcs.utils import Randomizer
 
 
 class TestRulePopulation(unittest.TestCase):
@@ -55,3 +58,18 @@ class TestRulePopulation(unittest.TestCase):
         assert_that(self.sut.rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a))
         assert_that(self.sut.get_terminal_rules(Symbol('b')), only_contains(rule_b))
+
+    def test_should_be_able_to_obtain_random_population(self):
+        # Given:
+        for rule in self.rules:
+            self.sut.add_rule(rule)
+
+        randomizer_mock = create_autospec(Randomizer)
+        randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
+
+        # When:
+        rules = self.sut.get_random_rules(randomizer_mock, False, 2)
+
+        # Then:
+        assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
+        assert_that(randomizer_mock.sample.called)

@@ -60,3 +60,6 @@ class PasiekaFitness(object):
     def calculate(self, cyk_service, rule):
         rule_info, _ = cyk_service.statistics.get_rule_statistics(rule)
         return rule_info.rule_usage
+
+    def get_keyfunc(self, cyk_service):
+        return lambda rule: self.calculate(cyk_service, rule)

@@ -11,6 +11,7 @@ class RulePopulationAccessViolationError(Exception):
 
 class RulePopulation(object):
     def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None):
+        self.all_non_terminal_rules = set()
         self.rules_by_right = dict()
         self.terminal_rules = dict()
         self._starting_symbol = starting_symbol
@@ -41,6 +42,7 @@ class RulePopulation(object):
             self._add_terminal_rule(rule)
         else:
             self._add_non_terminal_rule(rule)
+            self.all_non_terminal_rules.add(rule)
 
     def _add_non_terminal_rule(self, rule):
         by_right_key = (rule.left_child, rule.right_child)
@@ -63,3 +65,6 @@ class RulePopulation(object):
 
     def get_random_non_terminal_symbol(self, randomizer):
         return Symbol(randomizer.randint(1, self.max_non_terminal_symbols))
+
+    def get_random_rules(self, randomizer, terminal, size):
+        return randomizer.sample(self.all_non_terminal_rules, size)

@@ -10,3 +10,6 @@ class Randomizer(object):
 
     def randint(self, min_val, max_val):
         return self.generator.randint(min_val, max_val)
+
+    def sample(self, sequence, size):
+        return self.generator.sample(sequence, size)
