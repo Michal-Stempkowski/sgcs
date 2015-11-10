@@ -1,7 +1,7 @@
 from sgcs.induction.coverage.coverage_operators import CoverageOperations
 from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor
 from sgcs.induction.cyk_executors import CykTypeId
-from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness
+from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness, ClassicFitness
 
 
 class CykService(object):
@@ -14,7 +14,7 @@ class CykService(object):
         self._coverage_operations = coverage_operations \
             if coverage_operations else CoverageOperations()
         self._statistics = statistics if statistics else DummyCykStatistics()
-        self._fitness = fitness if fitness else PasiekaFitness()
+        self._fitness = fitness
         self._rule_adding = AddingRuleSupervisor()
 
     def perform_cyk(self, rules_population, sentence):
@@ -41,6 +41,10 @@ class CykService(object):
     @property
     def statistics(self):
         return self._statistics
+
+    @statistics.setter
+    def statistics(self, value):
+        self._statistics = value
 
     @property
     def rule_adding(self):

@@ -83,7 +83,7 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
             [rule_to_be_replaced, self.mk_rule('T', 'E', 'C'), self.mk_rule('A', 'E', 'W')],
             [self.mk_rule('A', 'W', 'H'), self.mk_rule('T', 'B', 'W'), self.mk_rule('G', 'W', 'C')]
         ]
-        self.fitness_mock.get_keyfunc.side_effect = self.fitness_get_keyfunc_dummy
+        self.fitness_mock.get_keyfunc_getter.side_effect = self.fitness_get_keyfunc_dummy
 
         # When:
         self.sut.apply(self.cyk_service_mock, self.rule, self.rule_population_mock)

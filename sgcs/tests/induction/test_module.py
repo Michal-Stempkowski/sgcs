@@ -13,7 +13,8 @@ from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfigura
     CrowdingConfiguration
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import RuleStatistics, CykStatistics
+from sgcs.induction.cyk_statistics import PasiekaRuleStatistics, CykStatistics, \
+    ClassicRuleStatistics, ClassicFitness
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol, Sentence
@@ -27,6 +28,8 @@ class TestModule(TestCase):
         self.cyk_configuration = CykConfiguration()
         self.coverage_operations = CoverageOperations()
         self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
+        self.rule_statistics = ClassicRuleStatistics()
+        self.fitness = ClassicFitness(10, 1, 1, 1, 1)
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -46,9 +49,10 @@ class TestModule(TestCase):
         ])
 
     def create_sut(self, factory):
-        self.sut = CykService(factory, self.cyk_configuration,
-                              self.randomizer, self.coverage_operations,
-                              statistics=CykStatistics(RuleStatistics()))
+        self.sut = CykService(factory, self.cyk_configuration, self.randomizer,
+                              self.coverage_operations, fitness=self.fitness)
+
+        self.sut.statistics = CykStatistics(self.rule_statistics, self.sut)
         self.sut.rule_adding.strategies = self.rule_adding_strategies
 
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):

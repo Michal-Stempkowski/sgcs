@@ -41,7 +41,7 @@ package induction {
     }
 
     class CykService
-    CykService : __init__(self, factory, configuration, randomizer)
+    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None)
     CykService : coverage_operations
     CykService : configuration
     CykService : randomizer
@@ -199,14 +199,28 @@ package induction {
     package CykStatistics {
         '&begin_cyk_statistics
 
-        class PasiekaFitnessOperator
-        PasiekaFitnessOperator : get_current_value(self, cyk_service, rule)
-        PasiekaFitnessOperator : calculate_new_value(self, cyk_service, rule)
+        class Fitness
+        Fitness : calculate(self, cyk_service, rule)
+        Fitness : get(self, cyk_service, rule)
+        Fitness : get_keyfunc(self, cyk_service)
+        Fitness <.. CykService: uses
+
+        class PasiekaFitness
+        PasiekaFitness --|> Fitness
+
+        class ClassicFitness
+        ClassicFitness : __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight, negative_weight)
+        ClassicFitness : base_fitness
+        ClassicFitness : classical_fitness_weight
+        ClassicFitness : fertility_weight
+        ClassicFitness : positive_weight
+        ClassicFitness : negative_weight
+        ClassicFitness --|> Fitness
 
         class DummyCykStatistics
         DummyCykStatistics : get_rule_statistics(self, rule)
         DummyCykStatistics : on_added_new_rule(self, rule)
-        DummyCykStatistics : on_rule_usage(self, rule)
+        DummyCykStatistics : on_rule_usage(self, rule, usage_info=None)
         DummyCykStatistics : on_rule_removed(self, rule)
         DummyCykStatistics <-- CykService: uses
 
@@ -214,19 +228,51 @@ package induction {
         CykStatistics --|> DummyCykStatistics
 
         class RuleInfo
-        RuleInfo <-- PasiekaFitnessOperator: uses
+        RuleInfo : fitness
+        RuleInfo <-- Fitness
 
-        class LeftSideInfo
-        LeftSideInfo <-- PasiekaFitnessOperator: uses
+        class PasiekaRuleInfo
+        PasiekaRuleInfo --|> RuleInfo
+        PasiekaRuleInfo : rule_usage
+        PasiekaRuleInfo <-- PasiekaFitness: uses
 
-        class RuleStatistics
-        RuleStatistics : added_new_rule(self, rule)
-        RuleStatistics : rule_used(self, rule)
-        RuleStatistics : get_rule_statistics(self, rule)
-        RuleStatistics : removed_rule(self, rule)
-        RuleStatistics "0..1" o-- "1" CykStatistics
-        RuleStatistics --> RuleInfo: creates
-        RuleStatistics --> LeftSideInfo: creates
+        class PasiekaLeftSideInfo
+        PasiekaLeftSideInfo : left_side_usage
+        PasiekaLeftSideInfo <-- PasiekaFitness: uses
+
+        class PasiekaRuleStatistics
+        PasiekaRuleStatistics : added_new_rule(self, rule, cyk_service)
+        PasiekaRuleStatistics : rule_used(self, rule, cyk_service)
+        PasiekaRuleStatistics : get_rule_statistics(self, rule, cyk_service)
+        PasiekaRuleStatistics : removed_rule(self, rule, cyk_service)
+        PasiekaRuleStatistics "0..1" o-- "1" CykStatistics
+        PasiekaRuleStatistics --> PasiekaRuleInfo: creates
+        PasiekaRuleStatistics --> PasiekaLeftSideInfo: creates
+
+        class ClassicRuleUsageInfo
+        ClassicRuleUsageInfo : __init__(self, positive_sentence, usage_count, points_gained=1)
+        ClassicRuleUsageInfo : positive_sentence
+        ClassicRuleUsageInfo : usage_count
+        ClassicRuleUsageInfo : points_gained
+
+        class ClassicRuleInfo
+        ClassicRuleInfo --|> RuleInfo
+        ClassicRuleInfo : valid_sentence_usage
+        ClassicRuleInfo : invalid_sentence_usage
+        ClassicRuleInfo : points_gained_for_valid_sentences
+        ClassicRuleInfo : points_gained_for_invalid_sentences
+        ClassicRuleInfo : points_total(self)
+        ClassicRuleInfo : apply_usage(self, usage_info)
+        ClassicRuleInfo <-- ClassicFitness: uses
+        ClassicRuleInfo --> ClassicRuleUsageInfo: uses
+
+        class ClassicRuleStatistics
+        ClassicRuleStatistics : added_new_rule(self, rule, cyk_service)
+        ClassicRuleStatistics : rule_used(self, rule, cyk_service)
+        ClassicRuleStatistics : get_rule_statistics(self, rule, cyk_service)
+        ClassicRuleStatistics : removed_rule(self, rule, cyk_service)
+        ClassicRuleStatistics "0..1" o-- "1" CykStatistics
+        ClassicRuleStatistics --> ClassicRuleInfo: creates
 
 
         '&end_cyk_statistics

@@ -61,7 +61,7 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
 
             cyk_service.randomizer.shuffle(subpopulation)
 
-            worst_rule = min(subpopulation, key=cyk_service.fitness.get_keyfunc(cyk_service))
+            worst_rule = min(subpopulation, key=cyk_service.fitness.get_keyfunc_getter(cyk_service))
             weak_rules.add(worst_rule)
 
         most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
