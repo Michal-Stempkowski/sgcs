@@ -213,7 +213,7 @@ class TestCykStatistics(unittest.TestCase):
     def test_if_rule_does_not_exist_its_usage_should_be_ignored(self):
         self.rule_statistics_mock.has_rule.return_value = False
         self.sut.on_rule_usage(self.rule, None)
-        self.rule_statistics_mock.rule_used.assert_not_called()
+        assert_that(not self.rule_statistics_mock.rule_used.called)
 
     def test_should_be_able_to_remove_rule(self):
         self.sut.on_rule_removed(self.rule)

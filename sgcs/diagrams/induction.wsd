@@ -390,9 +390,12 @@ package induction {
 
 
     class Traceback
-    Traceback : perform_traceback(self, cyk_service, environment, cyk_result)
+    Traceback : __init__(self, visitors)
+    Traceback : visitors
+    Traceback : perform_traceback(self, cyk_service, environment, cyk_result, rule_population)
     Traceback ..> Environment: uses
     Traceback ..> CykResult: uses
+    Traceback ..> RulePopulation: uses
     Traceback <..> CykService: uses
 
     class ClassicTraceback

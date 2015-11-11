@@ -103,6 +103,7 @@ class Environment(object):
         return production_pool.is_empty()
 
     def get_child_productions(self, production):
+        result = []
         if not production.rule.is_terminal_rule():
             parent_detector = production.detector
             left_child_symbol = production.rule.left_child
@@ -110,11 +111,13 @@ class Environment(object):
 
             for production in self._child_production_generator(
                     self._left_coord(*parent_detector.coordinates), left_child_symbol):
-                yield production
+                result.append(production)
 
             for production in self._child_production_generator(
                     self._right_coord(*parent_detector.coordinates), right_child_symbol):
-                yield production
+                result.append(production)
+
+        return result
 
     def _child_production_generator(self, coordinates, symbol):
         production_pool = self._get_production_pool(coordinates)
