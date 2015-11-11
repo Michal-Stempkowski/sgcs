@@ -1,3 +1,4 @@
+from induction.traceback import Traceback
 from sgcs.induction.coverage.coverage_operators import CoverageOperations
 from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor
 from sgcs.induction.cyk_executors import CykTypeId
@@ -6,7 +7,7 @@ from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness, Cl
 
 class CykService(object):
     def __init__(self, factory, configuration, randomizer, coverage_operations=None,
-                 statistics=None, fitness=None):
+                 statistics=None, fitness=None, traceback=None):
         self.factory = factory
         self.table_executor = self.factory.create(CykTypeId.table_executor, self)
         self._configuration = configuration
@@ -16,6 +17,7 @@ class CykService(object):
         self._statistics = statistics if statistics else DummyCykStatistics()
         self._fitness = fitness
         self._rule_adding = AddingRuleSupervisor()
+        self._traceback = Traceback([]) if traceback is None else traceback
 
     def perform_cyk(self, rules_population, sentence):
         environment = self.factory.create(CykTypeId.environment, sentence, self.factory)
@@ -62,3 +64,11 @@ class CykService(object):
     @fitness.setter
     def fitness(self, value):
         self._fitness = value
+
+    @property
+    def traceback(self):
+        return self._traceback
+
+    @traceback.setter
+    def traceback(self, value):
+        self._traceback = value

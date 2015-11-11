@@ -44,7 +44,7 @@ package induction {
     }
 
     class CykService
-    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None)
+    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None, traceback=None)
     CykService : coverage_operations
     CykService : configuration
     CykService : randomizer
@@ -52,6 +52,7 @@ package induction {
     CykService : fitness
     CykService : perform_cyk(self, rule_population, sentence)
     CykService : perform_cyk_for_all_sentences(self, rule_population, sentences)
+    CykService : traceback
     CykService ..> CykExecutors: creates (factory)
     CykService ..> Sentence: uses
     CykService ..> CykResult: uses
@@ -287,6 +288,14 @@ package induction {
         class ClassicRuleStatistics
         ClassicRuleStatistics --|> RuleStatistics
         ClassicRuleStatistics --> ClassicRuleInfo: creates
+
+        class StatisticsVisitor
+        __call__(self, production, cyk_service, environment, cyk_result, rules_population)
+        StatisticsVisitor ..> Production: uses
+        StatisticsVisitor <..> CykService: uses
+        StatisticsVisitor ..> Environment: uses
+        StatisticsVisitor ..> CykResult: uses
+        StatisticsVisitor ..> RulePopulation: uses
 
 
         '&end_cyk_statistics

@@ -19,8 +19,8 @@ class TestTraceback(unittest.TestCase):
 
         self.visitor1_calls = []
         self.visitor2_calls = []
-        self.sut = Traceback([lambda x: self.visitor1_calls.append(x),
-                              lambda x: self.visitor2_calls.append(x)])
+        self.sut = Traceback([lambda x, _1, _2, _3, _4: self.visitor1_calls.append(x),
+                              lambda x, _1, _2, _3, _4: self.visitor2_calls.append(x)])
 
         self.cyk_service_mock = create_autospec(CykService)
         self.environment_mock = create_autospec(Environment)
@@ -92,7 +92,7 @@ class TestTraceback(unittest.TestCase):
         self.sut.perform_traceback(self.cyk_service_mock, self.environment_mock,
                                    self.cyk_result, self.rule_population_mock)
 
-        # # Then:
+        # Then:
         assert_that(self.environment_mock.get_last_cell_productions.call_count, is_(equal_to(1)))
         assert_that(self.visitor1_calls, is_(empty()))
         assert_that(self.visitor2_calls, is_(empty()))
