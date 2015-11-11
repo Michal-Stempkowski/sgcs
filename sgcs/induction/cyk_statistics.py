@@ -1,10 +1,38 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractstaticmethod
 from enum import Enum
 
 
 class RuleInfo(object):
     def __init__(self):
         self.fitness = None
+
+
+class RuleStatistics(metaclass=ABCMeta):
+    def __init__(self):
+        self._rule_info = dict()
+
+    def has_rule(self, rule):
+        return rule in self._rule_info
+
+    @abstractmethod
+    def get_rule_statistics(self, rule, cyk_service):
+        pass
+
+    @abstractmethod
+    def added_new_rule(self, rule, cyk_service):
+        pass
+
+    @abstractmethod
+    def rule_used(self, rule, usage_info, cyk_service):
+        pass
+
+    @abstractmethod
+    def removed_rule(self, rule, cyk_service):
+        pass
+
+    @abstractstaticmethod
+    def create_usage(cyk_service, cyk_result, sentence):
+        pass
 
 
 class PasiekaRuleInfo(RuleInfo):
@@ -18,9 +46,9 @@ class PasiekaLeftSideInfo(object):
         self.left_side_usage = 0
 
 
-class PasiekaRuleStatistics(object):
+class PasiekaRuleStatistics(RuleStatistics):
     def __init__(self):
-        self._rule_info = dict()
+        super().__init__()
         self._left_side_info = dict()
 
     def get_rule_statistics(self, rule, cyk_service):
@@ -41,6 +69,10 @@ class PasiekaRuleStatistics(object):
         removed_usage = self._rule_info[rule].rule_usage
         self._left_side_info[rule.parent].left_side_usage -= removed_usage
         del self._rule_info[rule]
+
+    @staticmethod
+    def create_usage(cyk_service, cyk_result, sentence):
+        return None
 
 
 class Fitness(metaclass=ABCMeta):
@@ -91,10 +123,9 @@ class ClassicRuleUsageInfo(object):
         self.points_gained = points_gained
 
 
-class ClassicRuleStatistics(object):
+class ClassicRuleStatistics(RuleStatistics):
     def __init__(self):
-        self._rule_info = dict()
-
+        super().__init__()
         self._worst_rule = None
         self.min_fertility = None
 
@@ -140,15 +171,24 @@ class ClassicRuleStatistics(object):
         if rule == self._worst_rule or rule == self._best_rule:
             self.search_for_fertility()
 
+    @staticmethod
+    def create_usage(cyk_service, cyk_result, sentence):
+        price_value = cyk_service.fitness.valid_sentence_price \
+            if sentence.is_positive_sentence or sentence.is_positive_sentence is None \
+            else cyk_service.fitness.invalid_sentence_price
+        return ClassicRuleUsageInfo(sentence.is_positive_sentence, 1, price_value)
+
 
 class ClassicFitness(Fitness):
-    def __init__(self, base_fitness, classical_fitness_weight, fertility_weight,
-                 positive_weight, negative_weight):
+    def __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight,
+                 negative_weight, valid_sentence_price=1, invalid_sentence_price=1):
         self.base_fitness = base_fitness
         self.classical_fitness_weight = classical_fitness_weight
         self.fertility_weight = fertility_weight
         self.positive_weight = positive_weight
         self.negative_weight = negative_weight
+        self.valid_sentence_price = valid_sentence_price
+        self.invalid_sentence_price = invalid_sentence_price
 
     def calculate(self, cyk_service, rule):
         rule_info, min_fertility, max_fertility = cyk_service.statistics.get_rule_statistics(rule)
@@ -197,7 +237,8 @@ class CykStatistics(DummyCykStatistics):
         self.rule_statistics.added_new_rule(rule, self.cyk_service)
 
     def on_rule_usage(self, rule, usage_info=None):
-        self.rule_statistics.rule_used(rule, usage_info, self.cyk_service)
+        if self.rule_statistics.has_rule(rule):
+            self.rule_statistics.rule_used(rule, usage_info, self.cyk_service)
 
     def on_rule_removed(self, rule):
         self.rule_statistics.removed_rule(rule, self.cyk_service)

@@ -22,6 +22,11 @@ class CykService(object):
         result = self.table_executor.execute(environment, rules_population)
         return result
 
+    def perform_cyk_for_all_sentences(self, rule_population, sentences):
+        for sentence in sentences:
+            result = self.perform_cyk(rule_population, sentence)
+            # if result
+
     @property
     def configuration(self):
         return self._configuration

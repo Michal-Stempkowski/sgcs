@@ -16,17 +16,19 @@ class CykTableIndexError(Exception):
 class Environment(object):
     def __init__(self, sentence, factory):
         self.sentence = sentence
-        size = self.get_sentence_length()
+        self.size = self.get_sentence_length()
         self.cyk_table = {
             (x, y): factory.create(CykTypeId.production_pool)
-            for x in range(size) for y in range(size)
+            for x in range(self.size) for y in range(self.size)
         }
 
     def get_symbols(self, absolute_coordinates):
+        return self._get_production_pool(absolute_coordinates).get_effectors()
+
+    def _get_production_pool(self, absolute_coordinates):
         self.validate_absolute_coordinates(absolute_coordinates)
 
-        cords = absolute_coordinates
-        return self.cyk_table[cords].get_effectors()
+        return self.cyk_table[absolute_coordinates]
 
     def add_production(self, production):
         absolute_coordinates = production.get_coordinates()[:2]
@@ -34,11 +36,19 @@ class Environment(object):
 
         self.cyk_table[absolute_coordinates].add_production(production)
 
-    def _left_coord(self, row, col, shift, left_id, right_id):
-        return self.get_symbols((shift - 1, col))[left_id]
+    @staticmethod
+    def _left_coord(row, col, shift, left_id, right_id):
+        return shift - 1, col
 
-    def _right_coord(self, row, col, shift, left_id, right_id):
-        return self.get_symbols((row - shift, col + shift))[right_id]
+    @staticmethod
+    def _right_coord(row, col, shift, left_id, right_id):
+        return row - shift, col + shift
+
+    def _left_parent_symbols(self, row, col, shift, left_id, right_id):
+        return self.get_symbols(self._left_coord(row, col, shift, left_id, right_id))[left_id]
+
+    def _right_parent_symbols(self, row, col, shift, left_id, right_id):
+        return self.get_symbols(self._right_coord(row, col, shift, left_id, right_id))[right_id]
 
     def get_left_parent_symbol_count(self, coordinates_with_shift):
         if len(coordinates_with_shift) != 3:
@@ -72,12 +82,15 @@ class Environment(object):
     def get_sentence_symbol(self, index):
         return self.sentence.get_symbol(index)
 
+    def get_last_cell_productions(self):
+        return self.cyk_table[self.size - 1, 0].get_non_empty_productions()
+
     def __str__(self):
         return self.__class__.__name__ + '({' + str(self.cyk_table) + "})"
 
     def get_detector_symbols(self, coord):
-        left = self._left_coord(*coord)
-        right = self._right_coord(*coord)
+        left = self._left_parent_symbols(*coord)
+        right = self._right_parent_symbols(*coord)
 
         return left, right
 
@@ -88,3 +101,23 @@ class Environment(object):
     def has_no_productions(self, coordinates):
         production_pool = self.cyk_table[coordinates]
         return production_pool.is_empty()
+
+    def get_child_productions(self, production):
+        if not production.rule.is_terminal_rule():
+            parent_detector = production.detector
+            left_child_symbol = production.rule.left_child
+            right_child_symbol = production.rule.right_child
+
+            for production in self._child_production_generator(
+                    self._left_coord(*parent_detector.coordinates), left_child_symbol):
+                yield production
+
+            for production in self._child_production_generator(
+                    self._right_coord(*parent_detector.coordinates), right_child_symbol):
+                yield production
+
+    def _child_production_generator(self, coordinates, symbol):
+        production_pool = self._get_production_pool(coordinates)
+
+        return (p for p in production_pool.find_non_empty_productions(
+            lambda x: x.rule.parent == symbol))

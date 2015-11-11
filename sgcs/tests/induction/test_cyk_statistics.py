@@ -205,9 +205,15 @@ class TestCykStatistics(unittest.TestCase):
             self.rule, self.cyk_service_mock)
 
     def test_should_be_able_to_add_rule_usage(self):
+        self.rule_statistics_mock.has_rule.return_value = True
         self.sut.on_rule_usage(self.rule, None)
         self.rule_statistics_mock.rule_used.assert_called_once_with(
             self.rule, None, self.cyk_service_mock)
+
+    def test_if_rule_does_not_exist_its_usage_should_be_ignored(self):
+        self.rule_statistics_mock.has_rule.return_value = False
+        self.sut.on_rule_usage(self.rule, None)
+        self.rule_statistics_mock.rule_used.assert_not_called()
 
     def test_should_be_able_to_remove_rule(self):
         self.sut.on_rule_removed(self.rule)

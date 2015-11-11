@@ -14,7 +14,7 @@ class TestProductionPool(unittest.TestCase):
 
         self.rule_left_side = 'A'
         self.rule = create_autospec(Rule)
-        type(self.rule).parent = PropertyMock(return_value=self.rule_left_side)
+        self.rule.configure_mock(parent=self.rule_left_side)
 
         self.sut = ProductionPool()
 
@@ -28,6 +28,7 @@ class TestProductionPool(unittest.TestCase):
         # Then:
         assert_that(self.sut.is_empty(), is_(equal_to(False)))
         assert_that(self.sut.get_effectors(), only_contains('A'))
+        assert_that(self.sut.get_non_empty_productions(), only_contains(production))
 
     def test_adding_empty_production_should_be_handled_well(self):
         # Given:
@@ -39,6 +40,7 @@ class TestProductionPool(unittest.TestCase):
         # Then:
         assert_that(self.sut.is_empty(), is_(equal_to(True)))
         assert_that(self.sut.get_effectors(), is_(empty()))
+        assert_that(self.sut.get_non_empty_productions(), is_(empty()))
 
     def test_should_be_able_to_get_unsatisfied_detectors(self):
         # Given:
@@ -54,4 +56,25 @@ class TestProductionPool(unittest.TestCase):
 
         # Then:
         assert_that(result, only_contains(empty_detector))
+
+    def test_should_be_able_to_find_nonempty_productions_with_a_predicate(self):
+        # Given:
+        self.rule.configure_mock()
+        self.detector.configure_mock(coordinates=1)
+        production1 = Production(self.detector, self.rule)
+        self.sut.add_production(production1)
+
+        rule2_parent = 'B'
+        detector2 = create_autospec(Detector)
+        detector2.configure_mock(coordinates=2)
+        rule2 = create_autospec(Rule)
+        rule2.configure_mock(parent=rule2_parent)
+        production2 = Production(detector2, rule2)
+        self.sut.add_production(production2)
+
+        # When:
+        rules = list(self.sut.find_non_empty_productions(lambda x: x.rule.parent == 'B'))
+
+        # Then:
+        assert_that(rules, only_contains(production2))
 

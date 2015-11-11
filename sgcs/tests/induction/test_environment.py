@@ -8,6 +8,7 @@ from sgcs.induction.environment import Environment, CykTableIndexError
 from sgcs.induction.production import Production, ProductionPool
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.symbol import Sentence, Symbol
+from sgcs.tests.test_common import are_
 
 
 class TestEnvironment(unittest.TestCase):
@@ -37,6 +38,11 @@ class TestEnvironment(unittest.TestCase):
         return Production(
             Detector((row, col, shift, left_id, right_id)),
             Rule(effector, Symbol('A'), Symbol('B')))
+
+    def terminal_production_with(self, row, col, shift, left_id, right_id, effector, terminal):
+        return Production(
+            Detector((row, col, shift, left_id, right_id)),
+            TerminalRule(effector, Symbol(terminal)))
 
     def test_adding_productions_should_work_properly(self):
         # Given:
@@ -88,3 +94,36 @@ class TestEnvironment(unittest.TestCase):
 
         # Then:
         assert_that(result, only_contains(Detector(coordinates)))
+
+    def test_should_be_able_to_get_productions_from_last_cell(self):
+        # Given:
+        p1 = self.production_with(1, 0, 1, 0, 0, Symbol('A'))
+        p2 = self.production_with(1, 0, 1, 0, 1, Symbol('B'))
+        self.production_pool_mock.get_non_empty_productions.return_value = [p1, p2]
+
+        # When:
+        productions = self.sut.get_last_cell_productions()
+
+        # Then:
+        self.production_pool_mock.get_non_empty_productions.assert_has_calls([call()])
+        assert_that(productions, contains_inanyorder(p1, p2))
+
+    def test_should_be_able_to_get_parent_productions(self):
+        # Given:
+        p0 = self.production_with(1, 0, 1, 0, 0, Symbol('C'))
+        p1 = self.terminal_production_with(1, 0, 1, 0, 0, Symbol('A'), Symbol('a'))
+        p2 = self.terminal_production_with(1, 0, 1, 0, 1, Symbol('B'), Symbol('b'))
+        p3 = self.terminal_production_with(1, 0, 1, 0, 1, Symbol('Y'), Symbol('y'))
+        self.production_pool_mock.find_non_empty_productions.side_effect = [(p1, p2), (p3,)]
+
+        # When:
+        p0_productions = list(self.sut.get_child_productions(p0))
+        p1_productions = list(self.sut.get_child_productions(p1))
+        p2_productions = list(self.sut.get_child_productions(p2))
+        p3_productions = list(self.sut.get_child_productions(p3))
+
+        # Then:
+        assert_that(p0_productions, contains_inanyorder(p1, p2, p3))
+        assert_that(p1_productions, is_(empty()))
+        assert_that(p2_productions, is_(empty()))
+        assert_that(p3_productions, is_(empty()))

@@ -12,9 +12,12 @@ package induction {
     ProductionPool : non_empty_productions
     ProductionPool : empty_productions
     ProductionPool : add_production(self, production)
+    ProductionPool : get_nonempty_productions(self)
     ProductionPool : is_empty(self)
     ProductionPool : get_effectors(self)
     ProductionPool : get_unsatisfied_detectors(self)
+    ProductionPool : get_non_empty_productions(self)
+    ProductionPool : find_non_empty_productions(self, predicate)
 
     Production : __init__(self, detector, rule)
     Production : detector
@@ -48,6 +51,7 @@ package induction {
     CykService : rule_adding
     CykService : fitness
     CykService : perform_cyk(self, rule_population, sentence)
+    CykService : perform_cyk_for_all_sentences(self, rule_population, sentences)
     CykService ..> CykExecutors: creates (factory)
     CykService ..> Sentence: uses
     CykService ..> CykResult: uses
@@ -133,6 +137,8 @@ package induction {
 
     class CykResult
     CykResult : belongs_to_grammar
+    CykResult : cyk_table
+    CykResult ..> Environment
 
     '&alt_cyk_executors CykExecutors ..> Environment: uses
     '&alt_cyk_executors CykExecutors ..> CykService: uses
@@ -148,6 +154,8 @@ package induction {
     Environment : cyk_table
     Environment : get_symbols(self, absolute_coordinates)
     Environment : add_production(self, production)
+    Environment : get_productions(self, detector)
+    Environment : get_last_cell_productions(self)
     Environment : get_left_parent_symbol_count(self, coordinates_with_shift)
     Environment : get_right_parent_symbol_count(self, coordinates_with_shift)
     Environment : get_row_length(self, row)
@@ -158,6 +166,7 @@ package induction {
     Environment : is_sentence_positive(self)
     Environment : get_unsatisfied_detectors(self, coordinates)
     Environment : has_no_productions(self, coordinates)
+    Environment : get_child_productions(self, production)
 
     Environment ..> ProductionPool: creates (factory)
     Environment ..> Production: uses
@@ -209,12 +218,14 @@ package induction {
         PasiekaFitness --|> Fitness
 
         class ClassicFitness
-        ClassicFitness : __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight, negative_weight)
+        ClassicFitness : __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight, negative_weight, valid_sentence_price=1, invalid_sentence_price=1)
         ClassicFitness : base_fitness
         ClassicFitness : classical_fitness_weight
         ClassicFitness : fertility_weight
         ClassicFitness : positive_weight
         ClassicFitness : negative_weight
+        ClassicFitness : valid_sentence_price
+        ClassicFitness : invalid_sentence_price
         ClassicFitness --|> Fitness
 
         class DummyCykStatistics
@@ -231,6 +242,17 @@ package induction {
         RuleInfo : fitness
         RuleInfo <-- Fitness
 
+        class RuleStatistics
+        RuleStatistics : added_new_rule(self, rule, cyk_service)
+        RuleStatistics : rule_used(self, rule, cyk_service)
+        RuleStatistics : get_rule_statistics(self, rule, cyk_service)
+        RuleStatistics : removed_rule(self, rule, cyk_service)
+        RuleStatistics : create_usage(cyk_service, cyk_result, sentence)
+        RuleStatistics "0..1" o-- "1" CykStatistics
+        RuleStatistics ..> CykService: uses
+        RuleStatistics ..> CykResult: uses
+
+
         class PasiekaRuleInfo
         PasiekaRuleInfo --|> RuleInfo
         PasiekaRuleInfo : rule_usage
@@ -241,11 +263,7 @@ package induction {
         PasiekaLeftSideInfo <-- PasiekaFitness: uses
 
         class PasiekaRuleStatistics
-        PasiekaRuleStatistics : added_new_rule(self, rule, cyk_service)
-        PasiekaRuleStatistics : rule_used(self, rule, cyk_service)
-        PasiekaRuleStatistics : get_rule_statistics(self, rule, cyk_service)
-        PasiekaRuleStatistics : removed_rule(self, rule, cyk_service)
-        PasiekaRuleStatistics "0..1" o-- "1" CykStatistics
+        PasiekaRuleStatistics --|> RuleStatistics
         PasiekaRuleStatistics --> PasiekaRuleInfo: creates
         PasiekaRuleStatistics --> PasiekaLeftSideInfo: creates
 
@@ -267,11 +285,7 @@ package induction {
         ClassicRuleInfo --> ClassicRuleUsageInfo: uses
 
         class ClassicRuleStatistics
-        ClassicRuleStatistics : added_new_rule(self, rule, cyk_service)
-        ClassicRuleStatistics : rule_used(self, rule, cyk_service)
-        ClassicRuleStatistics : get_rule_statistics(self, rule, cyk_service)
-        ClassicRuleStatistics : removed_rule(self, rule, cyk_service)
-        ClassicRuleStatistics "0..1" o-- "1" CykStatistics
+        ClassicRuleStatistics --|> RuleStatistics
         ClassicRuleStatistics --> ClassicRuleInfo: creates
 
 
@@ -279,6 +293,7 @@ package induction {
     }
 
     '&alt_cyk_statistics CykStatistics <-- CykService: uses
+    '&alt_cyk_statistics CykStatistics ..> CykResult: uses
 
 
 
@@ -373,6 +388,16 @@ package induction {
     '&alt_coverage Coverage "1" *.. CykService
     '&alt_coverage Coverage --> CoverageType: uses
 
+
+    class Traceback
+    Traceback : perform_traceback(self, cyk_service, environment, cyk_result)
+    Traceback ..> Environment: uses
+    Traceback ..> CykResult: uses
+    Traceback <..> CykService: uses
+
+    class ClassicTraceback
+    ClassicTraceback --|> Traceback
+    ClassicTraceback ..> CykStatistics
 
 }
 
