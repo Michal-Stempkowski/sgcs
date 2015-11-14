@@ -188,6 +188,7 @@ package induction {
     RulePopulation : starting_symbol
     RulePopulation : universal_symbol
     RulePopulation : max_terminal_symbols
+    RulePopulation : get_all_non_terminal_rules(self)
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol)
@@ -290,7 +291,7 @@ package induction {
         ClassicRuleStatistics --> ClassicRuleInfo: creates
 
         class StatisticsVisitor
-        __call__(self, production, cyk_service, environment, cyk_result, rules_population)
+        StatisticsVisitor : __call__(self, production, cyk_service, environment, cyk_result, rules_population)
         StatisticsVisitor ..> Production: uses
         StatisticsVisitor <..> CykService: uses
         StatisticsVisitor ..> Environment: uses
@@ -410,6 +411,13 @@ package induction {
     class ClassicTraceback
     ClassicTraceback --|> Traceback
     ClassicTraceback ..> CykStatistics
+
+    class GrammarCorrector
+    GrammarCorrector : correct_grammar(self, rule_population, cyk_service)
+    GrammarCorrector : remove_non_productive(self, rule_population, cyk_service)
+    GrammarCorrector : remove_not_reachable(self, rule_population, cyk_service)
+    GrammarCorrector ..> RulePopulation: uses
+    GrammarCorrector <--> CykService: uses
 
 }
 

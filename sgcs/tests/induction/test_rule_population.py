@@ -24,6 +24,8 @@ class TestRulePopulation(unittest.TestCase):
         for rule in self.rules:
             self.sut.add_rule(rule)
 
+        assert_that(self.sut.get_all_non_terminal_rules(), contains_inanyorder(*self.rules))
+
     def test_adding_rule_should_result_in_storing_it(self):
         # Given:
         self.add_rules()
@@ -47,6 +49,7 @@ class TestRulePopulation(unittest.TestCase):
         assert_that(self.sut.rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a, rule_b))
         assert_that(self.sut.get_terminal_rules(Symbol('b')), is_(empty()))
+        assert_that(self.sut.get_terminal_rules(), only_contains(rule_a, rule_b))
 
     def test_universal_symbol_should_work_properly(self):
         # Given:
@@ -56,11 +59,13 @@ class TestRulePopulation(unittest.TestCase):
         # When:
         self.sut.add_rule(rule_a)
         self.sut.add_rule(rule_b)
+        tmp = self.sut.get_terminal_rules()
 
         # Then:
         assert_that(self.sut.rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a))
         assert_that(self.sut.get_terminal_rules(Symbol('b')), only_contains(rule_b))
+        assert_that(self.sut.get_terminal_rules(), only_contains(rule_a, rule_b))
 
     def test_should_be_able_to_obtain_random_population(self):
         # Given:

@@ -37,6 +37,9 @@ class RulePopulation(object):
         packed_rules = self.rules_by_right.get(pair)
         return packed_rules.values() if packed_rules else []
 
+    def get_all_non_terminal_rules(self):
+        return (x for y in self.rules_by_right.values() for x in y.values())
+
     def add_rule(self, rule):
         if rule.is_terminal_rule():
             self._add_terminal_rule(rule)
@@ -59,9 +62,12 @@ class RulePopulation(object):
         # if there is already such an rule, then make mess
         self.terminal_rules[rule.left_child][rule.parent] = rule
 
-    def get_terminal_rules(self, symbol):
-        packed_rules = self.terminal_rules.get(symbol)
-        return packed_rules.values() if packed_rules else []
+    def get_terminal_rules(self, symbol=None):
+        if symbol is None:
+            return (x for y in self.terminal_rules.values() for x in y.values())
+        else:
+            packed_rules = self.terminal_rules.get(symbol)
+            return packed_rules.values() if packed_rules else []
 
     def get_random_non_terminal_symbol(self, randomizer):
         return Symbol(randomizer.randint(1, self.max_non_terminal_symbols))
