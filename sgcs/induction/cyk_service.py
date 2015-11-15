@@ -3,7 +3,7 @@ from induction.traceback import Traceback
 from sgcs.induction.coverage.coverage_operators import CoverageOperations
 from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor
 from sgcs.induction.cyk_executors import CykTypeId
-from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness, ClassicFitness
+from statistics.cyk_statistics import DummyCykStatistics
 
 
 class CykService(object):

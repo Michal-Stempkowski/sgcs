@@ -6,7 +6,7 @@ from hamcrest import *
 from core.rule import Rule
 from core.symbol import Symbol
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import PasiekaRuleStatistics, CykStatistics, PasiekaFitness, PasiekaRuleInfo, \
+from statistics.cyk_statistics import PasiekaRuleStatistics, GrammarStatistics, PasiekaFitness, PasiekaRuleInfo, \
     PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo
 
 
@@ -187,13 +187,13 @@ class TestClassicRuleStatistics(unittest.TestCase):
         assert_that(max_fertility, is_(None))
 
 
-class TestCykStatistics(unittest.TestCase):
+class TestGrammarStatistics(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.rule_statistics_mock = create_autospec(PasiekaRuleStatistics)
         self.cyk_service_mock = create_autospec(CykService)
-        self.sut = CykStatistics(self.rule_statistics_mock, self.cyk_service_mock)
+        self.sut = GrammarStatistics(self.rule_statistics_mock, self.cyk_service_mock)
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))
 
     def test_should_be_able_to_get_rule_statistics(self):
@@ -229,7 +229,7 @@ class TestPasiekaFitness(unittest.TestCase):
         self.sut = PasiekaFitness()
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))
 
-        self.statistics_mock = create_autospec(CykStatistics)
+        self.statistics_mock = create_autospec(GrammarStatistics)
         self.cyk_service_mock = create_autospec(CykService)
         self.cyk_service_mock.configure_mock(statistics=self.statistics_mock)
 

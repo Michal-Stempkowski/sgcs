@@ -11,7 +11,7 @@ from sgcs.induction.coverage.rule_adding import SimpleAddingRuleStrategy, Adding
 from sgcs.induction.cyk_configuration import CrowdingConfiguration, AddingRulesConfiguration, \
     CykConfiguration
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import PasiekaFitness, CykStatistics
+from statistics.cyk_statistics import PasiekaFitness, GrammarStatistics
 
 
 class TestAddingRuleStrategyCommon(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
         self.cyk_service_mock = create_autospec(CykService)
         self.cyk_service_mock.configure_mock(configuration=create_autospec(CykConfiguration),
                                              fitness=self.fitness_mock,
-                                             statistics=create_autospec(CykStatistics))
+                                             statistics=create_autospec(GrammarStatistics))
         self.cyk_service_mock.configuration.configure_mock(
             rule_adding=create_autospec(AddingRulesConfiguration))
         self.cyk_service_mock.configuration.rule_adding.configure_mock(

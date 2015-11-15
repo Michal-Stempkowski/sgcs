@@ -239,7 +239,7 @@ class DummyCykStatistics(object):
         pass
 
 
-class CykStatistics(DummyCykStatistics):
+class GrammarStatistics(DummyCykStatistics):
     def __init__(self, rule_statistics, cyk_service):
         self.rule_statistics = rule_statistics
         self.cyk_service = cyk_service
@@ -259,3 +259,6 @@ class CykStatistics(DummyCykStatistics):
 
     def update_fitness(self, cyk_service):
         self.rule_statistics.update_fitness(cyk_service)
+
+
+# class

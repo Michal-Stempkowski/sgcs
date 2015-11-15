@@ -17,9 +17,9 @@ from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfigura
     CrowdingConfiguration, GrammarCorrection
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import CykStatistics, \
-    ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
 from sgcs.utils import Randomizer
+from statistics.cyk_statistics import GrammarStatistics, \
+    ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
 
 
 class TestModule(TestCase):
@@ -67,7 +67,7 @@ class TestModule(TestCase):
                               self.coverage_operations, fitness=self.fitness,
                               traceback=Traceback(self.traceback_visitors))
 
-        self.sut.statistics = CykStatistics(self.rule_statistics, self.sut)
+        self.sut.statistics = GrammarStatistics(self.rule_statistics, self.sut)
         self.sut.rule_adding.strategies = self.rule_adding_strategies
 
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):

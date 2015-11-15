@@ -7,8 +7,8 @@ from core.rule import TerminalRule, Rule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from induction.cyk_service import CykService
-from induction.cyk_statistics import CykStatistics
 from induction.grammar_corrector import GrammarCorrector
+from statistics.cyk_statistics import GrammarStatistics
 
 
 class TestGrammarCorrector(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestGrammarCorrector(unittest.TestCase):
         self.rule_population_mock.configure_mock(universal_symbol=Symbol('U'),
                                                  starting_symbol=Symbol('S'))
         self.cyk_service_mock = create_autospec(CykService)
-        self.cyk_service_mock.configure_mock(statistics=create_autospec(CykStatistics))
+        self.cyk_service_mock.configure_mock(statistics=create_autospec(GrammarStatistics))
 
         self.rule_a = self.mk_rule('A', 'a')
         self.rule_b = self.mk_rule('B', 'a')
