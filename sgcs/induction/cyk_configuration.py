@@ -2,6 +2,7 @@ class CykConfiguration(object):
     def __init__(self):
         self._coverage = None
         self._rule_adding = None
+        self._grammar_correction = None
 
     @property
     def coverage(self):
@@ -18,6 +19,14 @@ class CykConfiguration(object):
     @rule_adding.setter
     def rule_adding(self, value):
         self._rule_adding = value
+
+    @property
+    def grammar_correction(self):
+        return self._grammar_correction
+
+    @grammar_correction.setter
+    def grammar_correction(self, value):
+        self._grammar_correction = value
 
 
 class CoverageConfiguration(object):
@@ -128,6 +137,11 @@ class CrowdingConfiguration(object):
     @size.setter
     def size(self, value):
         self._size = value
+
+
+class GrammarCorrection(object):
+    def __init__(self):
+        self.should_run = False
 
 
 class InvalidCykConfigurationError(Exception):

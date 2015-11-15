@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from hamcrest import *
 
+from induction.traceback import Traceback
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
 from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
@@ -10,11 +11,11 @@ from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator,
 from sgcs.induction.coverage.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
     CoverageOperatorsConfiguration, CoverageOperatorConfiguration, AddingRulesConfiguration, \
-    CrowdingConfiguration
+    CrowdingConfiguration, GrammarCorrection
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.cyk_statistics import PasiekaRuleStatistics, CykStatistics, \
-    ClassicRuleStatistics, ClassicFitness
+    ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
 from sgcs.induction.rule import Rule, TerminalRule
 from sgcs.induction.rule_population import RulePopulation
 from sgcs.induction.symbol import Symbol, Sentence
@@ -26,9 +27,11 @@ class TestModule(TestCase):
         self.sut = None
         self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
+        self.cyk_configuration.grammar_correction = GrammarCorrection()
         self.coverage_operations = CoverageOperations()
         self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
         self.rule_statistics = ClassicRuleStatistics()
+        self.traceback_visitors = [StatisticsVisitor()]
         self.fitness = ClassicFitness(10, 1, 1, 1, 1)
 
         self.grammar_sentence = self.create_sentence(
@@ -47,10 +50,22 @@ class TestModule(TestCase):
             Rule(Symbol('C'), Symbol('S'), Symbol('B')),
             Rule(Symbol('B'), Symbol('B'), Symbol('B'))
         ])
+        self.random_rules = self.create_rules([
+            Rule(Symbol('S'), Symbol('NP'), Symbol('VP')),
+            Rule(Symbol('VP'), Symbol('VP'), Symbol('PP')),
+            Rule(Symbol('VP'), Symbol('V'), Symbol('NP')),
+            Rule(Symbol('PP'), Symbol('P'), Symbol('NP')),
+            Rule(Symbol('NP'), Symbol('Det'), Symbol('N')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('B')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('C')),
+            Rule(Symbol('C'), Symbol('S'), Symbol('B')),
+            Rule(Symbol('B'), Symbol('B'), Symbol('B'))
+        ])
 
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration, self.randomizer,
-                              self.coverage_operations, fitness=self.fitness)
+                              self.coverage_operations, fitness=self.fitness,
+                              traceback=Traceback(self.traceback_visitors))
 
         self.sut.statistics = CykStatistics(self.rule_statistics, self.sut)
         self.sut.rule_adding.strategies = self.rule_adding_strategies
@@ -65,7 +80,7 @@ class TestModule(TestCase):
 
         return rule_population
 
-    def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
+    def service_wire_up(self, rules_population):
         # Given:
         factory = Factory({
             CykTypeId.symbol_pair_executor: cyk_executors.CykSymbolPairExecutor,
@@ -85,6 +100,10 @@ class TestModule(TestCase):
 
         for rule in rules_population.all_non_terminal_rules:
             self.sut.statistics.on_added_new_rule(rule)
+
+    def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
+        # Given:
+        self.service_wire_up(rules_population)
 
         # When:
         cyk_result = self.sut.perform_cyk(rules_population, sentence)
@@ -299,3 +318,54 @@ class TestModule(TestCase):
 
         # When/Then:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)
+
+    def prepare_default_gcs_module(self):
+        self.prepare_coverage_module()
+        self.cyk_configuration.coverage.operators.terminal.chance = 1
+        self.cyk_configuration.coverage.operators.universal.chance = 1
+        self.cyk_configuration.coverage.operators.starting.chance = 1
+        self.cyk_configuration.coverage.operators.aggressive.chance = 0.33
+        self.cyk_configuration.coverage.operators.full.chance = 0.5
+
+    def test_gcs_induction_should_run_smoothly(self):
+        # Given:
+        self.prepare_default_gcs_module()
+        self.cyk_configuration.grammar_correction.should_run = False
+        rule_population = self.random_rules
+
+        sentences = [
+            self.create_sentence(
+                Symbol('she'),
+                Symbol('eats'),
+                Symbol('a'),
+                Symbol('fish'),
+                Symbol('with'),
+                Symbol('a'),
+                Symbol('fork')),
+
+            self.create_sentence(
+                Symbol('she'),
+                Symbol('eats'),
+                Symbol('a'),
+                Symbol('fish')),
+
+            self.create_sentence(
+                Symbol('he'),
+                Symbol('eats'),
+                Symbol('a'),
+                Symbol('fish'),
+                Symbol('with'),
+                Symbol('a'),
+                Symbol('knife'))
+        ]
+
+        len_of_non_terminal_rules = len(list(rule_population.get_all_non_terminal_rules()))
+
+        self.service_wire_up(rule_population)
+
+        # When:
+        self.sut.perform_cyk_for_all_sentences(rule_population, sentences)
+
+        # Then:
+        assert_that(len(list(rule_population.get_all_non_terminal_rules())),
+                    is_(equal_to(len_of_non_terminal_rules)))

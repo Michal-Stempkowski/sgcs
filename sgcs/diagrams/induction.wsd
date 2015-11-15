@@ -44,7 +44,7 @@ package induction {
     }
 
     class CykService
-    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None, traceback=None)
+    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None, traceback=None, grammar_corrector=None)
     CykService : coverage_operations
     CykService : configuration
     CykService : randomizer
@@ -235,6 +235,7 @@ package induction {
         DummyCykStatistics : on_added_new_rule(self, rule)
         DummyCykStatistics : on_rule_usage(self, rule, usage_info=None)
         DummyCykStatistics : on_rule_removed(self, rule)
+        DummyCykStatistics : update_fitness(self, cyk_service)
         DummyCykStatistics <-- CykService: uses
 
         class CykStatistics
@@ -250,6 +251,7 @@ package induction {
         RuleStatistics : get_rule_statistics(self, rule, cyk_service)
         RuleStatistics : removed_rule(self, rule, cyk_service)
         RuleStatistics : create_usage(cyk_service, cyk_result, sentence)
+        RuleStatistics : update_fitness(self, cyk_service)
         RuleStatistics "0..1" o-- "1" CykStatistics
         RuleStatistics ..> CykService: uses
         RuleStatistics ..> CykResult: uses

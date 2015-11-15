@@ -1,3 +1,4 @@
+from induction.grammar_corrector import GrammarCorrector
 from induction.traceback import Traceback
 from sgcs.induction.coverage.coverage_operators import CoverageOperations
 from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor
@@ -7,7 +8,7 @@ from sgcs.induction.cyk_statistics import DummyCykStatistics, PasiekaFitness, Cl
 
 class CykService(object):
     def __init__(self, factory, configuration, randomizer, coverage_operations=None,
-                 statistics=None, fitness=None, traceback=None):
+                 statistics=None, fitness=None, traceback=None, grammar_corrector=None):
         self.factory = factory
         self.table_executor = self.factory.create(CykTypeId.table_executor, self)
         self._configuration = configuration
@@ -18,16 +19,22 @@ class CykService(object):
         self._fitness = fitness
         self._rule_adding = AddingRuleSupervisor()
         self._traceback = Traceback([]) if traceback is None else traceback
+        self.grammar_corrector = GrammarCorrector() if grammar_corrector is None \
+            else grammar_corrector
 
     def perform_cyk(self, rules_population, sentence):
         environment = self.factory.create(CykTypeId.environment, sentence, self.factory)
         result = self.table_executor.execute(environment, rules_population)
+        self.traceback.perform_traceback(self, environment, result, rules_population)
         return result
 
     def perform_cyk_for_all_sentences(self, rule_population, sentences):
+        if self.configuration.grammar_correction.should_run:
+            self.grammar_corrector.correct_grammar(rule_population, self)
         for sentence in sentences:
-            result = self.perform_cyk(rule_population, sentence)
-            # if result
+            self.perform_cyk(rule_population, sentence)
+
+        self.statistics.update_fitness(self)
 
     @property
     def configuration(self):

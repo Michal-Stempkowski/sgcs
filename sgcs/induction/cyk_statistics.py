@@ -14,6 +14,10 @@ class RuleStatistics(metaclass=ABCMeta):
     def has_rule(self, rule):
         return rule in self._rule_info
 
+    def update_fitness(self, cyk_service):
+        for rule, rule_info in self._rule_info.items():
+            rule_info.fitness = cyk_service.fitness.calculate(cyk_service, rule)
+
     @abstractmethod
     def get_rule_statistics(self, rule, cyk_service):
         pass
@@ -231,6 +235,9 @@ class DummyCykStatistics(object):
     def on_rule_removed(self, rule):
         pass
 
+    def update_fitness(self, cyk_service):
+        pass
+
 
 class CykStatistics(DummyCykStatistics):
     def __init__(self, rule_statistics, cyk_service):
@@ -249,3 +256,6 @@ class CykStatistics(DummyCykStatistics):
 
     def on_rule_removed(self, rule):
         self.rule_statistics.removed_rule(rule, self.cyk_service)
+
+    def update_fitness(self, cyk_service):
+        self.rule_statistics.update_fitness(cyk_service)
