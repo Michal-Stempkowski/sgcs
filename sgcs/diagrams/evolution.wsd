@@ -10,15 +10,35 @@ package evolution {
     EvolutionService : randomizer
     EvolutionService : def __init__(self, configuration, randomizer)
 
+    class InvalidArityException
+
     class EvolutionOperator
     EvolutionOperator : arity
-    EvolutionOperator : apply(self, service, *rules)
-    EvolutionOperator : apply_impl(self, service, *rules)
+    EvolutionOperator : apply(self, service, rule_population, *rules)
+    EvolutionOperator : apply_impl(self, service, rule_population, *rules)
+    EvolutionOperator : get_execution_chance(self, service)
     EvolutionOperator --> Rule: creates
     EvolutionOperator ..> EvolutionService: uses
+    EvolutionOperator ..> RulePopulation: uses
+    EvolutionOperator ..> InvalidArityException: raises
 
     class InversionOperator
     InversionOperator --|> EvolutionOperator
+
+    class MutationOperator
+    MutationOperator --|> EvolutionOperator
+
+    class ParentMutationOperator
+    ParentMutationOperator --|> MutationOperator
+
+    class LeftChildMutationOperator
+    LeftChildMutationOperator --|> MutationOperator
+
+    class RightChildMutationOperator
+    RightChildMutationOperator --|> MutationOperator
+
+    class CrossoverOperator
+    CrossoverOperator --|> EvolutionOperator
 }
 
 @enduml
