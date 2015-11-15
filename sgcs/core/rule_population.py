@@ -1,4 +1,4 @@
-from sgcs.induction.symbol import Symbol
+from core.symbol import Symbol
 
 
 class RulePopulationAccessViolationError(Exception):

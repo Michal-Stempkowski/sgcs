@@ -1,9 +1,11 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec, PropertyMock
+from unittest.mock import create_autospec
+
 from hamcrest import *
+
+from core.rule import Rule
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import ProductionPool, Production, EmptyProduction
-from sgcs.induction.rule import Rule
 
 
 class TestProductionPool(unittest.TestCase):

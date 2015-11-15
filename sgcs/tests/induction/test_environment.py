@@ -1,14 +1,15 @@
 import unittest
-from unittest.mock import create_autospec, PropertyMock, call
+from unittest.mock import create_autospec, call
+
 from hamcrest import *
+
+from core.rule import Rule, TerminalRule
+from core.symbol import Sentence, Symbol
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment, CykTableIndexError
 from sgcs.induction.production import Production, ProductionPool
-from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.symbol import Sentence, Symbol
-from sgcs.tests.test_common import are_
 
 
 class TestEnvironment(unittest.TestCase):

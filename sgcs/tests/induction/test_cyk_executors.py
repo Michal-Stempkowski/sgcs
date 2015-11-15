@@ -1,14 +1,16 @@
 import unittest
 from unittest.mock import create_autospec, PropertyMock, call
+
 from hamcrest import *
+
+from core.rule import Rule, TerminalRule
+from core.rule_population import RulePopulation
+from core.symbol import Symbol
 from sgcs.factory import Factory
 from sgcs.induction.cyk_executors import *
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.environment import Environment
 from sgcs.induction.production import ProductionPool, Production, EmptyProduction
-from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.rule_population import RulePopulation
-from sgcs.induction.symbol import Symbol
 from sgcs.tests.test_common import are_
 
 

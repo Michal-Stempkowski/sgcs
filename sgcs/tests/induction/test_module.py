@@ -3,6 +3,9 @@ from unittest import TestCase
 
 from hamcrest import *
 
+from core.rule import Rule, TerminalRule
+from core.rule_population import RulePopulation
+from core.symbol import Symbol, Sentence
 from induction.traceback import Traceback
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
@@ -14,11 +17,8 @@ from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfigura
     CrowdingConfiguration, GrammarCorrection
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
-from sgcs.induction.cyk_statistics import PasiekaRuleStatistics, CykStatistics, \
+from sgcs.induction.cyk_statistics import CykStatistics, \
     ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
-from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.rule_population import RulePopulation
-from sgcs.induction.symbol import Symbol, Sentence
 from sgcs.utils import Randomizer
 
 

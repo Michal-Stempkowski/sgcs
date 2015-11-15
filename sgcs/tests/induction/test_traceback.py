@@ -1,15 +1,16 @@
 import unittest
-from unittest.mock import create_autospec, PropertyMock, call
+from unittest.mock import create_autospec
+
 from hamcrest import *
 
+from core.rule import TerminalRule, Rule
+from core.rule_population import RulePopulation
+from core.symbol import Symbol
 from induction.cyk_executors import CykResult
 from induction.cyk_service import CykService
 from induction.detector import Detector
 from induction.environment import Environment
 from induction.production import Production
-from induction.rule import TerminalRule, Rule
-from induction.rule_population import RulePopulation
-from induction.symbol import Symbol
 from induction.traceback import Traceback
 
 

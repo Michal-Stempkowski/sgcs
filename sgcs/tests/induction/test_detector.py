@@ -1,10 +1,12 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import create_autospec
+
 from hamcrest import *
+
+from core.rule import Rule
+from core.rule_population import RulePopulation
 from sgcs.induction.detector import Detector
 from sgcs.induction.environment import Environment, CykTableIndexError
-from sgcs.induction.rule import Rule
-from sgcs.induction.rule_population import RulePopulation
 
 
 class TestDetector(unittest.TestCase):

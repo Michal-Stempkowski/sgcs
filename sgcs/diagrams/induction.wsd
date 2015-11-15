@@ -1,4 +1,7 @@
 @startuml
+
+!include core.wsdi
+
 package induction {
 
     Detector ..> RulePopulation: uses
@@ -54,7 +57,7 @@ package induction {
     CykService : perform_cyk_for_all_sentences(self, rule_population, sentences)
     CykService : traceback
     CykService ..> CykExecutors: creates (factory)
-    CykService ..> Sentence: uses
+    CykService ..() core.Sentence: uses
     CykService ..> CykResult: uses
     CykService ..> Environment: creates (factory)
     CykService --* "1" CykTypeId
@@ -171,41 +174,6 @@ package induction {
 
     Environment ..> ProductionPool: creates (factory)
     Environment ..> Production: uses
-
-    SymbolTranslator --> Symbol: translates
-
-    Sentence --o Symbol
-    Sentence : __init__(self, symbols, is_positive_sentence=None)
-    Sentence : is_positive_sentence
-    Sentence : __len__(self)
-    Sentence : get_symbol(self, index)
-
-    class Symbol
-    Symbol : __init__(self, symbol_id)
-
-    class RulePopulation
-    RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None)
-    RulePopulation : starting_symbol
-    RulePopulation : universal_symbol
-    RulePopulation : max_terminal_symbols
-    RulePopulation : get_all_non_terminal_rules(self)
-    RulePopulation : add_rule(self, rule)
-    RulePopulation : get_rules_by_right(self, pair)
-    RulePopulation : get_terminal_rules(self, symbol)
-    RulePopulation : get_random_non_terminal_symbol(self, randomizer)
-    RulePopulation : get_random_rules(self, randomizer, terminal, size)
-    RulePopulation : remove_rule(self, rule)
-    RulePopulation --o Rule
-    RulePopulation --> Symbol: creates
-
-    Rule : __init__(self, parent, left_child, right_child)
-    Rule : parent
-    Rule : left_child
-    Rule : right_child
-    Rule : is_terminal_rule(self)
-
-    TerminalRule --|> Rule
-    TerminalRule : __init__(self, parent, child)
 
     package CykStatistics {
         '&begin_cyk_statistics
@@ -364,12 +332,15 @@ package induction {
             CoverageOperator ..> AddingRuleSupervisor: uses
 
             class TerminalCoverageOperator
+            TerminalCoverageOperator --> TerminalRule: uses
             TerminalCoverageOperator --|> CoverageOperator
 
             class UniversalCoverageOperator
+            TerminalCoverageOperator --> TerminalRule: uses
             UniversalCoverageOperator --|> CoverageOperator
 
             class StartingCoverageOperator
+            TerminalCoverageOperator --> TerminalRule: uses
             StartingCoverageOperator --|> CoverageOperator
 
             class AggressiveCoverageOperator
@@ -421,10 +392,6 @@ package induction {
     GrammarCorrector ..> RulePopulation: uses
     GrammarCorrector <--> CykService: uses
 
-}
-
-package datalayer {
-    SymbolTranslator --() ExternalSymbol: translates
 }
 
 @enduml

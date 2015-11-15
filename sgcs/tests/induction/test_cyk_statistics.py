@@ -1,12 +1,13 @@
 import unittest
-from unittest.mock import MagicMock, create_autospec, PropertyMock
+from unittest.mock import create_autospec
+
 from hamcrest import *
 
+from core.rule import Rule
+from core.symbol import Symbol
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.cyk_statistics import PasiekaRuleStatistics, CykStatistics, PasiekaFitness, PasiekaRuleInfo, \
     PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo
-from sgcs.induction.rule import Rule
-from sgcs.induction.symbol import Symbol
 
 
 class TestPasiekaRuleStatistics(unittest.TestCase):

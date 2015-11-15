@@ -1,0 +1,24 @@
+@startuml
+
+!include core.wsdi
+
+package core {
+
+class Symbol
+Symbol : __init__(self, symbol_id)
+
+class SymbolTranslator
+SymbolTranslator --> Symbol: translates
+
+Sentence --o Symbol
+
+RulePopulation --o Rule
+RulePopulation --> Symbol: creates
+
+}
+
+package datalayer {
+    SymbolTranslator --() ExternalSymbol: translates
+}
+
+@enduml

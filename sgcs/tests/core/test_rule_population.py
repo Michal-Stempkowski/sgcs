@@ -1,10 +1,11 @@
 import unittest
-from hamcrest import *
 from unittest.mock import create_autospec
 
-from sgcs.induction.rule import Rule, TerminalRule
-from sgcs.induction.rule_population import RulePopulation, RulePopulationAccessViolationError
-from sgcs.induction.symbol import Symbol
+from hamcrest import *
+
+from core.rule import Rule, TerminalRule
+from core.rule_population import RulePopulation, RulePopulationAccessViolationError
+from core.symbol import Symbol
 from sgcs.utils import Randomizer
 
 

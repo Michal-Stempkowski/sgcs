@@ -1,13 +1,14 @@
 import unittest
-from unittest.mock import create_autospec, PropertyMock, call
+from unittest.mock import create_autospec
+
 from hamcrest import *
 
+from core.rule import TerminalRule, Rule
+from core.rule_population import RulePopulation
+from core.symbol import Symbol
 from induction.cyk_service import CykService
 from induction.cyk_statistics import CykStatistics
 from induction.grammar_corrector import GrammarCorrector
-from induction.rule import TerminalRule, Rule
-from induction.rule_population import RulePopulation
-from induction.symbol import Symbol
 
 
 class TestGrammarCorrector(unittest.TestCase):
