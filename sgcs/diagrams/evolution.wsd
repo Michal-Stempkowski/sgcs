@@ -1,0 +1,24 @@
+@startuml
+
+!include core.wsdi
+hide TerminalRule
+hide Sentence
+
+package evolution {
+    class EvolutionService
+    EvolutionService : configuration
+    EvolutionService : randomizer
+    EvolutionService : def __init__(self, configuration, randomizer)
+
+    class EvolutionOperator
+    EvolutionOperator : arity
+    EvolutionOperator : apply(self, service, *rules)
+    EvolutionOperator : apply_impl(self, service, *rules)
+    EvolutionOperator --> Rule: creates
+    EvolutionOperator ..> EvolutionService: uses
+
+    class InversionOperator
+    InversionOperator --|> EvolutionOperator
+}
+
+@enduml
