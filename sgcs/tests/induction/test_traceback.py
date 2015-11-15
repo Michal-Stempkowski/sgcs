@@ -5,7 +5,7 @@ from hamcrest import *
 
 from core.rule import TerminalRule, Rule
 from core.rule_population import RulePopulation
-from core.symbol import Symbol
+from core.symbol import Symbol, Sentence
 from induction.cyk_executors import CykResult
 from induction.cyk_service import CykService
 from induction.detector import Detector
@@ -25,6 +25,7 @@ class TestTraceback(unittest.TestCase):
 
         self.cyk_service_mock = create_autospec(CykService)
         self.environment_mock = create_autospec(Environment)
+        self.environment_mock.configure_mock(sentence=create_autospec(Sentence))
 
         self.rule_population_mock = create_autospec(RulePopulation)
         self.rule_population_mock.configure_mock(starting_symbol=Symbol('S'))

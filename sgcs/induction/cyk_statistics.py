@@ -184,9 +184,9 @@ class ClassicRuleStatistics(RuleStatistics):
 
 
 class StatisticsVisitor(object):
-    def __call__(self, production, cyk_service, environment, cyk_result, rules_population):
+    def __call__(self, production, cyk_service, sentence, cyk_result, rules_population):
         usage_info = cyk_service.statistics.rule_statistics.create_usage(cyk_service, cyk_result,
-                                                                         environment.sentence)
+                                                                         sentence)
         cyk_service.statistics.on_rule_usage(production.rule, usage_info)
 
 
