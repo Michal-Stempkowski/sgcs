@@ -1,0 +1,90 @@
+@startuml
+
+!include detector.wsdi
+!include core.wsdi
+!include coverage_operators.wsdi
+!include environment.wsdi
+
+package cyk_executors {
+    enum CykTypeId {
+        symbol_pair_executor = 0
+        parent_combination_executor = 1
+        cell_executor = 2
+        row_executor = 3
+        table_executor = 4
+        production_pool = 5
+        environment = 6
+        cyk_result = 7
+        terminal_cell_executor = 8
+    }
+
+    class CykResult
+    CykResult : belongs_to_grammar
+
+    class CykExecutor
+    CykExecutor : child_level
+    CykExecutor : cyk_service
+    CykExecutor : __init__(self, child_level, cyk_service)
+    CykExecutor : create_child_executor(self, *args)
+    CykExecutor : get_coordinates(self)
+    CykExecutor --> CykTypeId: uses
+
+    class CykTableExecutor
+    CykTableExecutor : __init__(self, executor_factory)
+    CykTableExecutor : execute(self, environment, rule_population)
+    CykTableExecutor --|> CykExecutor
+    CykTableExecutor ..> Environment: uses
+    CykTableExecutor ..> RulePopulation: uses
+    CykTableExecutor --> CykResult: creates
+    CykTableExecutor ..> CoverageOperations: uses
+    CykTableExecutor --> CoverageType: uses
+
+    class CykRowExecutor
+    CykRowExecutor : current_row
+    CykRowExecutor : __init__(self, table_executor, row, cyk_service)
+    CykRowExecutor : execute(self, environment, rule_population)
+    CykRowExecutor <..> CykTableExecutor: uses
+    CykRowExecutor --|> CykExecutor
+
+    class CykFirstRowExecutor
+    CykFirstRowExecutor <..> CykTableExecutor: uses
+    CykFirstRowExecutor --|> CykRowExecutor
+
+    class CykCellExecutor
+    CykCellExecutor : current_row
+    CykCellExecutor : current_col
+    CykCellExecutor : __init__(self, row_executor, column, cyk_service)
+    CykCellExecutor ..> CoverageOperations: uses
+    CykCellExecutor --> CoverageType: uses
+    CykCellExecutor <..> CykRowExecutor: uses
+    CykCellExecutor --|> CykExecutor
+
+    class CykTerminalCellExecutor
+    CykTerminalCellExecutor : current_row
+    CykTerminalCellExecutor : current_col
+    CykTerminalCellExecutor : __init__(self, row_executor, column, cyk_service)
+    CykTerminalCellExecutor --> Detector: creates
+    CykTerminalCellExecutor ..> CoverageOperations: uses
+    CykTerminalCellExecutor --> CoverageType: uses
+    CykTerminalCellExecutor <..> CykFirstRowExecutor: uses
+    CykTerminalCellExecutor --|> CykCellExecutor
+
+    class CykParentCombinationExecutor
+    CykParentCombinationExecutor : current_row
+    CykParentCombinationExecutor : current_col
+    CykParentCombinationExecutor : shift
+    CykParentCombinationExecutor : __init__(self, cell_executor, shift, cyk_service)
+    CykParentCombinationExecutor <..> CykCellExecutor: uses
+    CykParentCombinationExecutor --|> CykExecutor
+
+    class CykSymbolPairExecutor
+    CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, cyk_service)
+    CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
+    CykSymbolPairExecutor --> Detector: creates
+    CykSymbolPairExecutor --|> CykExecutor
+
+}
+
+
+
+@enduml

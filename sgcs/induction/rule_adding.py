@@ -12,7 +12,7 @@ class AddingRuleStrategy(object, metaclass=ABCMeta):
         self.hints = []
 
     @abstractmethod
-    def apply(self, cyk_service, rule, rule_population):
+    def apply(self, adding_supervisor, statistics, rule, rule_population):
         pass
 
     def is_applicable(self, strategy_hint):
@@ -24,9 +24,9 @@ class SimpleAddingRuleStrategy(AddingRuleStrategy):
         super().__init__()
         self.hints.append(AddingRuleStrategyHint.expand_population)
 
-    def apply(self, cyk_service, rule, rule_population):
+    def apply(self, adding_supervisor, statistics, rule, rule_population):
         rule_population.add_rule(rule)
-        cyk_service.statistics.on_added_new_rule(rule)
+        statistics.on_added_new_rule(rule)
 
 
 class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
@@ -46,35 +46,72 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
             return -1
 
     @staticmethod
-    def replace_rule(old, new, rule_population, cyk_service):
+    def replace_rule(old, new, rule_population, statistics):
         rule_population.remove_rule(old)
-        cyk_service.statistics.on_rule_removed(old)
+        statistics.on_rule_removed(old)
 
         rule_population.add_rule(new)
-        cyk_service.statistics.on_added_new_rule(new)
+        statistics.on_added_new_rule(new)
 
-    def apply(self, cyk_service, rule, rule_population):
+    def apply(self, adding_supervisor, statistics, rule, rule_population):
         weak_rules = set()
-        for _ in range(cyk_service.configuration.rule_adding.crowding.factor):
+        for _ in range(adding_supervisor.configuration.crowding.factor):
             subpopulation = rule_population.get_random_rules(
-                cyk_service.randomizer, False, cyk_service.configuration.rule_adding.crowding.size)
+                adding_supervisor.randomizer, False, adding_supervisor.configuration.crowding.size)
 
-            cyk_service.randomizer.shuffle(subpopulation)
+            adding_supervisor.randomizer.shuffle(subpopulation)
 
-            worst_rule = min(subpopulation, key=cyk_service.fitness.get_keyfunc_getter(cyk_service))
+            worst_rule = min(subpopulation, key=statistics.fitness.get_keyfunc_getter(statistics))
             weak_rules.add(worst_rule)
 
         most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
-        self.replace_rule(most_related_rule, rule, rule_population, cyk_service)
+        self.replace_rule(most_related_rule, rule, rule_population, statistics)
 
 
 class AddingRuleSupervisor(object):
-    def __init__(self):
-        self.strategies = []
+    def __init__(self, randomizer, configuration, strategies):
+        self.strategies = strategies
+        self.randomizer = randomizer
+        self.configuration = configuration
 
-    def add_rule(self, rule, rule_population, cyk_service,
+    def add_rule(self, rule, rule_population, statistics,
                  strategy_hint=AddingRuleStrategyHint.expand_population):
         strategy_to_be_used = next(filter(
             lambda strategy: strategy.is_applicable(strategy_hint), self.strategies))
 
-        strategy_to_be_used.apply(cyk_service, rule, rule_population)
+        strategy_to_be_used.apply(self, statistics, rule, rule_population)
+
+
+class AddingRulesConfiguration(object):
+    def __init__(self):
+        self._crowding = None
+
+    @property
+    def crowding(self):
+        return self._crowding
+
+    @crowding.setter
+    def crowding(self, value):
+        self._crowding = value
+
+
+class CrowdingConfiguration(object):
+    def __init__(self):
+        self._factor = None
+        self._size = None
+
+    @property
+    def factor(self):
+        return self._factor
+
+    @factor.setter
+    def factor(self, value):
+        self._factor = value
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, value):
+        self._size = value

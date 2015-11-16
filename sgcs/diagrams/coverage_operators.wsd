@@ -1,0 +1,60 @@
+@startuml
+
+!include detector.wsdi
+!include core.wsdi
+!include induction.wsdi
+!include coverage_operators.wsdi
+
+package coverage_operators  {
+
+    enum CoverageType {
+        unknown_terminal_symbol = 0
+        no_effector_found = 1
+        no_starting_symbol = 2
+    }
+
+    class CoverageOperations
+    CoverageOperations : operators
+    CoverageOperations : perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates)
+    CoverageOperations ..> CykService: uses
+    CoverageOperations --> CoverageType: uses
+    CoverageOperations ..> Environment: uses
+    CoverageOperations ..> RulePopulation: uses
+    CoverageOperations ..> CoverageOperator: uses
+
+    class CoverageOperator
+    CoverageOperator : coverage_type
+    CoverageOperator : adding_rule_strategy_type
+    CoverageOperator : empty_production(coordinates)
+    CoverageOperator : production(coordinates, rule)
+    CoverageOperator : cover(self, cyk_service, environment, rule_population, coordinates)
+    CoverageOperator : cover_impl(self, cyk_service, environment, rule_population, coordinates)
+    CoverageOperator : __init__(self, coverage_type, adding_rule_strategy_type=AddingRuleStrategyHint.expand_population)
+    CoverageOperator : get_chance(self, cyk_service)
+    CoverageOperator --> AddingRuleStrategyHint: uses
+    CoverageOperator --> Production: creates
+    CoverageOperator --> EmptyProduction: creates
+    CoverageOperator --> Detector: creates
+
+    class TerminalCoverageOperator
+    TerminalCoverageOperator --|> CoverageOperator
+    TerminalCoverageOperator --> TerminalRule: creates
+
+    class UniversalCoverageOperator
+    UniversalCoverageOperator --|> CoverageOperator
+    UniversalCoverageOperator ..> InvalidCykConfigurationError: raises
+    UniversalCoverageOperator --> TerminalRule: creates
+
+    class StartingCoverageOperator
+    StartingCoverageOperator --|> CoverageOperator
+    StartingCoverageOperator --> TerminalRule: creates
+
+    class AggressiveCoverageOperator
+    AggressiveCoverageOperator --|> CoverageOperator
+    AggressiveCoverageOperator --> Rule: creates
+
+    class FullCoverageOperator
+    FullCoverageOperator --|> AggressiveCoverageOperator
+}
+
+@enduml

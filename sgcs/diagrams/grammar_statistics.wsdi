@@ -1,0 +1,8 @@
+@startuml
+package grammar_statistics #DDDDDD {
+
+class GrammarStatistics
+
+}
+
+@enduml

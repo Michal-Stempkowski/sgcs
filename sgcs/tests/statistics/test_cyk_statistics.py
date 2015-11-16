@@ -7,7 +7,8 @@ from core.rule import Rule
 from core.symbol import Symbol
 from sgcs.induction.cyk_service import CykService
 from statistics.cyk_statistics import PasiekaRuleStatistics, GrammarStatistics, PasiekaFitness, PasiekaRuleInfo, \
-    PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo
+    PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo, Fitness
+from utils import Randomizer
 
 
 class TestPasiekaRuleStatistics(unittest.TestCase):
@@ -192,8 +193,12 @@ class TestGrammarStatistics(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
         self.rule_statistics_mock = create_autospec(PasiekaRuleStatistics)
-        self.cyk_service_mock = create_autospec(CykService)
-        self.sut = GrammarStatistics(self.rule_statistics_mock, self.cyk_service_mock)
+        self.empty_statistics_visitor = []
+        self.fitness = create_autospec(Fitness)
+        self.randomizer_mock = create_autospec(Randomizer)
+
+        self.sut = GrammarStatistics(self.randomizer_mock, self.rule_statistics_mock,
+                                     self.empty_statistics_visitor, self.fitness)
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))
 
     def test_should_be_able_to_get_rule_statistics(self):
@@ -203,13 +208,13 @@ class TestGrammarStatistics(unittest.TestCase):
     def test_should_be_able_to_add_new_rule(self):
         self.sut.on_added_new_rule(self.rule)
         self.rule_statistics_mock.added_new_rule.assert_called_once_with(
-            self.rule, self.cyk_service_mock)
+            self.rule, self.sut)
 
     def test_should_be_able_to_add_rule_usage(self):
         self.rule_statistics_mock.has_rule.return_value = True
         self.sut.on_rule_usage(self.rule, None)
         self.rule_statistics_mock.rule_used.assert_called_once_with(
-            self.rule, None, self.cyk_service_mock)
+            self.rule, None, self.sut)
 
     def test_if_rule_does_not_exist_its_usage_should_be_ignored(self):
         self.rule_statistics_mock.has_rule.return_value = False
@@ -219,7 +224,7 @@ class TestGrammarStatistics(unittest.TestCase):
     def test_should_be_able_to_remove_rule(self):
         self.sut.on_rule_removed(self.rule)
         self.rule_statistics_mock.removed_rule.assert_called_once_with(
-            self.rule, self.cyk_service_mock)
+            self.rule, self.sut)
 
 
 class TestPasiekaFitness(unittest.TestCase):
@@ -230,8 +235,6 @@ class TestPasiekaFitness(unittest.TestCase):
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))
 
         self.statistics_mock = create_autospec(GrammarStatistics)
-        self.cyk_service_mock = create_autospec(CykService)
-        self.cyk_service_mock.configure_mock(statistics=self.statistics_mock)
 
     def test_fitness_should_be_calculated_properly(self):
         rule_info = PasiekaRuleInfo()
@@ -241,4 +244,4 @@ class TestPasiekaFitness(unittest.TestCase):
         left_side_info.left_side_usage = 5
 
         self.statistics_mock.get_rule_statistics.return_value = rule_info, left_side_info
-        assert_that(self.sut.calculate(self.cyk_service_mock, self.rule), is_(equal_to(4)))
+        assert_that(self.sut.calculate(self.statistics_mock, self.rule), is_(equal_to(4)))

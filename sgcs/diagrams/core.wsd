@@ -1,5 +1,17 @@
 @startuml
 
+package core {
+    package rule {
+        class Rule
+        class RulePopulation
+        class TerminalRule
+    }
+    package symbol {
+        class Sentence
+        class Symbol
+    }
+}
+
 !include core.wsdi
 
 package core {
@@ -10,10 +22,38 @@ Symbol : __init__(self, symbol_id)
 class SymbolTranslator
 SymbolTranslator --> Symbol: translates
 
+class Sentence
+Sentence : __init__(self, symbols, is_positive_sentence=None)
+Sentence : is_positive_sentence
+Sentence : __len__(self)
+Sentence : get_symbol(self, index)
 Sentence --o Symbol
 
+class RulePopulation
+RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None)
+RulePopulation : starting_symbol
+RulePopulation : universal_symbol
+RulePopulation : max_terminal_symbols
+RulePopulation : get_all_non_terminal_rules(self)
+RulePopulation : add_rule(self, rule)
+RulePopulation : get_rules_by_right(self, pair)
+RulePopulation : get_terminal_rules(self, symbol)
+RulePopulation : get_random_non_terminal_symbol(self, randomizer)
+RulePopulation : get_random_rules(self, randomizer, terminal, size)
+RulePopulation : remove_rule(self, rule)
 RulePopulation --o Rule
 RulePopulation --> Symbol: creates
+
+class Rule
+Rule : __init__(self, parent, left_child, right_child)
+Rule : parent
+Rule : left_child
+Rule : right_child
+Rule : is_terminal_rule(self)
+
+class TerminalRule
+TerminalRule --|> Rule
+TerminalRule : __init__(self, parent, child)
 
 }
 

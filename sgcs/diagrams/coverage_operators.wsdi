@@ -1,0 +1,9 @@
+@startuml
+
+package coverage_operators  #DDDDDD {
+
+    enum CoverageType
+    class CoverageOperations
+}
+
+@enduml

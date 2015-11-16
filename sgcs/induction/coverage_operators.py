@@ -2,7 +2,7 @@ from abc import abstractmethod, ABCMeta
 from enum import Enum
 
 from core.rule import TerminalRule, Rule
-from sgcs.induction.coverage.rule_adding import AddingRuleStrategyHint
+from induction.rule_adding import AddingRuleStrategyHint
 from sgcs.induction.cyk_configuration import InvalidCykConfigurationError
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
@@ -25,7 +25,8 @@ class CoverageOperations(object):
                 if not production.is_empty():
                     # rule_population.add_rule(production.rule)
                     # cyk_service.statistics.on_added_new_rule(production.rule)
-                    cyk_service.rule_adding.add_rule(production.rule, rule_population, cyk_service,
+                    cyk_service.rule_adding.add_rule(production.rule, rule_population,
+                                                     cyk_service.statistics,
                                                      operator.adding_rule_strategy_type)
                     environment.add_production(production)
 

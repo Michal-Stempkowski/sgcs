@@ -1,0 +1,49 @@
+@startuml
+
+!include utils.wsdi
+
+!include core.wsdi
+hide Sentence
+hide TerminalRule
+
+!include grammar_statistics.wsdi
+
+package rule_adding {
+
+    enum AddingRuleStrategyHint {
+        expand_population = 0
+        control_population_size = 1
+    }
+
+    class AddingRuleStrategy
+    AddingRuleStrategy : hints
+    AddingRuleStrategy : apply(self, adding_supervisor, statistics, rule, rule_population)
+    AddingRuleStrategy : is_applicable(self, strategy_hint)
+
+    class SimpleAddingRuleStrategy
+    SimpleAddingRuleStrategy --|> AddingRuleStrategy
+
+    class AddingRuleWithCrowdingStrategy
+    AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
+
+    class AddingRuleSupervisor
+    AddingRuleSupervisor : __init__(self, randomizer, configuration, strategies)
+    AddingRuleSupervisor : add_rule(self, rule, rule_population, statistics, strategy_hint=AddingRuleStrategyHint.expand_population)
+    AddingRuleSupervisor --* Randomizer
+    AddingRuleSupervisor --* AddingRulesConfiguration
+    AddingRuleSupervisor "1" --o "0..*"  AddingRuleStrategy
+    AddingRuleSupervisor ..> Rule: uses
+    AddingRuleSupervisor ..> RulePopulation: uses
+    AddingRuleSupervisor ..> GrammarStatistics: uses
+    AddingRuleSupervisor --> AddingRuleStrategyHint: uses
+
+    class AddingRulesConfiguration
+    AddingRulesConfiguration : crowding
+    AddingRulesConfiguration ..* CrowdingConfiguration: uses
+
+    class CrowdingConfiguration
+    CrowdingConfiguration : factor
+    CrowdingConfiguration : size
+}
+
+@enduml

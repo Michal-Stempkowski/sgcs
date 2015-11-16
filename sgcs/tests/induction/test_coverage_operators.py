@@ -7,10 +7,10 @@ from hamcrest import *
 from core.rule import TerminalRule, Rule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
-from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
+from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
     CoverageOperator, CoverageType
-from sgcs.induction.coverage.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
+from induction.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
 from sgcs.induction.cyk_configuration import CykConfiguration, InvalidCykConfigurationError
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.detector import Detector
@@ -432,6 +432,6 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
             self.coordinates)
 
         self.adding_rule_supervisor_mock.add_rule.assert_called_once_with(
-            expected_rule, self.rule_population_mock, self.cyk_service_mock,
+            expected_rule, self.rule_population_mock, self.cyk_service_mock.statistics,
             AddingRuleStrategyHint.expand_population)
         self.environment_mock.add_production.assert_called_once_with(expected_production)

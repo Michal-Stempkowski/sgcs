@@ -1,0 +1,13 @@
+@startuml
+
+package induction  #DDDDDD {
+
+    class CykService
+    class Environment
+    class Production
+    class EmptyProduction
+    class Detector
+
+}
+
+@enduml

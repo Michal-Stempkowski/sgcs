@@ -6,15 +6,14 @@ from hamcrest import *
 from core.rule import Rule, TerminalRule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol, Sentence
-from induction.traceback import Traceback
+from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
+    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
+from induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy, \
+    AddingRulesConfiguration, CrowdingConfiguration, AddingRuleSupervisor
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
-from sgcs.induction.coverage.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
-    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
-from sgcs.induction.coverage.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy
 from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperatorsConfiguration, CoverageOperatorConfiguration, AddingRulesConfiguration, \
-    CrowdingConfiguration, GrammarCorrection
+    CoverageOperatorsConfiguration, CoverageOperatorConfiguration, GrammarCorrection
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.utils import Randomizer
@@ -30,9 +29,11 @@ class TestModule(TestCase):
         self.cyk_configuration.grammar_correction = GrammarCorrection()
         self.coverage_operations = CoverageOperations()
         self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
-        self.rule_statistics = ClassicRuleStatistics()
-        self.traceback_visitors = [StatisticsVisitor()]
-        self.fitness = ClassicFitness(10, 1, 1, 1, 1)
+        self.statistics = GrammarStatistics(self.randomizer,
+                                            ClassicRuleStatistics(),
+                                            [StatisticsVisitor()],
+                                            ClassicFitness(10, 1, 1, 1, 1))
+        self.rule_adding = AddingRuleSupervisor(self.randomizer, None, self.rule_adding_strategies)
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -64,11 +65,10 @@ class TestModule(TestCase):
 
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration, self.randomizer,
-                              self.coverage_operations, fitness=self.fitness,
-                              traceback=Traceback(self.traceback_visitors))
+                              coverage_operations=self.coverage_operations,
+                              adding_rule_supervisor=self.rule_adding)
 
-        self.sut.statistics = GrammarStatistics(self.rule_statistics, self.sut)
-        self.sut.rule_adding.strategies = self.rule_adding_strategies
+        self.sut.statistics = self.statistics
 
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):
         return Sentence(sentence_seq, is_positive_sentence)
@@ -223,10 +223,10 @@ class TestModule(TestCase):
         self.prepare_rule_adding_module()
 
     def prepare_rule_adding_module(self):
-        self.cyk_configuration.rule_adding = AddingRulesConfiguration()
-        self.cyk_configuration.rule_adding.crowding = CrowdingConfiguration()
-        self.cyk_configuration.rule_adding.crowding.factor = 2
-        self.cyk_configuration.rule_adding.crowding.size = 3
+        self.rule_adding.configuration = AddingRulesConfiguration()
+        self.rule_adding.configuration.crowding = CrowdingConfiguration()
+        self.rule_adding.configuration.crowding.factor = 2
+        self.rule_adding.configuration.crowding.size = 3
 
     def default_coverage_operator_configuration(self):
         configuration = CoverageOperatorConfiguration()

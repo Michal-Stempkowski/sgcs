@@ -1,7 +1,6 @@
 class CykConfiguration(object):
     def __init__(self):
         self._coverage = None
-        self._rule_adding = None
         self._grammar_correction = None
 
     @property
@@ -11,14 +10,6 @@ class CykConfiguration(object):
     @coverage.setter
     def coverage(self, value):
         self._coverage = value
-
-    @property
-    def rule_adding(self):
-        return self._rule_adding
-
-    @rule_adding.setter
-    def rule_adding(self, value):
-        self._rule_adding = value
 
     @property
     def grammar_correction(self):
@@ -102,41 +93,6 @@ class CoverageOperatorConfiguration(object):
     @chance.setter
     def chance(self, value):
         self._chance = value
-
-
-class AddingRulesConfiguration(object):
-    def __init__(self):
-        self._crowding = None
-
-    @property
-    def crowding(self):
-        return self._crowding
-
-    @crowding.setter
-    def crowding(self, value):
-        self._crowding = value
-
-
-class CrowdingConfiguration(object):
-    def __init__(self):
-        self._factor = None
-        self._size = None
-
-    @property
-    def factor(self):
-        return self._factor
-
-    @factor.setter
-    def factor(self, value):
-        self._factor = value
-
-    @property
-    def size(self):
-        return self._size
-
-    @size.setter
-    def size(self, value):
-        self._size = value
 
 
 class GrammarCorrection(object):
