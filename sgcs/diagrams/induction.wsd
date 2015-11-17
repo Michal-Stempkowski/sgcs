@@ -1,397 +1,66 @@
 @startuml
 
-!include core.wsdi
+[data_layer]
+
+[core]
+core ..> data_layer
+
+[utils]
+[grammar_statistics]
+[rule_adding]
 
 package induction {
 
-    Detector ..> RulePopulation: uses
-    Detector "1" --> "[1;*]" Production: creates
-    Detector ..> Environment: uses
-    Detector : __init__(self, coordinates)
-    Detector : generate_production(self, environment, rule_population): list<Production>
-    Detector : coordinates: tuple
-
-    ProductionPool --o Production
-    ProductionPool : non_empty_productions
-    ProductionPool : empty_productions
-    ProductionPool : add_production(self, production)
-    ProductionPool : get_nonempty_productions(self)
-    ProductionPool : is_empty(self)
-    ProductionPool : get_effectors(self)
-    ProductionPool : get_unsatisfied_detectors(self)
-    ProductionPool : get_non_empty_productions(self)
-    ProductionPool : find_non_empty_productions(self, predicate)
-
-    Production : __init__(self, detector, rule)
-    Production : detector
-    Production : rule
-    Production : is_empty(self)
-    Production : get_coordinates(self)
-
-
-    EmptyProduction --|> Production
-    EmptyProduction : __init__(self, detector)
-    EmptyProduction : detector
-
-
-    enum CykTypeId {
-        symbol_pair_executor
-        parent_combination_executor
-        cell_executor
-        row_executor
-        table_executor
-        production_pool
-        environment
-        cyk_result
-        cyk_terminal_cell_executor
-    }
-
-    class CykService
-    CykService : __init__(self, factory, configuration, randomizer, coverage_operations=None, statistics=None, fitness=None, traceback=None, grammar_corrector=None)
-    CykService : coverage_operations
-    CykService : configuration
-    CykService : randomizer
-    CykService : rule_adding
-    CykService : fitness
-    CykService : perform_cyk(self, rule_population, sentence)
-    CykService : perform_cyk_for_all_sentences(self, rule_population, sentences)
-    CykService : traceback
-    CykService ..> CykExecutors: creates (factory)
-    CykService ..() core.Sentence: uses
-    CykService ..> CykResult: uses
-    CykService ..> Environment: creates (factory)
-    CykService --* "1" CykTypeId
-
-    package CykExecutors {
-    '&begin_cyk_executors
-
-        CykExecutor --* "1" CykTypeId
-        CykExecutor ..> CykService: uses
-        CykExecutor : __init__(self, child_level, cyk_service)
-        CykExecutor : create_child_executor(self, *args)
-
-        CykSymbolPairExecutor --|> CykExecutor
-        CykSymbolPairExecutor --> Detector: creates
-        CykSymbolPairExecutor ..> RulePopulation: uses
-        CykSymbolPairExecutor ..> Environment: uses
-        CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
-        CykSymbolPairExecutor : __init__(self, parent_executor, left_id, right_id, cyk_service)
-        CykSymbolPairExecutor : execute(self, environment, rule_population)
-        CykSymbolPairExecutor : get_coordinates(self)
-        CykSymbolPairExecutor : parent_executor
-
-        CykParentCombinationExecutor --|> CykExecutor
-        CykParentCombinationExecutor ..> RulePopulation: uses
-        CykParentCombinationExecutor ..> Environment: uses
-        CykParentCombinationExecutor : __init__(self, cell_executor, shift, cyk_service)
-        CykParentCombinationExecutor : parent_executor
-        CykParentCombinationExecutor : current_row
-        CykParentCombinationExecutor : current_col
-        CykParentCombinationExecutor : shift
-        CykParentCombinationExecutor : execute(self, environment, rule_population)
-        CykParentCombinationExecutor : get_coordinates(self)
-
-        CykCellExecutor --|> CykExecutor
-        CykCellExecutor ..> CykService: uses
-        CykCellExecutor ..> RulePopulation: uses
-        CykCellExecutor ..> Environment: uses
-        CykCellExecutor <..> CykParentCombinationExecutor: uses
-        CykCellExecutor : __init__(self, row_executor, column, cyk_service)
-        CykCellExecutor : parent_executor
-        CykCellExecutor : current_row
-        CykCellExecutor : current_col
-        CykCellExecutor : execute(self, environment, rule_population)
-
-        CykRowExecutor --|> CykExecutor
-        CykRowExecutor ..> RulePopulation: uses
-        CykRowExecutor ..> Environment: uses
-        CykRowExecutor <..> CykCellExecutor
-        CykRowExecutor : __init__(self, table_executor, row, cyk_service)
-        CykRowExecutor : parent_executor
-        CykRowExecutor : current_row
-        CykRowExecutor : execute(self, environment, rule_population)
-
-        CykTableExecutor --|> CykExecutor
-        CykTableExecutor <..> CykService: uses
-        CykTableExecutor ..> RulePopulation: uses
-        CykTableExecutor ..> Environment: uses
-        CykTableExecutor <..> CykRowExecutor: uses
-        CykTableExecutor : __init__(self, cyk_service)
-        CykTableExecutor : execute(self, environment, rule_population)
-        CykTableExecutor --> CykResult: creates
-        CykTableExecutor <..> CykFirstRowExecutor: uses
-
-        CykFirstRowExecutor --|> CykRowExecutor
-        CykFirstRowExecutor ..> RulePopulation: uses
-        CykFirstRowExecutor ..> Environment: uses
-        CykFirstRowExecutor : __init__(self, table_executor, row, cyk_service)
-        CykFirstRowExecutor : execute(self, environment, rule_population)
-        CykFirstRowExecutor <..> CykTerminalCellExecutor
-
-        CykTerminalCellExecutor --|> CykCellExecutor
-        CykTerminalCellExecutor ..> CykService: uses
-        CykTerminalCellExecutor ..> RulePopulation: uses
-        CykTerminalCellExecutor ..> Environment: uses
-        CykTerminalCellExecutor : __init__(self, row_executor, column, cyk_service)
-        CykTerminalCellExecutor : execute(self, environment, rule_population)
-        CykTerminalCellExecutor --> Detector: creates
-
-    '&end_cyk_executors
-    }
-
-    class CykResult
-    CykResult : belongs_to_grammar
-    CykResult : cyk_table
-    CykResult ..> Environment
-
-    '&alt_cyk_executors CykExecutors ..> Environment: uses
-    '&alt_cyk_executors CykExecutors ..> CykService: uses
-    '&alt_cyk_executors CykExecutors ..> Production: uses
-    '&alt_cyk_executors CykExecutors ..> RulePopulation: uses
-    '&alt_cyk_executors CykExecutors --> CykResult: creates
-    '&alt_cyk_executors CykExecutors --* "1" CykTypeId
-    '&alt_cyk_executors CykExecutors --> Detector: creates
-
-    Environment ..* "1" Sentence
-    Environment : __init__(self, sentence, factory)
-    Environment : sentence
-    Environment : cyk_table
-    Environment : get_symbols(self, absolute_coordinates)
-    Environment : add_production(self, production)
-    Environment : get_productions(self, detector)
-    Environment : get_last_cell_productions(self)
-    Environment : get_left_parent_symbol_count(self, coordinates_with_shift)
-    Environment : get_right_parent_symbol_count(self, coordinates_with_shift)
-    Environment : get_row_length(self, row)
-    Environment : get_sentence_length(self)
-    Environment : validate_absolute_coordinates(self, coordinates)
-    Environment : get_sentence_symbol(self, index)
-    Environment : get_detector_symbols(self, cords)
-    Environment : is_sentence_positive(self)
-    Environment : get_unsatisfied_detectors(self, coordinates)
-    Environment : has_no_productions(self, coordinates)
-    Environment : get_child_productions(self, production)
-
-    Environment ..> ProductionPool: creates (factory)
-    Environment ..> Production: uses
-
-    package CykStatistics {
-        '&begin_cyk_statistics
-
-        class Fitness
-        Fitness : calculate(self, cyk_service, rule)
-        Fitness : get(self, cyk_service, rule)
-        Fitness : get_keyfunc(self, cyk_service)
-        Fitness <.. CykService: uses
-
-        class PasiekaFitness
-        PasiekaFitness --|> Fitness
-
-        class ClassicFitness
-        ClassicFitness : __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight, negative_weight, valid_sentence_price=1, invalid_sentence_price=1)
-        ClassicFitness : base_fitness
-        ClassicFitness : classical_fitness_weight
-        ClassicFitness : fertility_weight
-        ClassicFitness : positive_weight
-        ClassicFitness : negative_weight
-        ClassicFitness : valid_sentence_price
-        ClassicFitness : invalid_sentence_price
-        ClassicFitness --|> Fitness
-
-        class DummyCykStatistics
-        DummyCykStatistics : get_rule_statistics(self, rule)
-        DummyCykStatistics : on_added_new_rule(self, rule)
-        DummyCykStatistics : on_rule_usage(self, rule, usage_info=None)
-        DummyCykStatistics : on_rule_removed(self, rule)
-        DummyCykStatistics : update_fitness(self, cyk_service)
-        DummyCykStatistics <-- CykService: uses
-
-        class CykStatistics
-        CykStatistics --|> DummyCykStatistics
-
-        class RuleInfo
-        RuleInfo : fitness
-        RuleInfo <-- Fitness
-
-        class RuleStatistics
-        RuleStatistics : added_new_rule(self, rule, cyk_service)
-        RuleStatistics : rule_used(self, rule, cyk_service)
-        RuleStatistics : get_rule_statistics(self, rule, cyk_service)
-        RuleStatistics : removed_rule(self, rule, cyk_service)
-        RuleStatistics : create_usage(cyk_service, cyk_result, sentence)
-        RuleStatistics : update_fitness(self, cyk_service)
-        RuleStatistics "0..1" o-- "1" CykStatistics
-        RuleStatistics ..> CykService: uses
-        RuleStatistics ..> CykResult: uses
-
-
-        class PasiekaRuleInfo
-        PasiekaRuleInfo --|> RuleInfo
-        PasiekaRuleInfo : rule_usage
-        PasiekaRuleInfo <-- PasiekaFitness: uses
-
-        class PasiekaLeftSideInfo
-        PasiekaLeftSideInfo : left_side_usage
-        PasiekaLeftSideInfo <-- PasiekaFitness: uses
-
-        class PasiekaRuleStatistics
-        PasiekaRuleStatistics --|> RuleStatistics
-        PasiekaRuleStatistics --> PasiekaRuleInfo: creates
-        PasiekaRuleStatistics --> PasiekaLeftSideInfo: creates
-
-        class ClassicRuleUsageInfo
-        ClassicRuleUsageInfo : __init__(self, positive_sentence, usage_count, points_gained=1)
-        ClassicRuleUsageInfo : positive_sentence
-        ClassicRuleUsageInfo : usage_count
-        ClassicRuleUsageInfo : points_gained
-
-        class ClassicRuleInfo
-        ClassicRuleInfo --|> RuleInfo
-        ClassicRuleInfo : valid_sentence_usage
-        ClassicRuleInfo : invalid_sentence_usage
-        ClassicRuleInfo : points_gained_for_valid_sentences
-        ClassicRuleInfo : points_gained_for_invalid_sentences
-        ClassicRuleInfo : points_total(self)
-        ClassicRuleInfo : apply_usage(self, usage_info)
-        ClassicRuleInfo <-- ClassicFitness: uses
-        ClassicRuleInfo --> ClassicRuleUsageInfo: uses
-
-        class ClassicRuleStatistics
-        ClassicRuleStatistics --|> RuleStatistics
-        ClassicRuleStatistics --> ClassicRuleInfo: creates
-
-        class StatisticsVisitor
-        StatisticsVisitor : __call__(self, production, cyk_service, environment, cyk_result, rules_population)
-        StatisticsVisitor ..> Production: uses
-        StatisticsVisitor <..> CykService: uses
-        StatisticsVisitor ..> Environment: uses
-        StatisticsVisitor ..> CykResult: uses
-        StatisticsVisitor ..> RulePopulation: uses
-
-
-        '&end_cyk_statistics
-    }
-
-    '&alt_cyk_statistics CykStatistics <-- CykService: uses
-    '&alt_cyk_statistics CykStatistics ..> CykResult: uses
-
-
-
-    enum CoverageType {
-        unknown_terminal_symbol
-        no_effector_found
-        no_starting_symbol
-    }
-
-    package Coverage {
-        '&begin_coverage
-
-        enum AddingRuleStrategyHint {
-            expand_population
-            control_population_size
-        }
-
-        package RuleAdding {
-
-            class AddingRuleStrategy
-            AddingRuleStrategy : is_applicable(self, strategy_hint)
-            AddingRuleStrategy : apply(self, cyk_service, rule, rule_population)
-            AddingRuleStrategy ..> RulePopulation: uses
-            AddingRuleStrategy ..> Rule: uses
-
-            class SimpleAddingRuleStrategy
-            SimpleAddingRuleStrategy --|> AddingRuleStrategy
-
-            class AddingRuleWithCrowdingStrategy
-            AddingRuleWithCrowdingStrategy : rule_affinity(left, right)
-            AddingRuleWithCrowdingStrategy : replace_rule(old, new, rule_population, cyk_service)
-            AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
-
-            class AddingRuleSupervisor
-            AddingRuleSupervisor : adding_rule_strategies
-            AddingRuleSupervisor : add_rule(self, rule, rule_population, cyk_service, strategy_hint=expand_population)
-            AddingRuleSupervisor ..* "1..*" AddingRuleStrategy
-            AddingRuleSupervisor ..> AddingRuleStrategyHint: uses
-            AddingRuleSupervisor "1" *.. CykService
-        }
-
-        package CoverageOperators {
-
-            class CoverageOperator
-            CoverageOperator : chance
-            CoverageOperator : coverage_type
-            CoverageOperator : adding_rule_strategy_type
-            CoverageOperator : __init__(self, coverage_type, adding_rule_strategy_type=expand_population)
-            CoverageOperator : cover(self, cyk_service, environment, rule_population, coordinates)
-            CoverageOperator : cover_impl(self, cyk_service, environment, rule_population, coordinates)
-            CoverageOperator : get_chance(self, cyk_service)
-            CoverageOperator ..> Environment: uses
-            CoverageOperator ..> RulePopulation: uses
-            CoverageOperator --> CoverageType: uses
-            CoverageOperator --> AddingRuleStrategyHint: uses
-            CoverageOperator ..> AddingRuleSupervisor: uses
-
-            class TerminalCoverageOperator
-            TerminalCoverageOperator --> TerminalRule: uses
-            TerminalCoverageOperator --|> CoverageOperator
-
-            class UniversalCoverageOperator
-            TerminalCoverageOperator --> TerminalRule: uses
-            UniversalCoverageOperator --|> CoverageOperator
-
-            class StartingCoverageOperator
-            TerminalCoverageOperator --> TerminalRule: uses
-            StartingCoverageOperator --|> CoverageOperator
-
-            class AggressiveCoverageOperator
-            AggressiveCoverageOperator --|> CoverageOperator
-
-            class FullCoverageOperator
-            FullCoverageOperator --|> CoverageOperator
-
-            class CoverageOperations
-            CoverageOperations : __init__(self)
-            CoverageOperations : operators
-            CoverageOperations : perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates)
-            CoverageOperations "0" --* "*" CoverageOperator
-            CoverageOperations ..> Environment: uses
-            CoverageOperations ..> RulePopulation: uses
-            CoverageOperations --> Rule: creates
-            CoverageOperations ..> CykService: uses
-            CoverageOperations "1" *.. CykService
-        }
-
-        '&end_coverage
-    }
-
-    '&alt_coverage Coverage ..> Environment: uses
-    '&alt_coverage Coverage ..> RulePopulation: uses
-    '&alt_coverage Coverage --> Rule: creates
-    '&alt_coverage Coverage ..> CykService: uses
-    '&alt_coverage Coverage "1" *.. CykService
-    '&alt_coverage Coverage --> CoverageType: uses
-
-
-    class Traceback
-    Traceback : __init__(self, visitors)
-    Traceback : visitors
-    Traceback : perform_traceback(self, cyk_service, environment, cyk_result, rule_population)
-    Traceback ..> Environment: uses
-    Traceback ..> CykResult: uses
-    Traceback ..> RulePopulation: uses
-    Traceback <..> CykService: uses
-
-    class ClassicTraceback
-    ClassicTraceback --|> Traceback
-    ClassicTraceback ..> CykStatistics
-
-    class GrammarCorrector
-    GrammarCorrector : correct_grammar(self, rule_population, cyk_service)
-    GrammarCorrector : remove_non_productive(self, rule_population, cyk_service)
-    GrammarCorrector : remove_not_reachable(self, rule_population, cyk_service)
-    GrammarCorrector ..> RulePopulation: uses
-    GrammarCorrector <--> CykService: uses
-
+    [coverage_operators]
+    [cyk_executors]
+    [cyk_service]
+    [detector]
+    [environment]
+    [grammar_corrector]
+    [production]
+    [traceback]
+
+    coverage_operators <-->  cyk_service
+    cyk_executors <--> cyk_service
+    cyk_service --> environment
+    cyk_service --> grammar_corrector
+    traceback <-->  cyk_service
+
+    coverage_operators ..> detector
+    coverage_operators ..> core
+    coverage_operators ..> production
+    coverage_operators ..> environment
+
+
+    cyk_executors ..> detector
+    cyk_executors ..> core
+    cyk_executors ..> coverage_operators
+    cyk_executors ..> environment
+
+    detector <..> production
+    detector ..> core
+
+    environment ..> core
+    environment ..> production
+
+    grammar_corrector ..> core
+    grammar_corrector ..> grammar_statistics
+
+    production ..> core
+
+    traceback ..> core
+    traceback ..> grammar_statistics
+    traceback ..> environment
+    traceback ..> cyk_executors
+
+    grammar_statistics ..> utils
+    grammar_statistics ..> core
+    grammar_statistics ..> cyk_executors
+    grammar_statistics ..> production
+
+    rule_adding ..> utils
+    rule_adding ..> core
+    rule_adding ..> grammar_statistics
 }
 
 @enduml

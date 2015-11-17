@@ -6,10 +6,10 @@ from hamcrest import *
 from core.rule import Rule, TerminalRule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
-from induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
+from rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
     AddingRuleWithCrowdingStrategy, AddingRuleSupervisor, AddingRuleStrategy, CrowdingConfiguration, \
     AddingRulesConfiguration
-from statistics.cyk_statistics import PasiekaFitness, GrammarStatistics
+from statistics.grammar_statistics import PasiekaFitness, GrammarStatistics
 from utils import Randomizer
 
 

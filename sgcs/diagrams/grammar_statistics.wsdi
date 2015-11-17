@@ -2,7 +2,20 @@
 package grammar_statistics #DDDDDD {
 
 class GrammarStatistics
-
+    class RuleInfo
+    class RuleStatistics
+    class PasiekaRuleInfo
+    class PasiekaLeftSideInfo
+    class PasiekaRuleStatistics
+    class Fitness
+    class PasiekaFitness
+    class ClassicRuleInfo
+    class ClassicRuleUsageInfo
+    class ClassicRuleStatistics
+    class StatisticsVisitor
+    class ClassicFitness
+    class DummyCykStatistics
+    class GrammarStatistics
 }
 
 @enduml

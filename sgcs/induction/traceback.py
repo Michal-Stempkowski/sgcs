@@ -9,10 +9,10 @@ class Traceback(object):
         
         while traceback_queue:
             next_production_to_visit = traceback_queue.pop(0)
-            self.visit(next_production_to_visit, cyk_service, environment.sentence, cyk_result,
-                       rules_population)
+            self._visit(next_production_to_visit, cyk_service, environment.sentence, cyk_result,
+                        rules_population)
             traceback_queue += environment.get_child_productions(next_production_to_visit)
 
-    def visit(self, *args):
+    def _visit(self, *args):
         for v in self.visitors:
             v(*args)

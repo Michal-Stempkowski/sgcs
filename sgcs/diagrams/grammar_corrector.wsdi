@@ -1,0 +1,9 @@
+@startuml
+
+package grammar_corrector #DDDDDD {
+
+    class GrammarCorrector
+
+}
+
+@enduml

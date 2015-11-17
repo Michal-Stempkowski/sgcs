@@ -8,7 +8,7 @@ from core.rule_population import RulePopulation
 from core.symbol import Symbol, Sentence
 from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
-from induction.rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy, \
+from rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy, \
     AddingRulesConfiguration, CrowdingConfiguration, AddingRuleSupervisor
 from sgcs.factory import Factory
 from sgcs.induction import cyk_executors, production, environment
@@ -17,7 +17,7 @@ from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfigura
 from sgcs.induction.cyk_executors import CykTypeId
 from sgcs.induction.cyk_service import CykService
 from sgcs.utils import Randomizer
-from statistics.cyk_statistics import GrammarStatistics, \
+from statistics.grammar_statistics import GrammarStatistics, \
     ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
 
 

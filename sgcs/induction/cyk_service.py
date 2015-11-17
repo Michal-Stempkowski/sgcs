@@ -2,7 +2,7 @@ from induction.coverage_operators import CoverageOperations
 from induction.grammar_corrector import GrammarCorrector
 from induction.traceback import Traceback
 from sgcs.induction.cyk_executors import CykTypeId
-from statistics.cyk_statistics import DummyCykStatistics
+from statistics.grammar_statistics import DummyCykStatistics
 
 
 class CykService(object):
@@ -30,7 +30,7 @@ class CykService(object):
 
     def perform_cyk_for_all_sentences(self, rule_population, sentences):
         if self.configuration.grammar_correction.should_run:
-            self.grammar_corrector.correct_grammar(rule_population, self)
+            self.grammar_corrector.correct_grammar(rule_population, self.statistics)
         for sentence in sentences:
             self.perform_cyk(rule_population, sentence)
 

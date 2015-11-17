@@ -1,9 +1,18 @@
 @startuml
 
+!include cyk_executors.wsdi
+
 !include detector.wsdi
+
 !include core.wsdi
+hide Sentence
+hide Rule
+hide TerminalRule
+
 !include coverage_operators.wsdi
+
 !include environment.wsdi
+hide CykTableIndexError
 
 package cyk_executors {
     enum CykTypeId {

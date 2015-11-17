@@ -8,7 +8,7 @@ from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from induction.cyk_service import CykService
 from induction.grammar_corrector import GrammarCorrector
-from statistics.cyk_statistics import GrammarStatistics
+from statistics.grammar_statistics import GrammarStatistics
 
 
 class TestGrammarCorrector(unittest.TestCase):
@@ -20,8 +20,7 @@ class TestGrammarCorrector(unittest.TestCase):
         self.rule_population_mock = create_autospec(RulePopulation)
         self.rule_population_mock.configure_mock(universal_symbol=Symbol('U'),
                                                  starting_symbol=Symbol('S'))
-        self.cyk_service_mock = create_autospec(CykService)
-        self.cyk_service_mock.configure_mock(statistics=create_autospec(GrammarStatistics))
+        self.statistics_mock = create_autospec(GrammarStatistics)
 
         self.rule_a = self.mk_rule('A', 'a')
         self.rule_b = self.mk_rule('B', 'a')
@@ -54,7 +53,7 @@ class TestGrammarCorrector(unittest.TestCase):
             self.second_lvl_rule_accessible_from_top
         ]
 
-        correction_function(self.rule_population_mock, self.cyk_service_mock)
+        correction_function(self.rule_population_mock, self.statistics_mock)
 
         call_args = set(map(lambda x: x[0][0],
                             self.rule_population_mock.remove_rule.call_args_list))

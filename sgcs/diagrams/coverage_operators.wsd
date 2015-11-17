@@ -1,9 +1,19 @@
 @startuml
 
 !include detector.wsdi
+
 !include core.wsdi
-!include induction.wsdi
+hide Sentence
+
 !include coverage_operators.wsdi
+
+!include cyk_service.wsdi
+
+!include production.wsdi
+hide ProductionPool
+
+!include environment.wsdi
+hide CykTableIndexError
 
 package coverage_operators  {
 

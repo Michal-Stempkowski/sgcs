@@ -1,0 +1,11 @@
+@startuml
+
+package production #DDDDDD {
+
+    class Production
+    class EmptyProduction
+    class ProductionPool
+
+}
+
+@enduml

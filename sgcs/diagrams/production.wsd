@@ -1,0 +1,38 @@
+@startuml
+
+!include production.wsdi
+
+!include detector.wsdi
+
+!include core.wsdi
+hide Sentence
+hide RulePopulation
+hide TerminalRule
+
+package production #FFFFFF {
+
+
+    class Production
+    Production : detector
+    Production : rule
+    Production : __init__(self, detector, rule)
+    Production : is_empty(self)
+    Production : get_coordinates(self)
+    Production ..> Detector
+    Production ..> Rule
+
+    class EmptyProduction
+    EmptyProduction : __init__(self, detector)
+    EmptyProduction --|> Production
+
+    class ProductionPool
+    ProductionPool : add_production(self, production)
+    ProductionPool : is_empty(self)
+    ProductionPool : get_effectors(self)
+    ProductionPool : get_unsatisfied_detectors(self)
+    ProductionPool : get_non_empty_productions(self)
+    ProductionPool : find_non_empty_productions(self, predicate)
+    ProductionPool ..o Production
+}
+
+@enduml

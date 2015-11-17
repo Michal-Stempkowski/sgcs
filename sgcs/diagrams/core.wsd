@@ -57,8 +57,8 @@ TerminalRule : __init__(self, parent, child)
 
 }
 
-package datalayer {
-    SymbolTranslator --() ExternalSymbol: translates
+package datalayer #DDDDDD {
+    SymbolTranslator --> ExternalSymbol: translates
 }
 
 @enduml

@@ -1,0 +1,35 @@
+@startuml
+
+!include grammar_corrector.wsdi
+
+!include core.wsdi
+hide TerminalRule
+hide Sentence
+
+!include grammar_statistics.wsdi
+hide RuleInfo
+hide RuleStatistics
+hide PasiekaRuleInfo
+hide PasiekaLeftSideInfo
+hide PasiekaRuleStatistics
+hide Fitness
+hide PasiekaFitness
+hide ClassicRuleInfo
+hide ClassicRuleUsageInfo
+hide ClassicRuleStatistics
+hide StatisticsVisitor
+hide ClassicFitness
+hide DummyCykStatistics
+
+package grammar_corrector #FFFFFF {
+
+    class GrammarCorrector
+    GrammarCorrector : correct_grammar(self, rule_population, statistics)
+    GrammarCorrector : remove_non_productive(self, rule_population, statistics)
+    GrammarCorrector : remove_not_reachable(self, rule_population, statistics)
+    GrammarCorrector ..> RulePopulation: uses
+    GrammarCorrector ..> GrammarStatistics: uses
+    GrammarCorrector ..> Rule: uses
+}
+
+@enduml

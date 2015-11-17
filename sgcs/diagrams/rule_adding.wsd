@@ -7,6 +7,19 @@ hide Sentence
 hide TerminalRule
 
 !include grammar_statistics.wsdi
+hide RuleInfo
+hide RuleStatistics
+hide PasiekaRuleInfo
+hide PasiekaLeftSideInfo
+hide PasiekaRuleStatistics
+hide Fitness
+hide PasiekaFitness
+hide ClassicRuleInfo
+hide ClassicRuleUsageInfo
+hide ClassicRuleStatistics
+hide StatisticsVisitor
+hide ClassicFitness
+hide DummyCykStatistics
 
 package rule_adding {
 

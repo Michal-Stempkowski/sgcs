@@ -2,7 +2,7 @@ from abc import abstractmethod, ABCMeta
 from enum import Enum
 
 from core.rule import TerminalRule, Rule
-from induction.rule_adding import AddingRuleStrategyHint
+from rule_adding import AddingRuleStrategyHint
 from sgcs.induction.cyk_configuration import InvalidCykConfigurationError
 from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction

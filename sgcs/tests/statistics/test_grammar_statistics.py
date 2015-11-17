@@ -6,7 +6,7 @@ from hamcrest import *
 from core.rule import Rule
 from core.symbol import Symbol
 from sgcs.induction.cyk_service import CykService
-from statistics.cyk_statistics import PasiekaRuleStatistics, GrammarStatistics, PasiekaFitness, PasiekaRuleInfo, \
+from statistics.grammar_statistics import PasiekaRuleStatistics, GrammarStatistics, PasiekaFitness, PasiekaRuleInfo, \
     PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo, Fitness
 from utils import Randomizer
 

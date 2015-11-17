@@ -1,6 +1,13 @@
 @startuml
 
 !include core.wsdi
+hide RulePopulation
+hide Rule
+hide TerminalRule
+
+!include production.wsdi
+hide EmptyProduction
+
 !include environment.wsdi
 
 package environment #FFFFFF {

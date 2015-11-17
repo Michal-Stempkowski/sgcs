@@ -1,0 +1,130 @@
+@startuml
+
+!include grammar_statistics.wsdi
+
+!include core.wsdi
+hide TerminalRule
+
+!include production.wsdi
+hide ProductionPool
+hide EmptyProduction
+
+!include utils.wsdi
+
+!include cyk_executors.wsdi
+
+package grammar_statistics #FFFFFF {
+
+    class RuleInfo
+    RuleInfo : fitness
+
+    class RuleStatistics
+    RuleStatistics : has_rule(self, rule)
+    RuleStatistics : update_fitness(self, grammar_statistics)
+    RuleStatistics : get_rule_statistics(self, rule, grammar_statistics)
+    RuleStatistics : added_new_rule(self, rule, grammar_statistics)
+    RuleStatistics : rule_used(self, rule, usage_info, grammar_statistics)
+    RuleStatistics : removed_rule(self, rule, grammar_statistics)
+    RuleStatistics : create_usage(grammar_statistics, cyk_result, sentence)
+    RuleStatistics ..o RuleInfo
+    RuleStatistics ..> Rule: uses
+    RuleStatistics ..> GrammarStatistics: uses
+    RuleStatistics ..> CykResult: uses
+    RuleStatistics ..> Sentence: uses
+
+    class PasiekaRuleInfo
+    PasiekaRuleInfo : rule_usage
+    PasiekaRuleInfo --|> RuleInfo
+
+    class PasiekaLeftSideInfo
+    PasiekaLeftSideInfo : left_side_usage
+
+    class PasiekaRuleStatistics
+    PasiekaRuleStatistics --|> RuleStatistics
+    PasiekaRuleStatistics --o PasiekaRuleInfo: creates
+    PasiekaRuleStatistics --o PasiekaLeftSideInfo: creates
+
+    class Fitness
+    Fitness : calculate(self, grammar_statistics, rule)
+    Fitness : get(self, grammar_statistics, rule)
+    Fitness : get_keyfunc_getter(self, grammar_statistics)
+    Fitness ..> GrammarStatistics: uses
+    Fitness ..> Rule: uses
+    Fitness ..> RuleInfo: uses
+
+    class PasiekaFitness
+    PasiekaFitness --> PasiekaRuleInfo: uses
+    PasiekaFitness --|> Fitness
+
+    class ClassicRuleInfo
+    ClassicRuleInfo : valid_sentence_usage
+    ClassicRuleInfo : invalid_sentence_usage
+    ClassicRuleInfo : points_gained_for_valid_sentences
+    ClassicRuleInfo : points_gained_for_invalid_sentences
+    ClassicRuleInfo : points_total(self)
+    ClassicRuleInfo : apply_usage(self, usage_info)
+    ClassicRuleInfo --> ClassicRuleUsageInfo: uses
+    ClassicRuleInfo --|> RuleInfo
+
+    class ClassicRuleUsageInfo
+    ClassicRuleUsageInfo : __init__(self, positive_sentence, usage_count, points_gained=1)
+    ClassicRuleUsageInfo : positive_sentence
+    ClassicRuleUsageInfo : usage_count
+    ClassicRuleUsageInfo : points_gained
+
+    class ClassicRuleStatistics
+    ClassicRuleStatistics : min_fertility
+    ClassicRuleStatistics : max_fertility
+    ClassicRuleStatistics --o ClassicRuleInfo: creates
+    ClassicRuleStatistics --> ClassicRuleUsageInfo: creates
+    ClassicRuleStatistics --|> RuleStatistics
+
+    class StatisticsVisitor
+    StatisticsVisitor : __call__(self, production, grammar_statistics, sentence, cyk_result, rules_population)
+    StatisticsVisitor ..> Production: uses
+    StatisticsVisitor ..> GrammarStatistics: uses
+    StatisticsVisitor ..> Sentence: uses
+    StatisticsVisitor ..> CykResult: uses
+    StatisticsVisitor ..> RulePopulation: uses
+
+    class ClassicFitness
+    ClassicFitness : __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight, negative_weight, valid_sentence_price=1, invalid_sentence_price=1)
+    ClassicFitness : base_fitness
+    ClassicFitness : classical_fitness_weight
+    ClassicFitness : fertility_weight
+    ClassicFitness : positive_weight
+    ClassicFitness : negative_weight
+    ClassicFitness : valid_sentence_price
+    ClassicFitness : invalid_sentence_price
+    ClassicFitness --> ClassicRuleInfo: uses
+    ClassicFitness --|> Fitness
+
+    class DummyCykStatistics
+    DummyCykStatistics : get_rule_statistics(self, rule)
+    DummyCykStatistics : on_added_new_rule(self, rule)
+    DummyCykStatistics : on_rule_usage(self, rule, usage_info=None)
+    DummyCykStatistics : on_rule_removed(self, rule)
+    DummyCykStatistics : update_fitness(self)
+    DummyCykStatistics ..> Rule: uses
+    DummyCykStatistics ..> Rule: uses
+
+    class GrammarStatistics
+    GrammarStatistics : __init__(self, randomizer, rule_statistics, statistics_visitors, fitness)
+    GrammarStatistics : randomizer
+    GrammarStatistics : rule_statistics
+    GrammarStatistics : statistics_visitors
+    GrammarStatistics : fitness
+    GrammarStatistics ..o Randomizer
+    GrammarStatistics ..o RuleStatistics
+    GrammarStatistics ..o StatisticsVisitor
+    GrammarStatistics ..o Fitness
+    GrammarStatistics : get_rule_statistics(self, rule)
+    GrammarStatistics : on_added_new_rule(self, rule)
+    GrammarStatistics : on_rule_usage(self, rule, usage_info=None)
+    GrammarStatistics : on_rule_removed(self, rule)
+    GrammarStatistics : update_fitness(self)
+    GrammarStatistics --|> DummyCykStatistics
+
+}
+
+@enduml

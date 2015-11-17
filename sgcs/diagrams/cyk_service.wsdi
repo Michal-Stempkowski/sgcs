@@ -1,0 +1,7 @@
+@startuml
+package cyk_service #DDDDDD {
+
+    class CykService
+}
+
+@enduml

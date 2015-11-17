@@ -1,0 +1,44 @@
+@startuml
+
+!include core.wsdi
+hide TerminalRule
+hide Sentence
+
+!include traceback.wsdi
+
+!include grammar_statistics.wsdi
+hide GrammarStatistics
+hide RuleInfo
+hide RuleStatistics
+hide PasiekaRuleInfo
+hide PasiekaLeftSideInfo
+hide PasiekaRuleStatistics
+hide Fitness
+hide PasiekaFitness
+hide ClassicRuleInfo
+hide ClassicRuleUsageInfo
+hide ClassicRuleStatistics
+hide ClassicFitness
+hide DummyCykStatistics
+
+!include environment.wsdi
+hide CykTableIndexError
+
+!include cyk_service.wsdi
+
+!include cyk_executors.wsdi
+
+package traceback #FFFFFF {
+    class Traceback
+    Traceback : visitors
+    Traceback : __init__(self, visitors)
+    Traceback : perform_traceback(self, cyk_service, environment, cyk_result, rules_population)
+    Traceback ..> StatisticsVisitor
+    Traceback ..> CykService
+    Traceback ..> Environment
+    Traceback ..> CykResult
+    Traceback ..> RulePopulation
+    Traceback ..> Rule
+}
+
+@enduml

@@ -1,0 +1,11 @@
+@startuml
+
+package cyk_executors #DDDDDD {
+
+    class CykResult
+
+}
+
+
+
+@enduml

@@ -10,7 +10,7 @@ from core.symbol import Symbol
 from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     StartingCoverageOperator, AggressiveCoverageOperator, FullCoverageOperator, CoverageOperations, \
     CoverageOperator, CoverageType
-from induction.rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
+from rule_adding import AddingRuleSupervisor, AddingRuleStrategyHint
 from sgcs.induction.cyk_configuration import CykConfiguration, InvalidCykConfigurationError
 from sgcs.induction.cyk_service import CykService
 from sgcs.induction.detector import Detector
