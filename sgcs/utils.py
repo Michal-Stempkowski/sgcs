@@ -16,3 +16,6 @@ class Randomizer(object):
 
     def shuffle(self, sequence):
         return self.generator.shuffle(sequence)
+
+    def uniform(self, min_val, max_val):
+        return self.generator.uniform(min_val, max_val)

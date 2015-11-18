@@ -40,3 +40,10 @@ class TestRandomizer(unittest.TestCase):
 
         # When/Then:
         assert_that(self.sut.sample(sequence, 3), contains(3, 4, 5))
+
+    def test_should_be_able_to_get_uniform_distribution(self):
+        # Given
+        self.generator_mock.uniform.return_value = 1.8273
+
+        # When/Then:
+        assert_that(self.sut.uniform(0.5, 2.7))

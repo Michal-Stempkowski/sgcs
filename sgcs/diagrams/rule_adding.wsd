@@ -26,6 +26,7 @@ package rule_adding {
     enum AddingRuleStrategyHint {
         expand_population = 0
         control_population_size = 1
+        control_population_size_with_elitism = 2
     }
 
     class AddingRuleStrategy
@@ -38,6 +39,9 @@ package rule_adding {
 
     class AddingRuleWithCrowdingStrategy
     AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
+
+    class AddingRuleWithElitismStrategy
+    AddingRuleWithElitismStrategy --|> AddingRuleStrategy
 
     class AddingRuleSupervisor
     AddingRuleSupervisor : __init__(self, randomizer, configuration, strategies)
@@ -52,11 +56,17 @@ package rule_adding {
 
     class AddingRulesConfiguration
     AddingRulesConfiguration : crowding
+    AddingRulesConfiguration : elitism
     AddingRulesConfiguration ..* CrowdingConfiguration: uses
+    AddingRulesConfiguration ..* ElitismConfiguration: uses
 
     class CrowdingConfiguration
     CrowdingConfiguration : factor
     CrowdingConfiguration : size
+
+    class ElitismConfiguration
+    ElitismConfiguration : is_used
+    ElitismConfiguration : size
 }
 
 @enduml

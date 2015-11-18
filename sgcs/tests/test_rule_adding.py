@@ -8,7 +8,7 @@ from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from rule_adding import SimpleAddingRuleStrategy, AddingRuleStrategyHint, \
     AddingRuleWithCrowdingStrategy, AddingRuleSupervisor, AddingRuleStrategy, CrowdingConfiguration, \
-    AddingRulesConfiguration
+    AddingRulesConfiguration, AddingRuleWithElitismStrategy, ElitismConfiguration
 from statistics.grammar_statistics import PasiekaFitness, GrammarStatistics
 from utils import Randomizer
 
@@ -28,11 +28,18 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
         self.crowding_settings_mock = create_autospec(CrowdingConfiguration)
         self.crowding_settings_mock.configure_mock(factor=2, size=3)
 
+        self.elitism_settings = ElitismConfiguration()
+        self.elitism_settings.is_used = True
+        self.elitism_settings.size = 2
+
+
         self.fitness_mock = create_autospec(PasiekaFitness)
 
         self.configuration_mock = create_autospec(AddingRulesConfiguration)
         self.configuration_mock.configure_mock(
-            crowding=self.crowding_settings_mock)
+            crowding=self.crowding_settings_mock,
+            elitism=self.elitism_settings
+        )
 
         self.rule_supervisor_mock = create_autospec(AddingRuleSupervisor)
         self.rule_supervisor_mock.configure_mock(
@@ -45,7 +52,7 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
 
     @staticmethod
     def mk_rule(parent, left, right):
-        return Rule(Symbol(hash(parent)), Symbol(hash(left)), Symbol(hash(right)))
+        return Rule(Symbol(parent), Symbol(left), Symbol(right))
 
 
 class TestSimpleAddingRuleStrategy(TestAddingRuleStrategyCommon):
@@ -55,9 +62,15 @@ class TestSimpleAddingRuleStrategy(TestAddingRuleStrategyCommon):
         self.sut = SimpleAddingRuleStrategy()
 
     def test_should_know_if_strategy_is_applicable(self):
-        assert_that(self.sut.is_applicable(AddingRuleStrategyHint.expand_population), is_(True))
-        assert_that(self.sut.is_applicable(AddingRuleStrategyHint.control_population_size),
-                    is_(False))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.expand_population),
+            is_(True))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size),
+            is_(False))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size_with_elitism),
+            is_(False))
 
     def test_should_be_able_to_apply_strategy(self):
         self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
@@ -73,16 +86,22 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
         self.sut = AddingRuleWithCrowdingStrategy()
 
     def test_should_know_if_strategy_is_applicable(self):
-        assert_that(self.sut.is_applicable(AddingRuleStrategyHint.expand_population), is_(False))
-        assert_that(self.sut.is_applicable(AddingRuleStrategyHint.control_population_size),
-                    is_(True))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.expand_population),
+            is_(False))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size),
+            is_(True))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size_with_elitism),
+            is_(False))
 
     def fitness_get_keyfunc_dummy(self, _):
         return lambda r: 0 \
             if r == self.mk_rule('A', 'G', 'C') \
             else 1000
 
-    def test_should_be_able_to_apply_strategy_for_terminal_production(self):
+    def test_should_be_able_to_apply_strategy_for_non_terminal_production(self):
         # Given:
         rule_to_be_replaced = self.mk_rule('A', 'G', 'C')
         self.rule_population_mock.get_random_rules.side_effect = [
@@ -97,6 +116,57 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
 
         # Then:
         assert_that(self.rule_population_mock.get_random_rules.call_count, is_(equal_to(2)))
+        self.rule_population_mock.remove_rule.assert_called_once_with(rule_to_be_replaced)
+        self.statistics_mock.on_rule_removed.\
+            assert_called_once_with(rule_to_be_replaced)
+        self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.statistics_mock.on_added_new_rule.\
+            assert_called_once_with(self.rule)
+
+
+class TestAddingRuleWithCrowdingStrategyAndElitism(TestAddingRuleStrategyCommon):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = AddingRuleWithElitismStrategy()
+
+    def test_should_know_if_strategy_is_applicable(self):
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.expand_population),
+            is_(False))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size),
+            is_(False))
+        assert_that(
+            self.sut.is_applicable(AddingRuleStrategyHint.control_population_size_with_elitism),
+            is_(True))
+
+    def fitness_get_keyfunc_dummy(self, _):
+        return lambda r: 0 \
+            if r == self.mk_rule('A', 'G', 'C') \
+            else 1000
+
+    def test_should_be_able_to_apply_strategy_for_non_terminal_production(self):
+        # Given:
+        rule_not_to_be_replaced = self.mk_rule('T', 'E', 'C')
+        rule_to_be_replaced = self.mk_rule('G', 'W', 'C')
+        self.rule_population_mock.get_all_non_terminal_rules.return_value = [
+            rule_not_to_be_replaced, self.mk_rule('A', 'E', 'W'),
+            self.mk_rule('A', 'W', 'H'), self.mk_rule('T', 'B', 'W'), rule_to_be_replaced
+        ]
+        self.rule_population_mock.get_random_rules_matching_filter.return_value = [
+            rule_to_be_replaced
+        ]
+
+        self.fitness_mock.get_keyfunc_getter.side_effect = self.fitness_get_keyfunc_dummy
+
+        # When:
+        self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
+                       self.rule_population_mock)
+
+        # Then:
+        assert_that(self.rule_population_mock.get_random_rules_matching_filter.call_count,
+                    is_(equal_to(2)))
         self.rule_population_mock.remove_rule.assert_called_once_with(rule_to_be_replaced)
         self.statistics_mock.on_rule_removed.\
             assert_called_once_with(rule_to_be_replaced)

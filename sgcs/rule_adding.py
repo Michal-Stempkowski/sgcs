@@ -5,6 +5,7 @@ from enum import Enum
 class AddingRuleStrategyHint(Enum):
     expand_population = 0
     control_population_size = 1
+    control_population_size_with_elitism = 2
 
 
 class AddingRuleStrategy(object, metaclass=ABCMeta):
@@ -53,19 +54,54 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
         rule_population.add_rule(new)
         statistics.on_added_new_rule(new)
 
+    @staticmethod
+    def _get_worst_rule(adding_supervisor, statistics, subpopulation):
+        adding_supervisor.randomizer.shuffle(subpopulation)
+        return min(subpopulation, key=statistics.fitness.get_keyfunc_getter(statistics))
+
+    def _replace_most_related_rule(self, statistics, rule_population, weak_rules, rule):
+        most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
+        self.replace_rule(most_related_rule, rule, rule_population, statistics)
+
     def apply(self, adding_supervisor, statistics, rule, rule_population):
         weak_rules = set()
         for _ in range(adding_supervisor.configuration.crowding.factor):
             subpopulation = rule_population.get_random_rules(
                 adding_supervisor.randomizer, False, adding_supervisor.configuration.crowding.size)
 
-            adding_supervisor.randomizer.shuffle(subpopulation)
+            weak_rules.add(self._get_worst_rule(adding_supervisor, statistics, subpopulation))
 
-            worst_rule = min(subpopulation, key=statistics.fitness.get_keyfunc_getter(statistics))
-            weak_rules.add(worst_rule)
+        self._replace_most_related_rule(statistics, rule_population, weak_rules, rule)
 
-        most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
-        self.replace_rule(most_related_rule, rule, rule_population, statistics)
+
+# noinspection PyAbstractClass
+class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
+    def __init__(self):
+        super().__init__()
+        self.hints = [AddingRuleStrategyHint.control_population_size_with_elitism]
+
+    @staticmethod
+    def generate_elite(adding_supervisor, statistics, rule_population):
+        rules = rule_population.get_all_non_terminal_rules()
+        rules_by_fitness = sorted(rules,
+                                  key=statistics.fitness.get_keyfunc_getter(statistics),
+                                  reverse=True)
+
+        return rules_by_fitness[:adding_supervisor.configuration.elitism.size]
+
+    def apply(self, adding_supervisor, statistics, rule, rule_population):
+        weak_rules = set()
+
+        elite = self.generate_elite(adding_supervisor, statistics, rule_population)
+
+        for _ in range(adding_supervisor.configuration.crowding.factor):
+            subpopulation = rule_population.get_random_rules_matching_filter(
+                adding_supervisor.randomizer, False, adding_supervisor.configuration.crowding.size,
+                lambda x: x not in elite)
+
+            weak_rules.add(self._get_worst_rule(adding_supervisor, statistics, subpopulation))
+
+        self._replace_most_related_rule(statistics, rule_population, weak_rules, rule)
 
 
 class AddingRuleSupervisor(object):
@@ -85,6 +121,7 @@ class AddingRuleSupervisor(object):
 class AddingRulesConfiguration(object):
     def __init__(self):
         self._crowding = None
+        self.elitism = None
 
     @property
     def crowding(self):
@@ -115,3 +152,9 @@ class CrowdingConfiguration(object):
     @size.setter
     def size(self, value):
         self._size = value
+
+
+class ElitismConfiguration(object):
+    def __init__(self):
+        self.is_used = False
+        self.size = None

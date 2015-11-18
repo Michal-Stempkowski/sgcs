@@ -83,3 +83,7 @@ class RulePopulation(object):
         else:
             right_key = rule.left_child
         del self.rules_by_right[right_key][rule.parent]
+
+    def get_random_rules_matching_filter(self, randomizer, terminal, size, filter):
+        filtered_rules = (x for x in self.all_non_terminal_rules if filter(x))
+        return randomizer.sample(filtered_rules, size)

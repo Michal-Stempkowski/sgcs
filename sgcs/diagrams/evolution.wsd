@@ -4,6 +4,21 @@
 hide TerminalRule
 hide Sentence
 
+!include grammar_statistics.wsdi
+hide RuleInfo
+hide RuleStatistics
+hide PasiekaRuleInfo
+hide PasiekaLeftSideInfo
+hide PasiekaRuleStatistics
+hide Fitness
+hide PasiekaFitness
+hide ClassicRuleInfo
+hide ClassicRuleUsageInfo
+hide ClassicRuleStatistics
+hide StatisticsVisitor
+hide ClassicFitness
+hide DummyCykStatistics
+
 package evolution {
     class EvolutionService
     EvolutionService : configuration
@@ -39,6 +54,29 @@ package evolution {
 
     class CrossoverOperator
     CrossoverOperator --|> EvolutionOperator
+
+    enum EvolutionSelectorType {
+        random = 0
+        tournament = 1
+        roulette = 2
+    }
+
+    class Selector
+    Selector : type
+    Selector : select(self, service, grammar_statistics, rule_population)
+    Selector --> EvolutionSelectorType: uses
+    Selector ..> EvolutionService: uses
+    Selector ..> GrammarStatistics: uses
+    Selector ..> RulePopulation: uses
+
+    class RandomSelector
+    RandomSelector --|> Selector
+
+    class TournamentSelector
+    TournamentSelector --|> Selector
+
+    class RouletteSelector
+    RouletteSelector --|> Selector
 }
 
 @enduml

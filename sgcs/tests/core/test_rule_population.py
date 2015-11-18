@@ -99,3 +99,19 @@ class TestRulePopulation(unittest.TestCase):
             only_contains(self.rules[1])
         )
 
+    def test_should_be_able_to_obtain_random_population_matching_filter(self):
+        # Given:
+        self.add_rules()
+
+        filter = lambda x: x.right_parent == 'C'
+
+        randomizer_mock = create_autospec(Randomizer)
+        randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
+
+        # When:
+        rules = self.sut.get_random_rules_matching_filter(randomizer_mock, False, 2, filter)
+
+        # Then:
+        assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
+        assert_that(randomizer_mock.sample.call_count, is_(equal_to(1)))
+

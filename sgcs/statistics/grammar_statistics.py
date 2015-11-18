@@ -261,6 +261,3 @@ class GrammarStatistics(DummyCykStatistics):
 
     def update_fitness(self):
         self.rule_statistics.update_fitness(self)
-
-
-
