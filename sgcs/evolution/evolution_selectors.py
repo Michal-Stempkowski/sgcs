@@ -46,7 +46,8 @@ class RouletteSelector(Selector):
         return roulette, roulette_size
 
     def select(self, service, grammar_statistics, rule_population):
-        rules = rule_population.get_all_non_terminal_rules()
+        rules = list(rule_population.get_all_non_terminal_rules())
         roulette, roulette_size = self._create_roulette(grammar_statistics, rule_population, rules)
         roulette_value = service.randomizer.uniform(0, roulette_size)
-        return rules[next(i for i, f in enumerate(roulette) if roulette_value < f)]
+        selected_value_index = next(i for i, f in enumerate(roulette) if roulette_value < f)
+        return rules[selected_value_index]

@@ -79,25 +79,23 @@ class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
     def __init__(self):
         super().__init__()
         self.hints = [AddingRuleStrategyHint.control_population_size_with_elitism]
+        self.elite = []
 
-    @staticmethod
-    def generate_elite(adding_supervisor, statistics, rule_population):
+    def generate_elite(self, adding_supervisor, statistics, rule_population):
         rules = rule_population.get_all_non_terminal_rules()
         rules_by_fitness = sorted(rules,
                                   key=statistics.fitness.get_keyfunc_getter(statistics),
                                   reverse=True)
 
-        return rules_by_fitness[:adding_supervisor.configuration.elitism.size]
+        self.elite = rules_by_fitness[:adding_supervisor.configuration.elitism.size]
 
     def apply(self, adding_supervisor, statistics, rule, rule_population):
         weak_rules = set()
 
-        elite = self.generate_elite(adding_supervisor, statistics, rule_population)
-
         for _ in range(adding_supervisor.configuration.crowding.factor):
             subpopulation = rule_population.get_random_rules_matching_filter(
                 adding_supervisor.randomizer, False, adding_supervisor.configuration.crowding.size,
-                lambda x: x not in elite)
+                lambda x: x not in self.elite)
 
             weak_rules.add(self._get_worst_rule(adding_supervisor, statistics, subpopulation))
 
@@ -116,6 +114,12 @@ class AddingRuleSupervisor(object):
             lambda strategy: strategy.is_applicable(strategy_hint), self.strategies))
 
         strategy_to_be_used.apply(self, statistics, rule, rule_population)
+
+    def update_elite_if_supported(self, rule_population, statistics):
+        for strategy in filter(
+            lambda strategy: strategy.is_applicable(
+                AddingRuleStrategyHint.control_population_size_with_elitism), self.strategies):
+            strategy.generate_elite(self, statistics, rule_population)
 
 
 class AddingRulesConfiguration(object):

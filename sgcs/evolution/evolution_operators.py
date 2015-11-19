@@ -15,6 +15,10 @@ class EvolutionOperator(metaclass=ABCMeta):
     def __init__(self, arity):
         self.arity = arity
 
+    @staticmethod
+    def arity_keyfunc(operator):
+        return operator.arity
+
     def apply(self, service, rule_population, *rules):
         if len(rules) != self.arity:
             raise InvalidArityException(len(rules))

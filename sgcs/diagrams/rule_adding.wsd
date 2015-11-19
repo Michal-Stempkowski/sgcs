@@ -41,6 +41,8 @@ package rule_adding {
     AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
 
     class AddingRuleWithElitismStrategy
+    AddingRuleStrategy : elite
+    AddingRuleStrategy : generate_elite(self, adding_supervisor, statistics, rule_population)
     AddingRuleWithElitismStrategy --|> AddingRuleStrategy
 
     class AddingRuleSupervisor

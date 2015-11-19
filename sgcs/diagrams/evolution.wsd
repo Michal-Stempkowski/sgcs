@@ -23,17 +23,21 @@ package evolution {
     class EvolutionService
     EvolutionService : configuration
     EvolutionService : randomizer
+    EvolutionService : selectors
+    EvolutionService : operators
     EvolutionService : def __init__(self, configuration, randomizer)
+    EvolutionService : run_genetic_algorithm(self, grammar_statistics, rule_population, rule_adding)
 
     class InvalidArityException
 
     class EvolutionOperator
+    EvolutionOperator : arity_keyfunc(operator)
     EvolutionOperator : arity
     EvolutionOperator : apply(self, service, rule_population, *rules)
     EvolutionOperator : apply_impl(self, service, rule_population, *rules)
     EvolutionOperator : get_execution_chance(self, service)
     EvolutionOperator --> Rule: creates
-    EvolutionOperator ..> EvolutionService: uses
+    EvolutionOperator <..> EvolutionService: uses
     EvolutionOperator ..> RulePopulation: uses
     EvolutionOperator ..> InvalidArityException: raises
 
@@ -65,7 +69,7 @@ package evolution {
     Selector : type
     Selector : select(self, service, grammar_statistics, rule_population)
     Selector --> EvolutionSelectorType: uses
-    Selector ..> EvolutionService: uses
+    Selector <..> EvolutionService: uses
     Selector ..> GrammarStatistics: uses
     Selector ..> RulePopulation: uses
 

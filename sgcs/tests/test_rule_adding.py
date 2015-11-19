@@ -161,6 +161,8 @@ class TestAddingRuleWithCrowdingStrategyAndElitism(TestAddingRuleStrategyCommon)
         self.fitness_mock.get_keyfunc_getter.side_effect = self.fitness_get_keyfunc_dummy
 
         # When:
+        self.sut.generate_elite(self.rule_supervisor_mock, self.statistics_mock,
+                                self.rule_population_mock)
         self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
                        self.rule_population_mock)
 
@@ -193,11 +195,15 @@ class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
         self.sut.strategies = [self.expanding_strategy_mock, self.controlling_strategy_mock]
 
     def test_valid_rule_strategies_should_be_used(self):
+        # Given:
         self.sut.add_rule(self.rule, self.rule_population_mock, self.statistics_mock)
         self.expanding_strategy_mock.apply.assert_called_once_with(
             self.sut, self.statistics_mock, self.rule, self.rule_population_mock)
 
+        # When:
         self.sut.add_rule(self.rule, self.rule_population_mock, self.statistics_mock,
                           AddingRuleStrategyHint.control_population_size)
+
+        # Then:
         self.controlling_strategy_mock.apply.assert_called_once_with(
             self.sut, self.statistics_mock, self.rule, self.rule_population_mock)

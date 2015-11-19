@@ -103,7 +103,7 @@ class TestRulePopulation(unittest.TestCase):
         # Given:
         self.add_rules()
 
-        filter = lambda x: x.right_parent == 'C'
+        filter = lambda x: x.right_child == 'C'
 
         randomizer_mock = create_autospec(Randomizer)
         randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]

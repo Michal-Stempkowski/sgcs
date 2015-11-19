@@ -73,7 +73,8 @@ class RulePopulation(object):
         return Symbol(randomizer.randint(1, self.max_non_terminal_symbols))
 
     def get_random_rules(self, randomizer, terminal, size):
-        return randomizer.sample(self.all_non_terminal_rules, size)
+        real_size = min(size, len(self.all_non_terminal_rules))
+        return randomizer.sample(self.all_non_terminal_rules, real_size)
 
     def remove_rule(self, rule):
         terminal = rule.is_terminal_rule()
@@ -85,5 +86,6 @@ class RulePopulation(object):
         del self.rules_by_right[right_key][rule.parent]
 
     def get_random_rules_matching_filter(self, randomizer, terminal, size, filter):
-        filtered_rules = (x for x in self.all_non_terminal_rules if filter(x))
-        return randomizer.sample(filtered_rules, size)
+        filtered_rules = [x for x in self.get_all_non_terminal_rules() if filter(x)]
+        real_size = min(size, len(filtered_rules))
+        return randomizer.sample(filtered_rules, real_size)
