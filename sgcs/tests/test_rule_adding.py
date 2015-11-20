@@ -50,6 +50,8 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
         self.statistics_mock = create_autospec(GrammarStatistics)
         self.statistics_mock.configure_mock(fitness=self.fitness_mock)
 
+        self.rule_population_mock.has_rule.return_value = False
+
     @staticmethod
     def mk_rule(parent, left, right):
         return Rule(Symbol(parent), Symbol(left), Symbol(right))
@@ -123,6 +125,21 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
         self.statistics_mock.on_added_new_rule.\
             assert_called_once_with(self.rule)
 
+    def test_should_add_rule_only_if_it_doesnt_exist(self):
+        # Given:
+        self.rule_population_mock.has_rule.return_value = True
+
+        # When:
+        self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
+                       self.rule_population_mock)
+
+        # Then:
+        assert_that(self.rule_population_mock.get_random_rules.call_count, is_(equal_to(0)))
+        assert_that(not_(self.rule_population_mock.called))
+        assert_that(not_(self.statistics_mock.on_rule_removed.called))
+        assert_that(not_(self.rule_population_mock.add_rule.called))
+        assert_that(not_(self.statistics_mock.on_added_new_rule.called))
+
 
 class TestAddingRuleWithCrowdingStrategyAndElitism(TestAddingRuleStrategyCommon):
     def __init__(self, *args, **kwargs):
@@ -175,6 +192,31 @@ class TestAddingRuleWithCrowdingStrategyAndElitism(TestAddingRuleStrategyCommon)
         self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
         self.statistics_mock.on_added_new_rule.\
             assert_called_once_with(self.rule)
+
+    def test_should_not_add_existing_rule(self):
+        # Given:
+        self.rule_population_mock.get_all_non_terminal_rules.return_value = [
+            self.mk_rule('A', 'E', 'W'),
+            self.mk_rule('A', 'W', 'H'), self.mk_rule('T', 'B', 'W')
+        ]
+
+        self.fitness_mock.get_keyfunc_getter.side_effect = self.fitness_get_keyfunc_dummy
+
+        self.rule_population_mock.has_rule.return_value = True
+
+        # When:
+        self.sut.generate_elite(self.rule_supervisor_mock, self.statistics_mock,
+                                self.rule_population_mock)
+        self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
+                       self.rule_population_mock)
+
+        # Then:
+        assert_that(self.rule_population_mock.get_random_rules_matching_filter.call_count,
+                    is_(equal_to(0)))
+        assert_that(not_(self.rule_population_mock.remove_rule.called))
+        assert_that(not_(self.statistics_mock.on_rule_removed.called))
+        assert_that(not_(self.rule_population_mock.add_rule.called))
+        assert_that(not_(self.statistics_mock.on_added_new_rule.called))
 
 
 class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):

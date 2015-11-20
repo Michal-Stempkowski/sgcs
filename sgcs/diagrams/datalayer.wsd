@@ -1,0 +1,15 @@
+@startuml
+
+package datalayer {
+    class SymbolTranslator
+    SymbolTranslator ..> EagerTokenizer
+
+    class EagerFileFetcher
+    EagerFileFetcher : __init__(self, path)
+    EagerFileFetcher : get_chunk_generator(self)
+
+    class EagerTokenizer
+    EagerTokenizer ..> EagerFileFetcher: uses
+}
+
+@enduml

@@ -64,6 +64,8 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
         self.replace_rule(most_related_rule, rule, rule_population, statistics)
 
     def apply(self, adding_supervisor, statistics, rule, rule_population):
+        if rule_population.has_rule(rule):
+            return
         weak_rules = set()
         for _ in range(adding_supervisor.configuration.crowding.factor):
             subpopulation = rule_population.get_random_rules(
@@ -90,6 +92,9 @@ class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
         self.elite = rules_by_fitness[:adding_supervisor.configuration.elitism.size]
 
     def apply(self, adding_supervisor, statistics, rule, rule_population):
+        if rule_population.has_rule(rule):
+            return
+
         weak_rules = set()
 
         for _ in range(adding_supervisor.configuration.crowding.factor):

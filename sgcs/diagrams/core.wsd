@@ -43,6 +43,7 @@ package core {
     RulePopulation : get_random_rules(self, randomizer, terminal, size)
     RulePopulation : remove_rule(self, rule)
     RulePopulation : get_random_rules_matching_filter(self, randomizer, terminal, size, filter)
+    RulePopulation : has_rule(self, rule)
     RulePopulation --o Rule
     RulePopulation --> Symbol: creates
     RulePopulation ..> Randomizer: uses
@@ -58,10 +59,6 @@ package core {
     TerminalRule --|> Rule
     TerminalRule : __init__(self, parent, child)
 
-}
-
-package datalayer #DDDDDD {
-    SymbolTranslator --> ExternalSymbol: translates
 }
 
 @enduml

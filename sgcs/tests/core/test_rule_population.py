@@ -115,3 +115,12 @@ class TestRulePopulation(unittest.TestCase):
         assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
         assert_that(randomizer_mock.sample.call_count, is_(equal_to(1)))
 
+    def test_should_know_if_rule_already_exists(self):
+        # Given:
+        self.add_rules()
+        not_added_rule = Rule('J', 'J', 'J')
+
+        # When:
+        for rule in self.rules:
+            assert_that(self.sut.has_rule(rule))
+        assert_that(not_(self.sut.has_rule(not_added_rule)))

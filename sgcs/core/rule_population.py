@@ -89,3 +89,7 @@ class RulePopulation(object):
         filtered_rules = [x for x in self.get_all_non_terminal_rules() if filter(x)]
         real_size = min(size, len(filtered_rules))
         return randomizer.sample(filtered_rules, real_size)
+
+    def has_rule(self, rule):
+        return rule in (self.terminal_rules if rule.is_terminal_rule()
+                        else self.all_non_terminal_rules)
