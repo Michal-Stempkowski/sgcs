@@ -2,13 +2,15 @@
 
 package datalayer {
     class SymbolTranslator
-    SymbolTranslator ..> EagerTokenizer
+    SymbolTranslator ..> EagerTokenizer: uses
 
     class EagerFileFetcher
     EagerFileFetcher : __init__(self, path)
     EagerFileFetcher : get_chunk_generator(self)
 
     class EagerTokenizer
+    EagerTokenizer : __init__(self, data_fetcher)
+    EagerTokenizer : get_chunk_generator(self)
     EagerTokenizer ..> EagerFileFetcher: uses
 }
 
