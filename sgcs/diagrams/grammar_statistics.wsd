@@ -100,6 +100,7 @@ package grammar_statistics #FFFFFF {
     ClassicFitness --|> Fitness
 
     class DummyCykStatistics
+    DummyCykStatistics : statistics_visitors
     DummyCykStatistics : get_rule_statistics(self, rule)
     DummyCykStatistics : on_added_new_rule(self, rule)
     DummyCykStatistics : on_rule_usage(self, rule, usage_info=None)
@@ -112,7 +113,6 @@ package grammar_statistics #FFFFFF {
     GrammarStatistics : __init__(self, randomizer, rule_statistics, statistics_visitors, fitness)
     GrammarStatistics : randomizer
     GrammarStatistics : rule_statistics
-    GrammarStatistics : statistics_visitors
     GrammarStatistics : fitness
     GrammarStatistics ..o Randomizer
     GrammarStatistics ..o RuleStatistics

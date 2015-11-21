@@ -12,6 +12,7 @@ from induction.detector import Detector
 from induction.environment import Environment
 from induction.production import Production
 from induction.traceback import Traceback
+from statistics.grammar_statistics import GrammarStatistics
 
 
 class TestTraceback(unittest.TestCase):
@@ -23,7 +24,11 @@ class TestTraceback(unittest.TestCase):
         self.sut = Traceback([lambda x, _1, _2, _3, _4: self.visitor1_calls.append(x),
                               lambda x, _1, _2, _3, _4: self.visitor2_calls.append(x)])
 
+        self.grammar_statistics_mock = create_autospec(GrammarStatistics)
+
         self.cyk_service_mock = create_autospec(CykService)
+        self.cyk_service_mock.configure_mock(statistics=self.grammar_statistics_mock)
+
         self.environment_mock = create_autospec(Environment)
         self.environment_mock.configure_mock(sentence=create_autospec(Sentence))
 

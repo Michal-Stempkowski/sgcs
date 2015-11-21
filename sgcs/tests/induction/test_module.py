@@ -8,6 +8,7 @@ from core.rule_population import RulePopulation
 from core.symbol import Symbol, Sentence
 from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
     AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
+from induction.traceback import Traceback
 from rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy, \
     AddingRulesConfiguration, CrowdingConfiguration, AddingRuleSupervisor
 from sgcs.factory import Factory
@@ -38,7 +39,6 @@ class TestModule(TestCase):
         self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
         self.statistics = GrammarStatistics(self.randomizer,
                                             ClassicRuleStatistics(),
-                                            [StatisticsVisitor()],
                                             ClassicFitness(10, 1, 1, 1, 1))
         self.rule_adding = AddingRuleSupervisor(self.randomizer,
                                                 AddingRulesConfiguration.create(
@@ -78,7 +78,8 @@ class TestModule(TestCase):
     def create_sut(self, factory):
         self.sut = CykService(factory, self.cyk_configuration, self.randomizer,
                               coverage_operations=self.coverage_operations,
-                              adding_rule_supervisor=self.rule_adding)
+                              adding_rule_supervisor=self.rule_adding,
+                              traceback=Traceback(self.statistics.statistics_visitors))
 
         self.sut.statistics = self.statistics
 

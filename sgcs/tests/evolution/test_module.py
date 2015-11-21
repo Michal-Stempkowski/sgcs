@@ -81,7 +81,7 @@ class TestEvolution(unittest.TestCase):
         positive_weight = 1
         negative_weight = 1
         self.grammar_statistics = GrammarStatistics(
-            self.randomizer, ClassicRuleStatistics(), StatisticsVisitor(),
+            self.randomizer, ClassicRuleStatistics(),
             ClassicFitness(base_fitness, classical_fitness_weight, fertility_weight,
                            positive_weight, negative_weight))
 

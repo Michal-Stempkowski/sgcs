@@ -223,6 +223,9 @@ class ClassicFitness(Fitness):
 
 
 class DummyCykStatistics(object):
+    def __init__(self):
+        self.statistics_visitors = []
+
     def get_rule_statistics(self, rule):
         return None
 
@@ -240,10 +243,11 @@ class DummyCykStatistics(object):
 
 
 class GrammarStatistics(DummyCykStatistics):
-    def __init__(self, randomizer, rule_statistics, statistics_visitors, fitness):
+    def __init__(self, randomizer, rule_statistics, fitness):
+        super().__init__()
         self.randomizer = randomizer
         self.rule_statistics = rule_statistics
-        self.statistics_visitors = statistics_visitors
+        self.statistics_visitors = [StatisticsVisitor()]
         self.fitness = fitness
 
     def get_rule_statistics(self, rule):

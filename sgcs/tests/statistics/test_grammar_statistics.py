@@ -198,7 +198,8 @@ class TestGrammarStatistics(unittest.TestCase):
         self.randomizer_mock = create_autospec(Randomizer)
 
         self.sut = GrammarStatistics(self.randomizer_mock, self.rule_statistics_mock,
-                                     self.empty_statistics_visitor, self.fitness)
+                                     self.fitness)
+        self.sut.statistics_visitors = []
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))
 
     def test_should_be_able_to_get_rule_statistics(self):

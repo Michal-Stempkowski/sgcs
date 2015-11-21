@@ -1,13 +1,34 @@
+from factory import Factory
+from induction import cyk_executors
 from induction.coverage_operators import CoverageOperations
+from induction.environment import Environment
 from induction.grammar_corrector import GrammarCorrector
+from induction.production import ProductionPool
 from induction.traceback import Traceback
 from sgcs.induction.cyk_executors import CykTypeId
 from statistics.grammar_statistics import DummyCykStatistics
 
 
 class CykService(object):
+    @staticmethod
+    def default(configuration, randomizer, adding_rule_supervisor, grammar_statistics):
+        factory = Factory({
+            CykTypeId.symbol_pair_executor: cyk_executors.CykSymbolPairExecutor,
+            CykTypeId.parent_combination_executor: cyk_executors.CykParentCombinationExecutor,
+            CykTypeId.cell_executor: cyk_executors.CykCellExecutor,
+            CykTypeId.row_executor:
+                lambda table_executor, row, executor_factory:
+                cyk_executors.CykRowExecutor(table_executor, row, executor_factory) if row > 0
+                else cyk_executors.CykFirstRowExecutor(table_executor, row, executor_factory),
+            CykTypeId.table_executor: cyk_executors.CykTableExecutor,
+            CykTypeId.production_pool: ProductionPool,
+            CykTypeId.environment: Environment,
+            CykTypeId.cyk_result: cyk_executors.CykResult,
+            CykTypeId.terminal_cell_executor: cyk_executors.CykTerminalCellExecutor
+        })
+
     def __init__(self, factory, configuration, randomizer, adding_rule_supervisor=None,
-                 statistics=None, coverage_operations=None, fitness=None, traceback=None,
+                 statistics=None, coverage_operations=None, traceback=None,
                  grammar_corrector=None):
         self.factory = factory
         self.table_executor = self.factory.create(CykTypeId.table_executor, self)
@@ -16,7 +37,6 @@ class CykService(object):
         self._coverage_operations = coverage_operations \
             if coverage_operations else CoverageOperations()
         self._statistics = statistics if statistics else DummyCykStatistics()
-        self._fitness = fitness
         self._rule_adding = adding_rule_supervisor
         self._traceback = Traceback([]) if traceback is None else traceback
         self.grammar_corrector = GrammarCorrector() if grammar_corrector is None \
