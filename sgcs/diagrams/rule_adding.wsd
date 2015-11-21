@@ -46,6 +46,7 @@ package rule_adding {
     AddingRuleWithElitismStrategy --|> AddingRuleStrategy
 
     class AddingRuleSupervisor
+    AddingRuleSupervisor : get_default_strategies()
     AddingRuleSupervisor : __init__(self, randomizer, configuration, strategies)
     AddingRuleSupervisor : add_rule(self, rule, rule_population, statistics, strategy_hint=AddingRuleStrategyHint.expand_population)
     AddingRuleSupervisor --* Randomizer

@@ -8,7 +8,7 @@ from sgcs.induction.detector import Detector
 from sgcs.induction.production import Production, EmptyProduction
 
 
-class CoverageType(Enum):
+class CoverageType(object):
     unknown_terminal_symbol = 0
     no_effector_found = 1
     no_starting_symbol = 2

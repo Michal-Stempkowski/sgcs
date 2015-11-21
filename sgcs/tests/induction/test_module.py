@@ -6,27 +6,18 @@ from hamcrest import *
 from core.rule import Rule, TerminalRule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol, Sentence
-from induction.coverage_operators import TerminalCoverageOperator, UniversalCoverageOperator, \
-    AggressiveCoverageOperator, StartingCoverageOperator, FullCoverageOperator, CoverageOperations
-from induction.traceback import Traceback
-from rule_adding import SimpleAddingRuleStrategy, AddingRuleWithCrowdingStrategy, \
-    AddingRulesConfiguration, CrowdingConfiguration, AddingRuleSupervisor
-from sgcs.factory import Factory
-from sgcs.induction import cyk_executors, production, environment
-from sgcs.induction.cyk_configuration import CykConfiguration, CoverageConfiguration, \
-    CoverageOperatorsConfiguration, CoverageOperatorConfiguration, GrammarCorrection
-from sgcs.induction.cyk_executors import CykTypeId
+from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
+from sgcs.induction.cyk_configuration import CykConfiguration
 from sgcs.induction.cyk_service import CykService
 from sgcs.utils import Randomizer
 from statistics.grammar_statistics import GrammarStatistics, \
-    ClassicRuleStatistics, ClassicFitness, StatisticsVisitor
+    ClassicRuleStatistics, ClassicFitness
 
 
 class TestModule(TestCase):
     def setUp(self):
         self.sut = None
         self.randomizer = Randomizer(Random())
-        self.cyk_configuration = CykConfiguration()
         self.cyk_configuration = CykConfiguration.create(
             should_correct_grammar=False,
             terminal_chance=0,
@@ -35,8 +26,7 @@ class TestModule(TestCase):
             starting_chance=0,
             full_chance=0
         )
-        self.coverage_operations = CoverageOperations.create_default_set()
-        self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
+
         self.statistics = GrammarStatistics(self.randomizer,
                                             ClassicRuleStatistics(),
                                             ClassicFitness(10, 1, 1, 1, 1))
@@ -45,7 +35,7 @@ class TestModule(TestCase):
                                                     crowding_factor=0,
                                                     crowding_size=0,
                                                     elitism_size=0),
-                                                self.rule_adding_strategies)
+                                                AddingRuleSupervisor.get_default_strategies())
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -75,14 +65,6 @@ class TestModule(TestCase):
             Rule(Symbol('B'), Symbol('B'), Symbol('B'))
         ])
 
-    def create_sut(self, factory):
-        self.sut = CykService(factory, self.cyk_configuration, self.randomizer,
-                              coverage_operations=self.coverage_operations,
-                              adding_rule_supervisor=self.rule_adding,
-                              traceback=Traceback(self.statistics.statistics_visitors))
-
-        self.sut.statistics = self.statistics
-
     def create_sentence(self, *sentence_seq, is_positive_sentence=True):
         return Sentence(sentence_seq, is_positive_sentence)
 
@@ -95,21 +77,8 @@ class TestModule(TestCase):
 
     def service_wire_up(self, rules_population):
         # Given:
-        factory = Factory({
-            CykTypeId.symbol_pair_executor: cyk_executors.CykSymbolPairExecutor,
-            CykTypeId.parent_combination_executor: cyk_executors.CykParentCombinationExecutor,
-            CykTypeId.cell_executor: cyk_executors.CykCellExecutor,
-            CykTypeId.row_executor:
-                lambda table_executor, row, executor_factory:
-                cyk_executors.CykRowExecutor(table_executor, row, executor_factory) if row > 0
-                else cyk_executors.CykFirstRowExecutor(table_executor, row, executor_factory),
-            CykTypeId.table_executor: cyk_executors.CykTableExecutor,
-            CykTypeId.production_pool: production.ProductionPool,
-            CykTypeId.environment: environment.Environment,
-            CykTypeId.cyk_result: cyk_executors.CykResult,
-            CykTypeId.terminal_cell_executor: cyk_executors.CykTerminalCellExecutor
-        })
-        self.create_sut(factory)
+        self.sut = CykService.default(self.cyk_configuration, self.randomizer, self.rule_adding,
+                                      self.statistics)
 
         for rule in rules_population.all_non_terminal_rules:
             self.sut.statistics.on_added_new_rule(rule)
@@ -212,11 +181,6 @@ class TestModule(TestCase):
     def prepare_rule_adding_module(self):
         self.rule_adding.configuration.crowding.factor = 2
         self.rule_adding.configuration.crowding.size = 3
-
-    def default_coverage_operator_configuration(self):
-        configuration = CoverageOperatorConfiguration()
-        configuration.chance = 0
-        return configuration
 
     def test_adding_coverage_module_should_change_nothing_if_chances_not_set(self):
         self.prepare_rule_adding_module()

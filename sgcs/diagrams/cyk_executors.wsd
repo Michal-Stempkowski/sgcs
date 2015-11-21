@@ -39,7 +39,7 @@ package cyk_executors {
     CykExecutor --> CykTypeId: uses
 
     class CykTableExecutor
-    CykTableExecutor : __init__(self, executor_factory)
+    CykTableExecutor :  __init__(self, cyk_service)
     CykTableExecutor : execute(self, environment, rule_population)
     CykTableExecutor --|> CykExecutor
     CykTableExecutor ..> Environment: uses

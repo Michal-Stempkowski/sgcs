@@ -4,7 +4,7 @@ from induction.coverage_operators import CoverageType
 from sgcs.induction.detector import Detector
 
 
-class CykTypeId(Enum):
+class CykTypeId(object):
     symbol_pair_executor = 0
     parent_combination_executor = 1
     cell_executor = 2
@@ -41,8 +41,8 @@ class CykExecutor(object):
 
 
 class CykTableExecutor(CykExecutor):
-    def __init__(self, executor_factory):
-        super().__init__(CykTypeId.row_executor, executor_factory)
+    def __init__(self, cyk_service):
+        super().__init__(CykTypeId.row_executor, cyk_service)
 
     @staticmethod
     def _belongs_to_grammar(rule_population, environment):

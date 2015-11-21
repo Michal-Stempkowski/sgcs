@@ -27,6 +27,19 @@ class CykService(object):
             CykTypeId.terminal_cell_executor: cyk_executors.CykTerminalCellExecutor
         })
 
+        coverage_operations = CoverageOperations.create_default_set()
+        traceback = Traceback(grammar_statistics.statistics_visitors)
+
+        return CykService(
+            factory,
+            configuration,
+            randomizer,
+            adding_rule_supervisor,
+            grammar_statistics,
+            coverage_operations,
+            traceback
+        )
+
     def __init__(self, factory, configuration, randomizer, adding_rule_supervisor=None,
                  statistics=None, coverage_operations=None, traceback=None,
                  grammar_corrector=None):

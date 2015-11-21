@@ -2,11 +2,11 @@ import inspect
 
 
 class Factory(object):
-    def __init__(self, impl=None):
-        self.impl = impl if impl else dict()
+    def __init__(self, implementation=None):
+        self.implementation = implementation if implementation else dict()
 
     def create(self, type_id, *args):
-        creator = self.impl.get(type_id)
+        creator = self.implementation.get(type_id)
 
         if not creator:
             caller_frame_record = inspect.stack()[1]

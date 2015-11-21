@@ -41,7 +41,7 @@ class EvolutionOperatorConfiguration(object):
         self.chance = None
 
 
-class EvolutionSelectorType(Enum):
+class EvolutionSelectorType(object):
     random = 0
     tournament = 1
     roulette = 2

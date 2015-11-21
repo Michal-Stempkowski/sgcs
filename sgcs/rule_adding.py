@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 
 
-class AddingRuleStrategyHint(Enum):
+class AddingRuleStrategyHint(object):
     expand_population = 0
     control_population_size = 1
     control_population_size_with_elitism = 2
@@ -108,6 +108,14 @@ class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
 
 
 class AddingRuleSupervisor(object):
+    @staticmethod
+    def get_default_strategies():
+        return [
+            SimpleAddingRuleStrategy(),
+            AddingRuleWithCrowdingStrategy(),
+            AddingRuleWithElitismStrategy()
+        ]
+
     def __init__(self, randomizer, configuration, strategies):
         self.strategies = strategies
         self.randomizer = randomizer
