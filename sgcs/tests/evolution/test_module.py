@@ -10,7 +10,8 @@ from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from evolution.evolution_configuration import EvolutionConfiguration, \
     EvolutionOperatorsConfiguration, EvolutionOperatorConfiguration, EvolutionSelectorConfiguration, \
-    EvolutionSelectorType
+    EvolutionSelectorType, EvolutionRandomSelectorConfiguration, \
+    EvolutionRouletteSelectorConfiguration
 from evolution.evolution_service import EvolutionService
 from rule_adding import AddingRuleSupervisor, AddingRuleWithElitismStrategy, \
     AddingRulesConfiguration, CrowdingConfiguration, ElitismConfiguration, SimpleAddingRuleStrategy, \
@@ -25,7 +26,13 @@ class TestEvolution(unittest.TestCase):
         super().__init__(*args, **kwargs)
 
         self.randomizer = Randomizer(Random())
-        self.create_configuration()
+
+        selector_configuration = [
+            EvolutionRandomSelectorConfiguration.create(),
+            EvolutionRouletteSelectorConfiguration.create()
+        ]
+        self.configuration = EvolutionConfiguration.create(
+            selector_configuration, inversion_chance=0, mutation_chance=0, crossover_chance=0)
         self.create_rule_population()
         self.create_grammar_statistics()
         self.create_rule_adding()
@@ -79,14 +86,11 @@ class TestEvolution(unittest.TestCase):
                            positive_weight, negative_weight))
 
     def create_rule_adding(self):
-        configuration = AddingRulesConfiguration()
-        configuration.crowding = CrowdingConfiguration()
-        configuration.elitism = ElitismConfiguration()
-
-        configuration.crowding.factor = 2
-        configuration.crowding.size = 3
-        configuration.elitism.is_used = True
-        configuration.elitism.size = 2
+        configuration = AddingRulesConfiguration.create(
+            crowding_factor=2,
+            crowding_size=3,
+            elitism_size=2
+        )
 
         adding_strategies = [SimpleAddingRuleStrategy(),
                              AddingRuleWithCrowdingStrategy(),

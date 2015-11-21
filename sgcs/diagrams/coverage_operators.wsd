@@ -25,6 +25,7 @@ package coverage_operators  {
 
     class CoverageOperations
     CoverageOperations : operators
+    CoverageOperations : create_default_set()
     CoverageOperations : perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates)
     CoverageOperations ..> CykService: uses
     CoverageOperations --> CoverageType: uses

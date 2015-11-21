@@ -3,6 +3,15 @@ class CykConfiguration(object):
         self._coverage = None
         self._grammar_correction = None
 
+    @staticmethod
+    def create(should_correct_grammar, terminal_chance, universal_chance, aggressive_chance,
+               starting_chance, full_chance):
+        configuration = CykConfiguration()
+        configuration.coverage = CoverageConfiguration.create(
+            terminal_chance, universal_chance, aggressive_chance, starting_chance, full_chance)
+        configuration.grammar_correction = GrammarCorrection.create(should_correct_grammar)
+        return configuration
+
     @property
     def coverage(self):
         return self._coverage
@@ -24,6 +33,12 @@ class CoverageConfiguration(object):
     def __init__(self):
         self._operators = None
 
+    @staticmethod
+    def create(*args):
+        configuration = CoverageConfiguration()
+        configuration.operators = CoverageOperatorsConfiguration.create(*args)
+        return configuration
+
     @property
     def operators(self):
         return self._operators
@@ -40,6 +55,16 @@ class CoverageOperatorsConfiguration(object):
         self._aggressive = None
         self._starting = None
         self._full = None
+
+    @staticmethod
+    def create(terminal_chance, universal_chance, aggressive_chance, starting_chance, full_chance):
+        configuration = CoverageOperatorsConfiguration()
+        configuration.terminal = CoverageOperatorConfiguration.create(terminal_chance)
+        configuration.universal = CoverageOperatorConfiguration.create(universal_chance)
+        configuration.aggressive = CoverageOperatorConfiguration.create(aggressive_chance)
+        configuration.starting = CoverageOperatorConfiguration.create(starting_chance)
+        configuration.full = CoverageOperatorConfiguration.create(full_chance)
+        return configuration
 
     @property
     def terminal(self):
@@ -86,6 +111,12 @@ class CoverageOperatorConfiguration(object):
     def __init__(self):
         self._chance = None
 
+    @staticmethod
+    def create(chance):
+        configuration = CoverageOperatorConfiguration()
+        configuration.chance = chance
+        return configuration
+
     @property
     def chance(self):
         return self._chance
@@ -98,6 +129,12 @@ class CoverageOperatorConfiguration(object):
 class GrammarCorrection(object):
     def __init__(self):
         self.should_run = False
+
+    @staticmethod
+    def create(should_run):
+        configuration = GrammarCorrection()
+        configuration.should_run = should_run
+        return configuration
 
 
 class InvalidCykConfigurationError(Exception):

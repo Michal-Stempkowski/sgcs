@@ -26,14 +26,26 @@ class TestModule(TestCase):
         self.sut = None
         self.randomizer = Randomizer(Random())
         self.cyk_configuration = CykConfiguration()
-        self.cyk_configuration.grammar_correction = GrammarCorrection()
-        self.coverage_operations = CoverageOperations()
+        self.cyk_configuration = CykConfiguration.create(
+            should_correct_grammar=False,
+            terminal_chance=0,
+            universal_chance=0,
+            aggressive_chance=0,
+            starting_chance=0,
+            full_chance=0
+        )
+        self.coverage_operations = CoverageOperations.create_default_set()
         self.rule_adding_strategies = [SimpleAddingRuleStrategy(), AddingRuleWithCrowdingStrategy()]
         self.statistics = GrammarStatistics(self.randomizer,
                                             ClassicRuleStatistics(),
                                             [StatisticsVisitor()],
                                             ClassicFitness(10, 1, 1, 1, 1))
-        self.rule_adding = AddingRuleSupervisor(self.randomizer, None, self.rule_adding_strategies)
+        self.rule_adding = AddingRuleSupervisor(self.randomizer,
+                                                AddingRulesConfiguration.create(
+                                                    crowding_factor=0,
+                                                    crowding_size=0,
+                                                    elitism_size=0),
+                                                self.rule_adding_strategies)
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),
@@ -196,35 +208,7 @@ class TestModule(TestCase):
         # When/Then:
         self.perform_cyk_scenario(sentence, rules_population, True)
 
-    def prepare_coverage_module(self):
-        self.coverage_operations.operators = [
-            TerminalCoverageOperator(),
-            UniversalCoverageOperator(),
-            AggressiveCoverageOperator(),
-            StartingCoverageOperator(),
-            FullCoverageOperator()
-        ]
-
-        terminal_configuration = self.default_coverage_operator_configuration()
-        universal_configuration = self.default_coverage_operator_configuration()
-        aggressive_configuration = self.default_coverage_operator_configuration()
-        starting_configuration = self.default_coverage_operator_configuration()
-        full_configuration = self.default_coverage_operator_configuration()
-
-        self.cyk_configuration.coverage = CoverageConfiguration()
-        self.cyk_configuration.coverage.operators = CoverageOperatorsConfiguration()
-
-        self.cyk_configuration.coverage.operators.terminal = terminal_configuration
-        self.cyk_configuration.coverage.operators.universal = universal_configuration
-        self.cyk_configuration.coverage.operators.aggressive = aggressive_configuration
-        self.cyk_configuration.coverage.operators.starting = starting_configuration
-        self.cyk_configuration.coverage.operators.full = full_configuration
-
-        self.prepare_rule_adding_module()
-
     def prepare_rule_adding_module(self):
-        self.rule_adding.configuration = AddingRulesConfiguration()
-        self.rule_adding.configuration.crowding = CrowdingConfiguration()
         self.rule_adding.configuration.crowding.factor = 2
         self.rule_adding.configuration.crowding.size = 3
 
@@ -234,13 +218,13 @@ class TestModule(TestCase):
         return configuration
 
     def test_adding_coverage_module_should_change_nothing_if_chances_not_set(self):
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
 
         self.test_another_ok_scenario()
 
     def test_terminal_coverage_operator_should_work(self):
         # Given:
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         rules_population = self.empty_rule_population
 
@@ -252,7 +236,7 @@ class TestModule(TestCase):
 
     def test_universal_coverage_operator_should_work(self):
         # Given:
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.universal.chance = 1
         rules_population = self.empty_rule_population
 
@@ -272,7 +256,7 @@ class TestModule(TestCase):
 
     def test_starting_coverage_operator_should_work(self):
         # Given:
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.starting.chance = 1
         sentence = Sentence(
             [Symbol('fork')],
@@ -291,7 +275,7 @@ class TestModule(TestCase):
 
     def test_aggressive_coverage_operator_should_work(self):
         # Given:
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.aggressive.chance = 1
         rules_population = self.example_rule_population
@@ -310,7 +294,7 @@ class TestModule(TestCase):
 
     def test_full_coverage_operator_should_work(self):
         # Given:
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.aggressive.chance = 1
         self.cyk_configuration.coverage.operators.full.chance = 1
@@ -320,7 +304,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, True)
 
     def prepare_default_gcs_module(self):
-        self.prepare_coverage_module()
+        self.prepare_rule_adding_module()
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.universal.chance = 1
         self.cyk_configuration.coverage.operators.starting.chance = 1

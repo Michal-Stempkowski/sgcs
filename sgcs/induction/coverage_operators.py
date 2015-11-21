@@ -15,6 +15,19 @@ class CoverageType(Enum):
 
 
 class CoverageOperations(object):
+    @staticmethod
+    def create_default_set():
+        coverage_operations = CoverageOperations()
+        coverage_operations.operators = [
+            TerminalCoverageOperator(),
+            UniversalCoverageOperator(),
+            AggressiveCoverageOperator(),
+            StartingCoverageOperator(),
+            FullCoverageOperator()
+        ]
+
+        return coverage_operations
+
     def __init__(self):
         self.operators = []
 

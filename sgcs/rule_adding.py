@@ -122,12 +122,19 @@ class AddingRuleSupervisor(object):
 
     def update_elite_if_supported(self, rule_population, statistics):
         for strategy in filter(
-            lambda strategy: strategy.is_applicable(
+            lambda s: s.is_applicable(
                 AddingRuleStrategyHint.control_population_size_with_elitism), self.strategies):
             strategy.generate_elite(self, statistics, rule_population)
 
 
 class AddingRulesConfiguration(object):
+    @staticmethod
+    def create(crowding_factor, crowding_size, elitism_size):
+        configuration = AddingRulesConfiguration()
+        configuration.crowding = CrowdingConfiguration.create(crowding_factor, crowding_size)
+        configuration.elitism = ElitismConfiguration.create(elitism_size)
+        return configuration
+
     def __init__(self):
         self._crowding = None
         self.elitism = None
@@ -142,6 +149,13 @@ class AddingRulesConfiguration(object):
 
 
 class CrowdingConfiguration(object):
+    @staticmethod
+    def create(crowding_factor, crowding_size):
+        configuration = CrowdingConfiguration()
+        configuration.factor = crowding_factor
+        configuration.size = crowding_size
+        return configuration
+
     def __init__(self):
         self._factor = None
         self._size = None
@@ -164,6 +178,13 @@ class CrowdingConfiguration(object):
 
 
 class ElitismConfiguration(object):
+    @staticmethod
+    def create(elitism_size):
+        configuration = ElitismConfiguration()
+        configuration.size = elitism_size
+        configuration.is_used = True if elitism_size > 0 else False
+        return configuration
+
     def __init__(self):
         self.is_used = False
         self.size = None
