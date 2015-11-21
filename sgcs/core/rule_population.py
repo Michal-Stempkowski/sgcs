@@ -10,12 +10,14 @@ class RulePopulationAccessViolationError(Exception):
 
 
 class RulePopulation(object):
-    def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None):
+    def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None,
+                 max_non_terminal_symbols=32):
         self.all_non_terminal_rules = set()
         self.rules_by_right = dict()
         self.terminal_rules = dict()
         self._starting_symbol = starting_symbol
         self._universal_symbol = universal_symbol
+        self._max_non_terminal_symbols = max_non_terminal_symbols
 
     @property
     def starting_symbol(self):
@@ -27,7 +29,7 @@ class RulePopulation(object):
 
     @property
     def max_non_terminal_symbols(self):
-        return 32
+        return self._max_non_terminal_symbols
 
     def get_rules_by_right(self, pair):
         if len(pair) != 2:
@@ -70,7 +72,7 @@ class RulePopulation(object):
             return packed_rules.values() if packed_rules else []
 
     def get_random_non_terminal_symbol(self, randomizer):
-        return Symbol(randomizer.randint(1, self.max_non_terminal_symbols))
+        return Symbol(randomizer.randint(101, 101 + self.max_non_terminal_symbols))
 
     def get_random_rules(self, randomizer, terminal, size):
         real_size = min(size, len(self.all_non_terminal_rules))

@@ -31,10 +31,10 @@ package core {
     Sentence --o Symbol
 
     class RulePopulation
-    RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None)
+    RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None, max_non_terminal_symbols=32)
     RulePopulation : starting_symbol
     RulePopulation : universal_symbol
-    RulePopulation : max_terminal_symbols
+    RulePopulation : max_non_terminal_symbols
     RulePopulation : get_all_non_terminal_rules(self)
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)

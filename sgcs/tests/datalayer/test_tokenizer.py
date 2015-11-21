@@ -1,4 +1,3 @@
-import os
 import unittest
 from unittest.mock import create_autospec
 
@@ -17,14 +16,15 @@ class TestTokenizer(unittest.TestCase):
 
     def test_should_tokenize_sentences_well(self):
         # Given:
-        self.data_fetcher_mock.get_chunk_generator.return_value = (x for x in ["Ala ma kota\n",
+        self.data_fetcher_mock.get_chunk_generator.return_value = (x for x in ["2 5",
+                                                                               "1 3 Ala ma kota\n",
                                                                                "      \n",
-                                                                               "Kot ma Ale\n"])
+                                                                               "1 3 Kot ma Ale\n"])
 
         # When:
         token_generator = self.sut.get_token_generator()
 
         # Then:
-        assert_that(next(token_generator), contains("ala", "ma", "kota"))
-        assert_that(next(token_generator), contains("kot", "ma", "ale"))
-        assert_that(next(token_generator), is_(none()))
+        assert_that(next(token_generator), contains(True, "ala", "ma", "kota"))
+        assert_that(next(token_generator), contains(True, "kot", "ma", "ale"))
+        assert_that(calling(next).with_args(token_generator), raises(StopIteration))
