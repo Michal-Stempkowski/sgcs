@@ -1,4 +1,6 @@
 from core.symbol import Symbol, Sentence
+from datalayer.data_fetcher import EagerFileFetcher
+from datalayer.tokenizer import EagerTokenizer
 
 
 class UnknownSymbol(Exception):
@@ -18,6 +20,12 @@ class UnknownWord(Exception):
 
 
 class SymbolTranslator(object):
+    @staticmethod
+    def create(path):
+        file_fetcher = EagerFileFetcher(path)
+        tokenizer = EagerTokenizer(file_fetcher)
+        return SymbolTranslator(tokenizer)
+
     def __init__(self, tokenizer):
         self.tokenizer = tokenizer
         self.new_id = -101

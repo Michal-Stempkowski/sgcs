@@ -109,6 +109,14 @@ class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
 
 class AddingRuleSupervisor(object):
     @staticmethod
+    def default(randomizer):
+        return AddingRuleSupervisor(randomizer,
+                                    AddingRulesConfiguration.create(
+                                        crowding_factor=0,
+                                        crowding_size=0,
+                                        elitism_size=0),
+                                    AddingRuleSupervisor.get_default_strategies())
+    @staticmethod
     def get_default_strategies():
         return [
             SimpleAddingRuleStrategy(),

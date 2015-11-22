@@ -51,25 +51,6 @@ class TestEvolution(unittest.TestCase):
             TerminalRule(Symbol('N'), Symbol('fork')), TerminalRule(Symbol('Det'), Symbol('a'))
         ]
 
-    def create_configuration(self):
-        self.configuration = EvolutionConfiguration()
-        self.configuration.operators = EvolutionOperatorsConfiguration()
-        self.configuration.operators.inversion = EvolutionOperatorConfiguration()
-        self.configuration.operators.mutation = EvolutionOperatorConfiguration()
-        self.configuration.operators.crossover = EvolutionOperatorConfiguration()
-
-        self.configuration.operators.inversion.chance = 0
-        self.configuration.operators.mutation.chance = 0
-        self.configuration.operators.crossover.chance = 0
-
-        self.configuration.selectors = [
-            EvolutionSelectorConfiguration(),
-            EvolutionSelectorConfiguration()
-        ]
-
-        self.configuration.selectors[0].type = EvolutionSelectorType.random
-        self.configuration.selectors[1].type = EvolutionSelectorType.roulette
-
     def create_rule_population(self):
         self.starting_symbol = Symbol('S')
         self.rule_population = RulePopulation(self.starting_symbol)

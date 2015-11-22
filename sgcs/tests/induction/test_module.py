@@ -27,15 +27,8 @@ class TestModule(TestCase):
             full_chance=0
         )
 
-        self.statistics = GrammarStatistics(self.randomizer,
-                                            ClassicRuleStatistics(),
-                                            ClassicFitness(10, 1, 1, 1, 1))
-        self.rule_adding = AddingRuleSupervisor(self.randomizer,
-                                                AddingRulesConfiguration.create(
-                                                    crowding_factor=0,
-                                                    crowding_size=0,
-                                                    elitism_size=0),
-                                                AddingRuleSupervisor.get_default_strategies())
+        self.statistics = GrammarStatistics.default(self.randomizer)
+        self.rule_adding = AddingRuleSupervisor.default(self.randomizer)
 
         self.grammar_sentence = self.create_sentence(
             Symbol('she'),

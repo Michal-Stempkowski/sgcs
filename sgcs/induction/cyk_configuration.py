@@ -110,6 +110,7 @@ class CoverageOperatorsConfiguration(object):
 class CoverageOperatorConfiguration(object):
     def __init__(self):
         self._chance = None
+        # self.
 
     @staticmethod
     def create(chance):

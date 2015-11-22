@@ -16,9 +16,7 @@ class LongTestDataRead(unittest.TestCase):
         self.dir_path = r"C:\Users\Michał\PycharmProjects\mgr\sgcs\sgcs\data\example gramatics"
         self.filename = 'toy opt los 65534'
 
-        self.data_fetcher = EagerFileFetcher(os.path.join(self.dir_path, self.filename))
-        self.tokenizer = EagerTokenizer(self.data_fetcher)
-        self.sut = SymbolTranslator(self.tokenizer)
+        self.sut = SymbolTranslator.create(os.path.join(self.dir_path, self.filename))
 
     def perform_long_double_read_scenario(self, sentences):
         for sentence in sentences:

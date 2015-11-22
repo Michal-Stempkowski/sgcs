@@ -243,6 +243,11 @@ class DummyCykStatistics(object):
 
 
 class GrammarStatistics(DummyCykStatistics):
+    @staticmethod
+    def default(randomizer):
+        return GrammarStatistics(randomizer, ClassicRuleStatistics(),
+                                 ClassicFitness(10, 1, 1, 1, 1))
+
     def __init__(self, randomizer, rule_statistics, fitness):
         super().__init__()
         self.randomizer = randomizer
