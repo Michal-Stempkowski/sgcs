@@ -121,3 +121,5 @@ class GcsRunner(object):
             if self.configuration.should_run_evolution:
                 self.evolution.run_genetic_algorithm(self.grammar_statistics, rule_population,
                                                      self.rule_adding)
+
+        return rule_population

@@ -9,7 +9,7 @@ from algorithm.gcs_runner import GcsRunner, AlgorithmConfiguration
 from datalayer.symbol_translator import SymbolTranslator
 from evolution.evolution_configuration import EvolutionRouletteSelectorConfiguration
 from induction.cyk_service import CykService
-from rule_adding import AddingRuleSupervisor, AddingRulesConfiguration
+from rule_adding import AddingRuleSupervisor, AddingRulesConfiguration, AddingRuleStrategyHint
 from statistics.grammar_statistics import GrammarStatistics
 from utils import Randomizer
 
@@ -37,17 +37,28 @@ class LongTestRunningGcs(unittest.TestCase):
             EvolutionRouletteSelectorConfiguration.create(),
             EvolutionRouletteSelectorConfiguration.create()
         ]
+
         self.configuration.induction.grammar_correction.should_run = False
         self.configuration.induction.coverage.operators.terminal.chance = 1
         self.configuration.induction.coverage.operators.universal.chance = 0
         self.configuration.induction.coverage.operators.starting.chance = 1
+        self.configuration.induction.coverage.operators.starting.adding_hint = \
+            AddingRuleStrategyHint.expand_population
         self.configuration.induction.coverage.operators.full.chance = 1
-        self.configuration.max_algorithm_steps = 1
+        self.configuration.induction.coverage.operators.full.adding_hint = \
+            AddingRuleStrategyHint.expand_population
+
+        self.configuration.max_algorithm_steps = 5
         self.configuration.rule.max_non_terminal_symbols = 40
-        self.configuration.evolution.operators.crossover = 0.2
-        self.configuration.evolution.operators.mutation = 0.8
-        self.configuration.evolution.operators.inversion = 0.8
+
+        self.configuration.evolution.operators.crossover.chance = 0.2
+        self.configuration.evolution.operators.mutation.chance = 0.8
+        self.configuration.evolution.operators.inversion.chance = 0.8
+
         self.configuration.induction.coverage.operators.aggressive.chance = 1
+        self.configuration.induction.coverage.operators.aggressive.adding_hint = \
+            AddingRuleStrategyHint.expand_population
+
         self.configuration.rule.adding.crowding.factor = 18
         self.configuration.rule.adding.crowding.size = 3
         self.configuration.rule.adding.elitism.is_used = True
@@ -62,4 +73,5 @@ class LongTestRunningGcs(unittest.TestCase):
     def test_gcs_for_tomita_l1(self):
         symbol_translator = SymbolTranslator.create(self.mk_path('tomita 1.txt'))
 
-        self.sut.perform_gcs(self.initial_rules, symbol_translator)
+        result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
+        t = 6 + 6

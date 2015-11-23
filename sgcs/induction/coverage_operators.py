@@ -31,13 +31,12 @@ class CoverageOperations(object):
     def __init__(self):
         self.operators = []
 
-    def perform_coverage(self, cyk_service, coverage_type, environment, rule_population, coordinates):
+    def perform_coverage(self, cyk_service, coverage_type, environment, rule_population,
+                         coordinates):
         for operator in self.operators:
             if operator.coverage_type == coverage_type:
                 production = operator.cover(cyk_service, environment, rule_population, coordinates)
                 if not production.is_empty():
-                    # rule_population.add_rule(production.rule)
-                    # cyk_service.statistics.on_added_new_rule(production.rule)
                     cyk_service.rule_adding.add_rule(production.rule, rule_population,
                                                      cyk_service.statistics,
                                                      operator.adding_rule_strategy_type(

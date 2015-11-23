@@ -48,8 +48,9 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
 
     @staticmethod
     def replace_rule(old, new, rule_population, statistics):
-        rule_population.remove_rule(old)
-        statistics.on_rule_removed(old)
+        if old is not None:
+            rule_population.remove_rule(old)
+            statistics.on_rule_removed(old)
 
         rule_population.add_rule(new)
         statistics.on_added_new_rule(new)
@@ -60,7 +61,7 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
         return min(subpopulation, key=statistics.fitness.get_keyfunc_getter(statistics))
 
     def _replace_most_related_rule(self, statistics, rule_population, weak_rules, rule):
-        most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x))
+        most_related_rule = max(weak_rules, key=lambda x: self.rule_affinity(rule, x), default=None)
         self.replace_rule(most_related_rule, rule, rule_population, statistics)
 
     def apply(self, adding_supervisor, statistics, rule, rule_population):
@@ -102,7 +103,8 @@ class AddingRuleWithElitismStrategy(AddingRuleWithCrowdingStrategy):
                 adding_supervisor.randomizer, False, adding_supervisor.configuration.crowding.size,
                 lambda x: x not in self.elite)
 
-            weak_rules.add(self._get_worst_rule(adding_supervisor, statistics, subpopulation))
+            if subpopulation:
+                weak_rules.add(self._get_worst_rule(adding_supervisor, statistics, subpopulation))
 
         self._replace_most_related_rule(statistics, rule_population, weak_rules, rule)
 

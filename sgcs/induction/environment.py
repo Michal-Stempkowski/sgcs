@@ -44,6 +44,9 @@ class Environment(object):
     def _right_coord(row, col, shift, left_id, right_id):
         return row - shift, col + shift
 
+    def _terminal_parent_symbols(self, col):
+        return self.sentence.get_symbol(col)
+
     def _left_parent_symbols(self, row, col, shift, left_id, right_id):
         return self.get_symbols(self._left_coord(row, col, shift, left_id, right_id))[left_id]
 
@@ -89,10 +92,15 @@ class Environment(object):
         return self.__class__.__name__ + '({' + str(self.cyk_table) + "})"
 
     def get_detector_symbols(self, coord):
-        left = self._left_parent_symbols(*coord)
-        right = self._right_parent_symbols(*coord)
+        row = coord[0]
+        if row > 0:
+            left = self._left_parent_symbols(*coord)
+            right = self._right_parent_symbols(*coord)
 
-        return left, right
+            return left, right
+        else:
+            col = coord[1]
+            return self._terminal_parent_symbols(col),
 
     def get_unsatisfied_detectors(self, coordinates):
         production_pool = self.cyk_table[coordinates]
