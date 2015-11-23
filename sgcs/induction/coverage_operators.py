@@ -40,7 +40,8 @@ class CoverageOperations(object):
                     # cyk_service.statistics.on_added_new_rule(production.rule)
                     cyk_service.rule_adding.add_rule(production.rule, rule_population,
                                                      cyk_service.statistics,
-                                                     operator.adding_rule_strategy_type)
+                                                     operator.adding_rule_strategy_type(
+                                                         cyk_service))
                     environment.add_production(production)
 
 
@@ -62,9 +63,9 @@ class CoverageOperator(object, metaclass=ABCMeta):
     def coverage_type(self):
         return self._coverage_type
 
-    @property
-    def adding_rule_strategy_type(self):
-        return self._adding_rule_strategy_type
+    def adding_rule_strategy_type(self, cyk_service):
+        custom_strategy = self.get_custom_adding_strategy(cyk_service)
+        return self._adding_rule_strategy_type if custom_strategy is None else custom_strategy
 
     def cover(self, cyk_service, environment, rule_population, coordinates):
         if cyk_service.randomizer.perform_with_chance(self.get_chance(cyk_service)):
@@ -80,10 +81,17 @@ class CoverageOperator(object, metaclass=ABCMeta):
     def get_chance(self, cyk_service):
         pass
 
+    @abstractmethod
+    def get_custom_adding_strategy(self, cyk_service):
+        pass
+
 
 class TerminalCoverageOperator(CoverageOperator):
     def __init__(self):
         super().__init__(CoverageType.unknown_terminal_symbol)
+
+    def get_custom_adding_strategy(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.terminal.adding_hint
 
     def cover_impl(self, cyk_service, environment, rule_population, coordinates):
         parent = rule_population.get_random_non_terminal_symbol(cyk_service.randomizer)
@@ -98,6 +106,9 @@ class TerminalCoverageOperator(CoverageOperator):
 class UniversalCoverageOperator(CoverageOperator):
     def __init__(self):
         super().__init__(CoverageType.unknown_terminal_symbol)
+
+    def get_custom_adding_strategy(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.universal.adding_hint
 
     def cover_impl(self, cyk_service, environment, rule_population, coordinates):
         child = environment.get_sentence_symbol(coordinates[1])
@@ -120,6 +131,9 @@ class StartingCoverageOperator(CoverageOperator):
         super().__init__(CoverageType.no_starting_symbol,
                          AddingRuleStrategyHint.control_population_size)
 
+    def get_custom_adding_strategy(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.starting.adding_hint
+
     def cover_impl(self, cyk_service, environment, rule_population, coordinates):
         if environment.get_sentence_length() == 1 and environment.is_sentence_positive():
             only_symbol = environment.get_sentence_symbol(0)
@@ -137,6 +151,9 @@ class AggressiveCoverageOperator(CoverageOperator):
     def __init__(self):
         super().__init__(CoverageType.no_effector_found,
                          AddingRuleStrategyHint.control_population_size)
+
+    def get_custom_adding_strategy(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.aggressive.adding_hint
 
     @staticmethod
     def _select_detector(cyk_service, environment, rule_population, coordinates):
@@ -171,6 +188,9 @@ class FullCoverageOperator(AggressiveCoverageOperator):
     def __init__(self):
         super().__init__()
         self._coverage_type = CoverageType.no_starting_symbol
+
+    def get_custom_adding_strategy(self, cyk_service):
+        return cyk_service.configuration.coverage.operators.full.adding_hint
 
     def _select_parent(self, cyk_service, rule_population):
         return rule_population.starting_symbol

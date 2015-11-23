@@ -1,3 +1,6 @@
+from rule_adding import AddingRuleStrategyHint
+
+
 class CykConfiguration(object):
     def __init__(self):
         self._coverage = None
@@ -59,11 +62,17 @@ class CoverageOperatorsConfiguration(object):
     @staticmethod
     def create(terminal_chance, universal_chance, aggressive_chance, starting_chance, full_chance):
         configuration = CoverageOperatorsConfiguration()
-        configuration.terminal = CoverageOperatorConfiguration.create(terminal_chance)
-        configuration.universal = CoverageOperatorConfiguration.create(universal_chance)
-        configuration.aggressive = CoverageOperatorConfiguration.create(aggressive_chance)
-        configuration.starting = CoverageOperatorConfiguration.create(starting_chance)
-        configuration.full = CoverageOperatorConfiguration.create(full_chance)
+
+        configuration.terminal = CoverageOperatorConfiguration.create(terminal_chance, None)
+
+        configuration.universal = CoverageOperatorConfiguration.create(universal_chance, None)
+
+        configuration.aggressive = CoverageOperatorConfiguration.create(aggressive_chance, None)
+
+        configuration.starting = CoverageOperatorConfiguration.create(starting_chance, None)
+
+        configuration.full = CoverageOperatorConfiguration.create(full_chance, None)
+
         return configuration
 
     @property
@@ -110,12 +119,13 @@ class CoverageOperatorsConfiguration(object):
 class CoverageOperatorConfiguration(object):
     def __init__(self):
         self._chance = None
-        # self.
+        self.adding_hint = None
 
     @staticmethod
-    def create(chance):
+    def create(chance, adding_hint):
         configuration = CoverageOperatorConfiguration()
         configuration.chance = chance
+        configuration.adding_hint = adding_hint
         return configuration
 
     @property

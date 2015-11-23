@@ -116,6 +116,7 @@ class AddingRuleSupervisor(object):
                                         crowding_size=0,
                                         elitism_size=0),
                                     AddingRuleSupervisor.get_default_strategies())
+
     @staticmethod
     def get_default_strategies():
         return [

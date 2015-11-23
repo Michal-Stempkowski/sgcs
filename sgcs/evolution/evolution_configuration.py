@@ -5,14 +5,19 @@ class EvolutionConfiguration(object):
     @staticmethod
     def create(selectors, inversion_chance, mutation_chance, crossover_chance):
         configuration = EvolutionConfiguration()
+
         configuration.operators = EvolutionOperatorsConfiguration.create(
             inversion_chance, mutation_chance, crossover_chance)
+
         configuration.selectors = selectors
+        configuration.custom_rule_adding_hint = None
+
         return configuration
 
     def __init__(self):
         self.operators = None
         self.selectors = []
+        self.custom_rule_adding_hint = None
 
 
 class EvolutionOperatorsConfiguration(object):

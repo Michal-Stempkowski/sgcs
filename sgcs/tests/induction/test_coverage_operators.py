@@ -328,8 +328,8 @@ class TestCoverageOperations(CoverageOperatorTestCommon):
 
     def create_operator_mock(self, coverage_type, adding_strategy):
         operator_mock = create_autospec(CoverageOperator)
-        operator_mock.configure_mock(
-            coverage_type=coverage_type, adding_rule_strategy_type=adding_strategy)
+        operator_mock.configure_mock(coverage_type=coverage_type)
+        operator_mock.adding_rule_strategy_type.return_value = adding_strategy
         operator_mock.cover.return_value = EmptyProduction(Detector(self.coordinates))
         return operator_mock
 

@@ -39,7 +39,11 @@ class EvolutionService(object):
                     new_rules += op.apply(self, rule_population, *arg_list)
                 selected_rules = new_rules
 
+        custom_strategy_hint = self.configuration.custom_rule_adding_hint
+        strategy_hint = AddingRuleStrategyHint.control_population_size_with_elitism \
+            if custom_strategy_hint is None else custom_strategy_hint
+
         for rule in selected_rules:
-            rule_adding.add_rule(rule, rule_population, grammar_statistics, strategy_hint=
-                                 AddingRuleStrategyHint.control_population_size_with_elitism)
+            rule_adding.add_rule(rule, rule_population, grammar_statistics,
+                                 strategy_hint=strategy_hint)
 
