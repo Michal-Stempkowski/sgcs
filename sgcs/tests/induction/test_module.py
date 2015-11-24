@@ -6,6 +6,7 @@ from hamcrest import *
 from core.rule import Rule, TerminalRule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol, Sentence
+from grammar_estimator import EvolutionStepEstimator
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
 from sgcs.induction.cyk_configuration import CykConfiguration
 from sgcs.induction.cyk_service import CykService
@@ -305,8 +306,10 @@ class TestModule(TestCase):
 
         self.service_wire_up(rule_population)
 
+        evolution_step_estimator = EvolutionStepEstimator()
+
         # When:
-        self.sut.perform_cyk_for_all_sentences(rule_population, sentences)
+        self.sut.perform_cyk_for_all_sentences(rule_population, sentences, evolution_step_estimator)
 
         # Then:
         assert_that(len(list(rule_population.get_all_non_terminal_rules())),

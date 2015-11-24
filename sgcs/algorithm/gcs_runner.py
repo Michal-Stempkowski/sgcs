@@ -1,7 +1,12 @@
+import sys
+
+import time
+
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from evolution.evolution_configuration import EvolutionConfiguration
 from evolution.evolution_service import EvolutionService
+from grammar_estimator import EvolutionStepEstimator
 from induction.cyk_configuration import CykConfiguration
 from induction.cyk_service import CykService
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
@@ -87,10 +92,12 @@ class LoopStopCriteria(object):
     def __init__(self, max_evolution_steps):
         self.max_evolution_steps = max_evolution_steps
         self.current_step = 0
+        self.start_time = time.clock()
 
     def __call__(self, *args, **kwargs):
+        print('current step:', self.current_step)
         self.current_step += 1
-        return self.current_step > self.max_evolution_steps
+        return self.current_step > self.max_evolution_steps or time.clock() - self.start_time > 900
 
 
 class GcsRunner(object):
@@ -116,10 +123,14 @@ class GcsRunner(object):
         stop_criteria = self.stop_criteria_creator(self.configuration.max_algorithm_steps)
         while not stop_criteria():
             sentences = symbol_translator.get_sentences()
-            self.induction.perform_cyk_for_all_sentences(rule_population, sentences)
+            evolution_step_estimator = EvolutionStepEstimator()
+            self.induction.perform_cyk_for_all_sentences(rule_population, sentences,
+                                                         evolution_step_estimator)
             # Calculate Fg
             if self.configuration.should_run_evolution:
                 self.evolution.run_genetic_algorithm(self.grammar_statistics, rule_population,
                                                      self.rule_adding)
+            print('rule_statistics size:', len(self.grammar_statistics.rule_statistics._rule_info))
+            # print('rule_population size:', sys.getsizeof(rule_population.all_non_terminal_rules))
 
         return rule_population

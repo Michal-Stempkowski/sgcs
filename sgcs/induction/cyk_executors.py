@@ -19,6 +19,7 @@ class CykTypeId(object):
 class CykResult(object):
     def __init__(self):
         self.belongs_to_grammar = False
+        self.is_positive = None
 
     def __str__(self):
         props = ['belongs?:{0}'.format('Y' if self.belongs_to_grammar else 'N')]
@@ -68,6 +69,7 @@ class CykTableExecutor(CykExecutor):
 
         result = self.cyk_service.factory.create(CykTypeId.cyk_result)
         result.belongs_to_grammar = self._belongs_to_grammar(rule_population, environment)
+        result.is_positive = environment.is_sentence_positive()
         return result
 
 

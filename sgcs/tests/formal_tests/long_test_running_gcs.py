@@ -48,14 +48,14 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration.induction.coverage.operators.full.adding_hint = \
             AddingRuleStrategyHint.expand_population
 
-        self.configuration.max_algorithm_steps = 5
+        self.configuration.max_algorithm_steps = 10
         self.configuration.rule.max_non_terminal_symbols = 40
 
         self.configuration.evolution.operators.crossover.chance = 0.2
         self.configuration.evolution.operators.mutation.chance = 0.8
         self.configuration.evolution.operators.inversion.chance = 0.8
 
-        self.configuration.induction.coverage.operators.aggressive.chance = 1
+        self.configuration.induction.coverage.operators.aggressive.chance = 0.4
         self.configuration.induction.coverage.operators.aggressive.adding_hint = \
             AddingRuleStrategyHint.expand_population
 

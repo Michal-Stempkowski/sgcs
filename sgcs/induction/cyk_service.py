@@ -61,11 +61,12 @@ class CykService(object):
         self.traceback.perform_traceback(self, environment, result, rules_population)
         return result
 
-    def perform_cyk_for_all_sentences(self, rule_population, sentences):
+    def perform_cyk_for_all_sentences(self, rule_population, sentences, evolution_step_estimator):
         if self.configuration.grammar_correction.should_run:
             self.grammar_corrector.correct_grammar(rule_population, self.statistics)
         for sentence in sentences:
-            self.perform_cyk(rule_population, sentence)
+            result = self.perform_cyk(rule_population, sentence)
+            evolution_step_estimator.append_result(result)
 
         self.statistics.update_fitness()
 
