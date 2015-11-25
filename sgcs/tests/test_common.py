@@ -6,7 +6,7 @@ def are_(matcher):
     return is_(matcher)
 
 
-def assert_nearly_equal_or_both_nan(a, b, delta):
+def assert_nearly_equal_or_both_nan(a, b, delta=0.01):
     if math.isnan(a):
         assert_that(math.isnan(b))
     else:
