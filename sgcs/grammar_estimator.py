@@ -193,3 +193,6 @@ class GrammarEstimator(object):
 
     def get_global_min_positive(self):
         return self._positive_common[1]
+
+    def get_global_min_negative(self):
+        return self._negative_common[1]
