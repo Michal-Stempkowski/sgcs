@@ -1,9 +1,10 @@
 import unittest
 from unittest.mock import create_autospec
 
+import math
 from hamcrest import *
 
-from grammar_estimator import EvolutionStepEstimator
+from grammar_estimator import EvolutionStepEstimator, GrammarEstimator
 from induction.cyk_executors import CykResult
 from tests.test_common import assert_nearly_equal_or_both_nan
 
@@ -30,7 +31,7 @@ class TestEvolutionStepEstimator(unittest.TestCase):
         assert_that(self.sut.negatives_that_has_occurred, is_(equal_to(negatives)))
         assert_nearly_equal_or_both_nan(self.sut.fitness, fitness, 0.01)
 
-    def test_adding_results(self):
+    def test_step_estimation(self):
         result_tp = self.mk_cyk_result(True, True)
         result_fp = self.mk_cyk_result(True, False)
         result_tn = self.mk_cyk_result(False, False)
@@ -49,7 +50,7 @@ class TestEvolutionStepEstimator(unittest.TestCase):
 
         self.sut.append_result(result_fp)
         self.assert_estimation(tp=2, tn=0, fp=1, fn=0, total=3, positives=2, negatives=1,
-                               fitness=0.66)
+                               fitness=0.67)
 
         self.sut.append_result(result_tn)
         self.assert_estimation(tp=2, tn=1, fp=1, fn=0, total=4, positives=2, negatives=2,
@@ -58,3 +59,43 @@ class TestEvolutionStepEstimator(unittest.TestCase):
         self.sut.append_result(result_fn)
         self.assert_estimation(tp=2, tn=1, fp=1, fn=1, total=5, positives=3, negatives=2,
                                fitness=0.6)
+
+
+class TestGrammarEstimator(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = GrammarEstimator()
+
+    @staticmethod
+    def mk_evolution_step(tp, tn, fp, fn):
+        step = EvolutionStepEstimator()
+        step._true_positive = tp
+        step._true_negative = tn
+        step._false_positive = fp
+        step._false_negative = fn
+        return step
+
+    def assert_estimation(self, step, fitness, positive, negative, min_fitness):
+        assert_nearly_equal_or_both_nan(self.sut.get_fitness(step), fitness, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_positive(step), positive, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_negative(step), negative, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_min_fitness(step), min_fitness, 0.01)
+
+    def test_grammar_estimation(self):
+        self.assert_estimation(step=0, fitness=float('nan'), positive=float('nan'),
+                               negative=float('nan'), min_fitness=float('nan'))
+
+        self.sut.append_step_estimation(0, self.mk_evolution_step(tp=3, tn=2, fp=3, fn=2))
+        self.assert_estimation(step=0, fitness=0.5, positive=0.6, negative=0.6,
+                               min_fitness=0.5)
+
+        self.sut.append_step_estimation(0, self.mk_evolution_step(tp=5, tn=5, fp=0, fn=0))
+        self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
+                               min_fitness=0.5)
+
+        self.sut.append_step_estimation(1, self.mk_evolution_step(tp=0, tn=1, fp=2, fn=0))
+        self.assert_estimation(step=1, fitness=0.33, positive=float('nan'), negative=0.67,
+                               min_fitness=0.33)
+        self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
+                               min_fitness=0.5)
