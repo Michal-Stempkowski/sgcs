@@ -60,7 +60,10 @@ class EvolutionStepEstimator(object):
 class GrammarEstimator(object):
     def __init__(self):
         self._fitness = dict()
+        self._fitness_common = [float('nan')]
+
         self._positive = dict()
+
         self._negative = dict()
 
     @staticmethod
@@ -71,47 +74,64 @@ class GrammarEstimator(object):
     def nan_safe_max(a, b):
         return max(a, b) if not math.isnan(a) else b
 
-    def _add_and_pack(self, a, b):
+    @staticmethod
+    def nan_safe_ladd(a, b):
+        return a + b if not math.isnan(a) else b
+
+    @staticmethod
+    def nan_safe_rsub(a, b):
+        return a - b if not math.isnan(b) else a
+
+    def _add_and_pack(self, a, b, common_data):
         accum, count, min_val, max_val = a
         new_val, delta = b
         new_acum = accum + new_val
         new_count = count + delta
+        old_attrib = accum / count if count else float('nan')
+        current_attrib = new_acum / new_count
+
+        common_data[0] = self.nan_safe_rsub(
+            self.nan_safe_ladd(common_data[0], current_attrib), old_attrib)
         return new_acum, new_count,\
-            self.nan_safe_min(min_val, new_acum / new_count),\
-            self.nan_safe_max(max_val, new_acum / new_count)
+            self.nan_safe_min(min_val, current_attrib),\
+            self.nan_safe_max(max_val, current_attrib)
 
     def append_step_estimation(self, step, estimation):
         self._update_fitness(step, estimation)
         self._update_positive(step, estimation)
         self._update_negative(step, estimation)
 
-    def _generic_update(self, estimation, step, collection, data_guard, calculate_function):
+    def _generic_update(self, estimation, step, collection, data_guard, calculate_function,
+                        update_common_function):
         data = collection.get(step, (0, 0, float('nan'), float('nan')))
         if data_guard(estimation):
             val = calculate_function(estimation)
 
-            collection[step] = self._add_and_pack(data, (val, 1))
+            collection[step] = self._add_and_pack(data, (val, 1), update_common_function)
 
     def _update_fitness(self, step, estimation):
         self._generic_update(estimation,
                              step,
                              self._fitness,
                              lambda _: True,
-                             lambda est: est.fitness)
+                             lambda est: est.fitness,
+                             self._fitness_common)
 
     def _update_positive(self, step, estimation):
         self._generic_update(estimation,
                              step,
                              self._positive,
                              lambda est: estimation.positives_that_has_occurred != 0,
-                             lambda est: est.true_positive / est.positives_that_has_occurred)
+                             lambda est: est.true_positive / est.positives_that_has_occurred,
+                             [0])
 
     def _update_negative(self, step, estimation):
         self._generic_update(estimation,
                              step,
                              self._negative,
                              lambda est: estimation.negatives_that_has_occurred != 0,
-                             lambda est: est.false_positive / est.negatives_that_has_occurred)
+                             lambda est: est.false_positive / est.negatives_that_has_occurred,
+                             [0])
 
     @staticmethod
     def _generic_get(step, collection):
@@ -149,3 +169,6 @@ class GrammarEstimator(object):
 
     def get_max_negative(self, step):
         return self._generic_get_special_val(step, self._negative, 3)
+
+    def get_average_fitness(self):
+        return self._fitness_common[0] / len(self._fitness) if len(self._fitness) else float('nan')
