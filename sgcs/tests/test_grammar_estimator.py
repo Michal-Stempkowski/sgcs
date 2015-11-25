@@ -76,28 +76,36 @@ class TestGrammarEstimator(unittest.TestCase):
         step._false_negative = fn
         return step
 
-    def assert_estimation(self, step, fitness, positive, negative, min_fitness, max_fitness):
+    def assert_estimation(self, step, fitness, positive, negative, min_fitness, max_fitness,
+                          min_positive, max_positive):
         assert_nearly_equal_or_both_nan(self.sut.get_fitness(step), fitness, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_positive(step), positive, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_negative(step), negative, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_min_fitness(step), min_fitness, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_max_fitness(step), max_fitness, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_min_positive(step), min_positive, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_max_positive(step), max_positive, 0.01)
 
     def test_grammar_estimation(self):
         self.assert_estimation(step=0, fitness=float('nan'), positive=float('nan'),
                                negative=float('nan'),
-                               min_fitness=float('nan'), max_fitness=float('nan'))
+                               min_fitness=float('nan'), max_fitness=float('nan'),
+                               min_positive=float('nan'), max_positive=float('nan'))
 
         self.sut.append_step_estimation(0, self.mk_evolution_step(tp=3, tn=2, fp=3, fn=2))
         self.assert_estimation(step=0, fitness=0.5, positive=0.6, negative=0.6,
-                               min_fitness=0.5, max_fitness=0.5)
+                               min_fitness=0.5, max_fitness=0.5,
+                               min_positive=0.6, max_positive=0.6)
 
         self.sut.append_step_estimation(0, self.mk_evolution_step(tp=5, tn=5, fp=0, fn=0))
         self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
-                               min_fitness=0.5, max_fitness=0.75)
+                               min_fitness=0.5, max_fitness=0.75,
+                               min_positive=0.6, max_positive=0.8)
 
         self.sut.append_step_estimation(1, self.mk_evolution_step(tp=0, tn=1, fp=2, fn=0))
         self.assert_estimation(step=1, fitness=0.33, positive=float('nan'), negative=0.67,
-                               min_fitness=0.33, max_fitness=0.33)
+                               min_fitness=0.33, max_fitness=0.33,
+                               min_positive=float('nan'), max_positive=float('nan'))
         self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
-                               min_fitness=0.5, max_fitness=0.75)
+                               min_fitness=0.5, max_fitness=0.75,
+                               min_positive=0.6, max_positive=0.8)

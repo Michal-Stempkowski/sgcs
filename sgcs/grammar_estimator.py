@@ -137,3 +137,9 @@ class GrammarEstimator(object):
 
     def get_max_fitness(self, step):
         return self._generic_get_special_val(step, self._fitness, 3)
+
+    def get_min_positive(self, step):
+        return self._generic_get_special_val(step, self._positive, 2)
+
+    def get_max_positive(self, step):
+        return self._generic_get_special_val(step, self._positive, 3)
