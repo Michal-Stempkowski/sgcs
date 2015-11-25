@@ -66,6 +66,7 @@ class GrammarEstimator(object):
         self._positive_common = [float('nan')]
 
         self._negative = dict()
+        self._negative_common = [float('nan')]
 
     @staticmethod
     def nan_safe_min(a, b):
@@ -132,7 +133,7 @@ class GrammarEstimator(object):
                              self._negative,
                              lambda est: estimation.negatives_that_has_occurred != 0,
                              lambda est: est.false_positive / est.negatives_that_has_occurred,
-                             [0])
+                             self._negative_common)
 
     @staticmethod
     def _generic_get(step, collection):
@@ -178,3 +179,7 @@ class GrammarEstimator(object):
     def get_average_positive(self):
         return self._positive_common[0] / len(self._positive) \
             if len(self._positive) else float('nan')
+
+    def get_average_negative(self):
+        return self._negative_common[0] / len(self._negative) \
+            if len(self._negative) else float('nan')
