@@ -204,3 +204,6 @@ class GrammarEstimator(object):
 
     def get_global_max_positive(self):
         return self._positive_common[2]
+
+    def get_global_max_negative(self):
+        return self._negative_common[2]
