@@ -67,11 +67,18 @@ class GrammarEstimator(object):
     def nan_safe_min(a, b):
         return min(a, b) if not math.isnan(a) else b
 
+    @staticmethod
+    def nan_safe_max(a, b):
+        return max(a, b) if not math.isnan(a) else b
+
     def _add_and_pack(self, a, b):
-        accum, count, min_val = a
+        accum, count, min_val, max_val = a
         new_val, delta = b
+        new_acum = accum + new_val
         new_count = count + delta
-        return accum + new_val, new_count, self.nan_safe_min(min_val, new_val / new_count)
+        return new_acum, new_count,\
+            self.nan_safe_min(min_val, new_acum / new_count),\
+            self.nan_safe_max(max_val, new_acum / new_count)
 
     def append_step_estimation(self, step, estimation):
         self._update_fitness(step, estimation)
@@ -79,7 +86,7 @@ class GrammarEstimator(object):
         self._update_negative(step, estimation)
 
     def _generic_update(self, estimation, step, collection, data_guard, calculate_function):
-        data = collection.get(step, (0, 0, float('nan')))
+        data = collection.get(step, (0, 0, float('nan'), float('nan')))
         if data_guard(estimation):
             val = calculate_function(estimation)
 
@@ -112,9 +119,9 @@ class GrammarEstimator(object):
         return data[0] / data[1] if data else float('nan')
 
     @staticmethod
-    def _generic_get_min(step, collection):
+    def _generic_get_special_val(step, collection, col):
         data = collection.get(step)
-        return data[2] if data else float('nan')
+        return data[col] if data else float('nan')
 
     def get_fitness(self, step):
         return self._generic_get(step, self._fitness)
@@ -126,4 +133,7 @@ class GrammarEstimator(object):
         return self._generic_get(step, self._negative)
 
     def get_min_fitness(self, step):
-        return self._generic_get_min(step, self._fitness)
+        return self._generic_get_special_val(step, self._fitness, 2)
+
+    def get_max_fitness(self, step):
+        return self._generic_get_special_val(step, self._fitness, 3)

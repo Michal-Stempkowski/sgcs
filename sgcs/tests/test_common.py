@@ -10,4 +10,4 @@ def assert_nearly_equal_or_both_nan(a, b, delta):
     if math.isnan(a):
         assert_that(math.isnan(b))
     else:
-        assert_that(b, is_(close_to(a, delta)))
+        assert_that(a, is_(close_to(b, delta)))
