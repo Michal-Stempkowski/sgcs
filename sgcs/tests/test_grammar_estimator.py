@@ -78,7 +78,7 @@ class TestGrammarEstimator(unittest.TestCase):
 
     def assert_estimation(self, step, fitness, positive, negative, min_fitness, max_fitness,
                           min_positive, max_positive, min_negative, max_negative, average_fitness,
-                          average_positive, average_negative):
+                          average_positive, average_negative, global_min_fitness):
         assert_nearly_equal_or_both_nan(self.sut.get_fitness(step), fitness, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_positive(step), positive, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_negative(step), negative, 0.01)
@@ -91,6 +91,7 @@ class TestGrammarEstimator(unittest.TestCase):
         assert_nearly_equal_or_both_nan(self.sut.get_average_fitness(), average_fitness, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_average_positive(), average_positive, 0.01)
         assert_nearly_equal_or_both_nan(self.sut.get_average_negative(), average_negative, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.get_global_min_fitness(), global_min_fitness, 0.01)
 
     def test_grammar_estimation(self):
         self.assert_estimation(step=0, fitness=float('nan'), positive=float('nan'),
@@ -100,7 +101,8 @@ class TestGrammarEstimator(unittest.TestCase):
                                min_negative=float('nan'), max_negative=float('nan'),
                                average_fitness=float('nan'),
                                average_positive=float('nan'),
-                               average_negative=float('nan'))
+                               average_negative=float('nan'),
+                               global_min_fitness=float('nan'))
 
         self.sut.append_step_estimation(0, self.mk_evolution_step(tp=3, tn=2, fp=3, fn=2))
         self.assert_estimation(step=0, fitness=0.5, positive=0.6, negative=0.6,
@@ -109,7 +111,8 @@ class TestGrammarEstimator(unittest.TestCase):
                                min_negative=0.6, max_negative=0.6,
                                average_fitness=0.5,
                                average_positive=0.6,
-                               average_negative=0.6)
+                               average_negative=0.6,
+                               global_min_fitness=0.5)
 
         self.sut.append_step_estimation(0, self.mk_evolution_step(tp=5, tn=5, fp=0, fn=0))
         self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
@@ -118,7 +121,8 @@ class TestGrammarEstimator(unittest.TestCase):
                                min_negative=0.3, max_negative=0.6,
                                average_fitness=0.75,
                                average_positive=0.8,
-                               average_negative=0.3)
+                               average_negative=0.3,
+                               global_min_fitness=0.5)
 
         self.sut.append_step_estimation(1, self.mk_evolution_step(tp=0, tn=1, fp=2, fn=0))
         self.assert_estimation(step=1, fitness=0.33, positive=float('nan'), negative=0.67,
@@ -127,11 +131,13 @@ class TestGrammarEstimator(unittest.TestCase):
                                min_negative=0.67, max_negative=0.67,
                                average_fitness=0.54,
                                average_positive=0.8,
-                               average_negative=0.48)
+                               average_negative=0.48,
+                               global_min_fitness=0.33)
         self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3,
                                min_fitness=0.5, max_fitness=0.75,
                                min_positive=0.6, max_positive=0.8,
                                min_negative=0.3, max_negative=0.6,
                                average_fitness=0.54,
                                average_positive=0.8,
-                               average_negative=0.48)
+                               average_negative=0.48,
+                               global_min_fitness=0.33)

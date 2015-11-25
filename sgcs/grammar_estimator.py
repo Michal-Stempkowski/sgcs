@@ -60,13 +60,13 @@ class EvolutionStepEstimator(object):
 class GrammarEstimator(object):
     def __init__(self):
         self._fitness = dict()
-        self._fitness_common = [float('nan')]
+        self._fitness_common = [float('nan'), float('nan')]
 
         self._positive = dict()
-        self._positive_common = [float('nan')]
+        self._positive_common = [float('nan'), float('nan')]
 
         self._negative = dict()
-        self._negative_common = [float('nan')]
+        self._negative_common = [float('nan'), float('nan')]
 
     @staticmethod
     def nan_safe_min(a, b):
@@ -92,11 +92,15 @@ class GrammarEstimator(object):
         old_attrib = accum / count if count else float('nan')
         current_attrib = new_acum / new_count
 
+        step_min = self.nan_safe_min(min_val, current_attrib)
+        step_max = self.nan_safe_max(max_val, current_attrib)
+
         common_data[0] = self.nan_safe_rsub(
             self.nan_safe_ladd(common_data[0], current_attrib), old_attrib)
-        return new_acum, new_count,\
-            self.nan_safe_min(min_val, current_attrib),\
-            self.nan_safe_max(max_val, current_attrib)
+
+        common_data[1] = self.nan_safe_min(common_data[1], step_min)
+
+        return new_acum, new_count, step_min, step_max
 
     def append_step_estimation(self, step, estimation):
         self._update_fitness(step, estimation)
@@ -183,3 +187,6 @@ class GrammarEstimator(object):
     def get_average_negative(self):
         return self._negative_common[0] / len(self._negative) \
             if len(self._negative) else float('nan')
+
+    def get_global_min_fitness(self):
+        return self._fitness_common[1]
