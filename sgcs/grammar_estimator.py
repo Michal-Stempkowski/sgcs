@@ -60,13 +60,13 @@ class EvolutionStepEstimator(object):
 class GrammarEstimator(object):
     def __init__(self):
         self._fitness = dict()
-        self._fitness_common = [float('nan'), float('nan')]
+        self._fitness_common = [float('nan'), float('nan'), float('nan')]
 
         self._positive = dict()
-        self._positive_common = [float('nan'), float('nan')]
+        self._positive_common = [float('nan'), float('nan'), float('nan')]
 
         self._negative = dict()
-        self._negative_common = [float('nan'), float('nan')]
+        self._negative_common = [float('nan'), float('nan'), float('nan')]
 
     @staticmethod
     def nan_safe_min(a, b):
@@ -99,6 +99,8 @@ class GrammarEstimator(object):
             self.nan_safe_ladd(common_data[0], current_attrib), old_attrib)
 
         common_data[1] = self.nan_safe_min(common_data[1], step_min)
+
+        common_data[2] = self.nan_safe_max(common_data[2], step_max)
 
         return new_acum, new_count, step_min, step_max
 
@@ -196,3 +198,6 @@ class GrammarEstimator(object):
 
     def get_global_min_negative(self):
         return self._negative_common[1]
+
+    def get_global_max_fitness(self):
+        return self._fitness_common[2]
