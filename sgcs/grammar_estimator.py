@@ -63,6 +63,7 @@ class GrammarEstimator(object):
         self._fitness_common = [float('nan')]
 
         self._positive = dict()
+        self._positive_common = [float('nan')]
 
         self._negative = dict()
 
@@ -123,7 +124,7 @@ class GrammarEstimator(object):
                              self._positive,
                              lambda est: estimation.positives_that_has_occurred != 0,
                              lambda est: est.true_positive / est.positives_that_has_occurred,
-                             [0])
+                             self._positive_common)
 
     def _update_negative(self, step, estimation):
         self._generic_update(estimation,
@@ -171,4 +172,9 @@ class GrammarEstimator(object):
         return self._generic_get_special_val(step, self._negative, 3)
 
     def get_average_fitness(self):
-        return self._fitness_common[0] / len(self._fitness) if len(self._fitness) else float('nan')
+        return self._fitness_common[0] / len(self._fitness) \
+            if len(self._fitness) else float('nan')
+
+    def get_average_positive(self):
+        return self._positive_common[0] / len(self._positive) \
+            if len(self._positive) else float('nan')
