@@ -1,6 +1,22 @@
+from utils import RunTimes
+
+
 class Symbol(object):
     def __init__(self, symbol_id):
         self.symbol_id = symbol_id
+
+    def human_friendly_representation(self, abs_shift):
+        remainder = self.symbol_id - abs_shift + 1
+        result = []
+        alphabet_size = ord('z') - ord('a')
+
+        run_one_more_time = RunTimes(1)
+        while remainder > alphabet_size or run_one_more_time():
+            letter = chr(remainder % alphabet_size+ ord('a'))
+            result.append(letter.upper())
+            remainder //= alphabet_size
+
+        return ''.join(reversed(result))
 
     def __eq__(self, other):
         return self.symbol_id == other.symbol_id
@@ -25,6 +41,7 @@ class Sentence(object):
 
     def get_symbol(self, index):
         return self.symbols[index]
+
 
     def __eq__(self, other):
         return len(self.symbols) == len(other.symbols) and \

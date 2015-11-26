@@ -192,7 +192,7 @@ class GcsRunner(object):
 
             evolution_step += 1
 
-            print('rule_statistics size:', len(self.grammar_statistics.rule_statistics._rule_info))
+            print('evolution step:', evolution_step)
             # print('rule_population size:', sys.getsizeof(rule_population.all_non_terminal_rules))
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())

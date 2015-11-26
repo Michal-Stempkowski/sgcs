@@ -11,6 +11,27 @@ class Rule(object):
     def is_terminal_rule(self):
         return self.right_child is None
 
+    @staticmethod
+    def _repr_or_special(symbol, shift, starting, universal):
+        if symbol == starting:
+            return '<S>'
+        elif universal and symbol == universal:
+            return '<U>'
+        else:
+            return symbol.human_friendly_representation(shift)
+
+    def human_friendly_representation(self, shift, starting_symbol, universal_symbol):
+        abs_shift = abs(shift)
+        left_side = self._repr_or_special(self.parent, abs_shift, starting_symbol, universal_symbol)
+        if self.is_terminal_rule():
+            return left_side, self.left_child.symbol_id
+        else:
+            left_child = self._repr_or_special(
+                self.left_child, abs_shift, starting_symbol, universal_symbol)
+            right_child = self._repr_or_special(
+                self.right_child, abs_shift, starting_symbol, universal_symbol)
+            return left_side, left_child, right_child
+
     def __eq__(self, other):
         return self is other or other is not None and\
                                 self.parent == other.parent and \

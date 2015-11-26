@@ -62,9 +62,9 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration.induction.coverage.operators.full.adding_hint = \
             AddingRuleStrategyHint.expand_population
 
-        self.configuration.max_algorithm_steps = 10
+        self.configuration.max_algorithm_steps = 5000
         self.configuration.rule.max_non_terminal_symbols = 40
-        self.configuration.max_execution_time = 90
+        self.configuration.max_execution_time = 900
         self.configuration.satisfying_fitness = 1
 
         self.configuration.evolution.operators.crossover.chance = 0.2
@@ -91,7 +91,7 @@ class LongTestRunningGcs(unittest.TestCase):
 
         result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
         print(result[1].stop_reasoning_message())
-        print(result[0])
+        print(symbol_translator.rule_population_to_string(result[0]))
 
         print('Statistics:')
         print('fitness:', self.grammar_estimator['fitness'].get_global_max())

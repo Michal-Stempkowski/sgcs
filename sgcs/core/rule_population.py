@@ -31,6 +31,10 @@ class RulePopulation(object):
     def max_non_terminal_symbols(self):
         return self._max_non_terminal_symbols
 
+    @staticmethod
+    def symbol_shift():
+        return 101
+
     def get_rules_by_right(self, pair):
         if len(pair) != 2:
             raise RulePopulationAccessViolationError(
@@ -72,7 +76,8 @@ class RulePopulation(object):
             return packed_rules.values() if packed_rules else []
 
     def get_random_non_terminal_symbol(self, randomizer):
-        return Symbol(randomizer.randint(101, 101 + self.max_non_terminal_symbols))
+        return Symbol(randomizer.randint(self.symbol_shift(),
+                                         self.symbol_shift() + self.max_non_terminal_symbols))
 
     def get_random_rules(self, randomizer, terminal, size):
         real_size = min(size, len(self.all_non_terminal_rules))

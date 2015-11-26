@@ -19,3 +19,13 @@ class Randomizer(object):
 
     def uniform(self, min_val, max_val):
         return self.generator.uniform(min_val, max_val)
+
+
+class RunTimes(object):
+    def __init__(self, times):
+        self.times = times
+
+    def __call__(self, *args, **kwargs):
+        result = self.times > 0
+        self.times -= 1
+        return result
