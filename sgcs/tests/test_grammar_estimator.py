@@ -29,7 +29,7 @@ class TestEvolutionStepEstimator(unittest.TestCase):
         assert_that(self.sut.total, is_(equal_to(total)))
         assert_that(self.sut.positives_that_has_occurred, is_(equal_to(positives)))
         assert_that(self.sut.negatives_that_has_occurred, is_(equal_to(negatives)))
-        assert_nearly_equal_or_both_nan(self.sut.fitness, fitness, 0.01)
+        assert_nearly_equal_or_both_nan(self.sut.fitness, fitness)
 
     def test_step_estimation(self):
         result_tp = self.mk_cyk_result(True, True)
@@ -81,28 +81,34 @@ class TestGrammarEstimator(unittest.TestCase):
                           average_positive, average_negative, global_min_fitness,
                           global_min_positive, global_min_negative, global_max_fitness,
                           global_max_positive, global_max_negative):
-        assert_nearly_equal_or_both_nan(self.sut.get_fitness(step), fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_positive(step), positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_negative(step), negative)
+        fit = 'fitness'
+        pos = 'positive'
+        neg = 'negative'
+
+        assert_nearly_equal_or_both_nan(self.sut[fit].get(step), fitness)
+        assert_nearly_equal_or_both_nan(self.sut[pos].get(step), positive)
+        assert_nearly_equal_or_both_nan(self.sut[neg].get(step), negative)
         
-        assert_nearly_equal_or_both_nan(self.sut.get_min_fitness(step), min_fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_max_fitness(step), max_fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_min_positive(step), min_positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_max_positive(step), max_positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_min_negative(step), min_negative)
-        assert_nearly_equal_or_both_nan(self.sut.get_max_negative(step), max_negative)
+        assert_nearly_equal_or_both_nan(self.sut[fit].get_min(step), min_fitness)
+        assert_nearly_equal_or_both_nan(self.sut[fit].get_max(step), max_fitness)
+
+        assert_nearly_equal_or_both_nan(self.sut[pos].get_min(step), min_positive)
+        assert_nearly_equal_or_both_nan(self.sut[pos].get_max(step), max_positive)
+
+        assert_nearly_equal_or_both_nan(self.sut[neg].get_min(step), min_negative)
+        assert_nearly_equal_or_both_nan(self.sut[neg].get_max(step), max_negative)
         
-        assert_nearly_equal_or_both_nan(self.sut.get_average_fitness(), average_fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_average_positive(), average_positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_average_negative(), average_negative)
+        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_average(), average_fitness)
+        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_average(), average_positive)
+        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_average(), average_negative)
         
-        assert_nearly_equal_or_both_nan(self.sut.get_global_min_fitness(), global_min_fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_global_min_positive(), global_min_positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_global_min_negative(), global_min_negative)
-        
-        assert_nearly_equal_or_both_nan(self.sut.get_global_max_fitness(), global_max_fitness)
-        assert_nearly_equal_or_both_nan(self.sut.get_global_max_positive(), global_max_positive)
-        assert_nearly_equal_or_both_nan(self.sut.get_global_max_negative(), global_max_negative)
+        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_min(), global_min_fitness)
+        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_min(), global_min_positive)
+        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_min(), global_min_negative)
+
+        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_max(), global_max_fitness)
+        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_max(), global_max_positive)
+        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_max(), global_max_negative)
 
     def test_grammar_estimation(self):
         self.assert_estimation(step=0, fitness=float('nan'), positive=float('nan'),

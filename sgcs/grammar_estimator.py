@@ -1,4 +1,5 @@
 import math
+from abc import ABCMeta, abstractmethod
 
 
 class EvolutionStepEstimator(object):
@@ -57,17 +58,7 @@ class EvolutionStepEstimator(object):
                 self._true_negative += 1
 
 
-class GrammarEstimator(object):
-    def __init__(self):
-        self._fitness = dict()
-        self._fitness_common = [float('nan'), float('nan'), float('nan')]
-
-        self._positive = dict()
-        self._positive_common = [float('nan'), float('nan'), float('nan')]
-
-        self._negative = dict()
-        self._negative_common = [float('nan'), float('nan'), float('nan')]
-
+class GrammarCriteria(metaclass=ABCMeta):
     @staticmethod
     def nan_safe_min(a, b):
         return min(a, b) if not math.isnan(a) else b
@@ -84,7 +75,28 @@ class GrammarEstimator(object):
     def nan_safe_rsub(a, b):
         return a - b if not math.isnan(b) else a
 
-    def _add_and_pack(self, a, b, common_data):
+    def __init__(self):
+        self._occurrences = dict()
+        self._global_min = float('nan')
+        self._global_max = float('nan')
+        self._global_average = float('nan')
+
+    def update(self, step, estimation):
+        data = self._occurrences.get(step, (0, 0, float('nan'), float('nan')))
+        if self._data_guard(estimation):
+            val = self._calculate(estimation)
+
+            self._occurrences[step] = self._add_and_pack(data, (val, 1))
+
+    @abstractmethod
+    def _data_guard(self, estimation):
+        pass
+
+    @abstractmethod
+    def _calculate(self, estimation):
+        pass
+
+    def _add_and_pack(self, a, b):
         accum, count, min_val, max_val = a
         new_val, delta = b
         new_acum = accum + new_val
@@ -95,132 +107,72 @@ class GrammarEstimator(object):
         step_min = self.nan_safe_min(min_val, current_attrib)
         step_max = self.nan_safe_max(max_val, current_attrib)
 
-        common_data[0] = self.nan_safe_rsub(
-            self.nan_safe_ladd(common_data[0], current_attrib), old_attrib)
+        self._global_average = self.nan_safe_rsub(
+            self.nan_safe_ladd(self._global_average, current_attrib), old_attrib)
 
-        common_data[1] = self.nan_safe_min(common_data[1], step_min)
+        self._global_min = self.nan_safe_min(self._global_min, step_min)
 
-        common_data[2] = self.nan_safe_max(common_data[2], step_max)
+        self._global_max = self.nan_safe_max(self._global_max, step_max)
 
         return new_acum, new_count, step_min, step_max
 
-    def append_step_estimation(self, step, estimation):
-        self._update_fitness(step, estimation)
-        self._update_positive(step, estimation)
-        self._update_negative(step, estimation)
-
-    def _generic_update(self, estimation, step, collection, data_guard, calculate_function,
-                        common_data):
-        data = collection.get(step, (0, 0, float('nan'), float('nan')))
-        if data_guard(estimation):
-            val = calculate_function(estimation)
-
-            collection[step] = self._add_and_pack(data, (val, 1), common_data)
-
-    def _update_fitness(self, step, estimation):
-        self._generic_update(estimation,
-                             step,
-                             collection=self._fitness,
-                             data_guard=lambda _: True,
-                             calculate_function=lambda est: est.fitness,
-                             common_data=self._fitness_common)
-
-    def _update_positive(self, step, estimation):
-        self._generic_update(estimation,
-                             step,
-                             collection=self._positive,
-                             data_guard=lambda est: estimation.positives_that_has_occurred != 0,
-                             calculate_function=
-                             lambda est: est.true_positive / est.positives_that_has_occurred,
-                             common_data=self._positive_common)
-
-    def _update_negative(self, step, estimation):
-        self._generic_update(estimation,
-                             step,
-                             collection=self._negative,
-                             data_guard=lambda est: estimation.negatives_that_has_occurred != 0,
-                             calculate_function=
-                             lambda est: est.false_positive / est.negatives_that_has_occurred,
-                             common_data=self._negative_common)
-
-    @staticmethod
-    def _generic_get(step, collection):
-        data = collection.get(step)
+    def get(self, step):
+        data = self._occurrences.get(step)
         return data[0] / data[1] if data else float('nan')
 
-    @staticmethod
-    def _generic_get_special_val(step, collection, col):
-        data = collection.get(step)
-        return data[col] if data else float('nan')
+    def get_min(self, step):
+        data = self._occurrences.get(step)
+        return data[2] if data else float('nan')
 
-    def get_fitness(self, step):
-        return self._generic_get(step, self._fitness)
+    def get_max(self, step):
+        data = self._occurrences.get(step)
+        return data[3] if data else float('nan')
 
-    def get_positive(self, step):
-        return self._generic_get(step, self._positive)
+    def get_global_average(self):
+        return self._global_average / len(self._occurrences) \
+            if len(self._occurrences) else float('nan')
 
-    def get_negative(self, step):
-        return self._generic_get(step, self._negative)
+    def get_global_min(self):
+        return self._global_min
 
-    def _generic_get_min(self, step, collection):
-        return self._generic_get_special_val(step, collection, 2)
+    def get_global_max(self):
+        return self._global_max
 
-    def _generic_get_max(self, step, collection):
-        return self._generic_get_special_val(step, collection, 3)
 
-    def get_min_fitness(self, step):
-        return self._generic_get_min(step, self._fitness)
+class FitnessGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.fitness
 
-    def get_max_fitness(self, step):
-        return self._generic_get_max(step, self._fitness)
+    def _data_guard(self, estimation):
+        return True
 
-    def get_min_positive(self, step):
-        return self._generic_get_min(step, self._positive)
 
-    def get_max_positive(self, step):
-        return self._generic_get_max(step, self._positive)
+class PositiveGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.true_positive / estimation.positives_that_has_occurred
 
-    def get_min_negative(self, step):
-        return self._generic_get_min(step, self._negative)
+    def _data_guard(self, estimation):
+        return estimation.positives_that_has_occurred != 0
 
-    def get_max_negative(self, step):
-        return self._generic_get_max(step, self._negative)
 
-    @staticmethod
-    def _generic_get_average(collection_common, base_collection):
-        return collection_common[0] / len(base_collection) if len(base_collection) else float('nan')
+class NegativeGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.false_positive / estimation.negatives_that_has_occurred
 
-    def get_average_fitness(self):
-        return self._generic_get_average(self._fitness_common, self._fitness)
+    def _data_guard(self, estimation):
+        return estimation.negatives_that_has_occurred != 0
 
-    def get_average_positive(self):
-        return self._generic_get_average(self._positive_common, self._positive)
 
-    def get_average_negative(self):
-        return self._generic_get_average(self._negative_common, self._negative)
+class GrammarEstimator(object):
+    def __init__(self):
+        self.criterias = dict(
+            fitness=FitnessGrammarCriteria(),
+            positive=PositiveGrammarCriteria(),
+            negative=NegativeGrammarCriteria()
+        )
 
-    @staticmethod
-    def _generic_get_global_min(collection):
-        return collection[1]
+    def __getitem__(self, item):
+        return self.criterias[item]
 
-    def get_global_min_fitness(self):
-        return self._generic_get_global_min(self._fitness_common)
-
-    def get_global_min_positive(self):
-        return self._generic_get_global_min(self._positive_common)
-
-    def get_global_min_negative(self):
-        return self._generic_get_global_min(self._negative_common)
-
-    @staticmethod
-    def _generic_get_global_max(collection):
-        return collection[2]
-
-    def get_global_max_fitness(self):
-        return self._generic_get_global_max(self._fitness_common)
-
-    def get_global_max_positive(self):
-        return self._generic_get_global_max(self._positive_common)
-
-    def get_global_max_negative(self):
-        return self._generic_get_global_max(self._negative_common)
+    def append_step_estimation(self, step, estimation):
+        any(criteria.update(step, estimation) for criteria in self.criterias.values())
