@@ -3,11 +3,14 @@ import unittest
 from random import Random
 from unittest.mock import create_autospec
 
+import time
 from hamcrest import *
 
-from algorithm.gcs_runner import GcsRunner, AlgorithmConfiguration
+from algorithm.gcs_runner import GcsRunner, AlgorithmConfiguration, FitnessStopCriteria, \
+    StepStopCriteria, TimeStopCriteria
 from datalayer.symbol_translator import SymbolTranslator
 from evolution.evolution_configuration import EvolutionRouletteSelectorConfiguration
+from grammar_estimator import GrammarEstimator
 from induction.cyk_service import CykService
 from rule_adding import AddingRuleSupervisor, AddingRulesConfiguration, AddingRuleStrategyHint
 from statistics.grammar_statistics import GrammarStatistics
@@ -21,7 +24,18 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration = AlgorithmConfiguration.default()
         self.randomizer = Randomizer(Random())
 
-        self.sut = GcsRunner(self.configuration, self.randomizer)
+        self.grammar_estimator = GrammarEstimator()
+
+        self.fitness_stop_criteria = FitnessStopCriteria(self.grammar_estimator, self.configuration)
+        self.steps_stop_criteria = StepStopCriteria(self.configuration)
+        self.time_stop_criteria = TimeStopCriteria(self.configuration)
+
+        self.sut = GcsRunner(self.configuration, self.randomizer, self.grammar_estimator,
+                             [
+                                 self.fitness_stop_criteria,
+                                 self.steps_stop_criteria,
+                                 self.time_stop_criteria
+                             ])
 
         self.initial_rules = []
 
@@ -50,6 +64,8 @@ class LongTestRunningGcs(unittest.TestCase):
 
         self.configuration.max_algorithm_steps = 10
         self.configuration.rule.max_non_terminal_symbols = 40
+        self.configuration.max_execution_time = 90
+        self.configuration.satisfying_fitness = 1
 
         self.configuration.evolution.operators.crossover.chance = 0.2
         self.configuration.evolution.operators.mutation.chance = 0.8
@@ -74,4 +90,10 @@ class LongTestRunningGcs(unittest.TestCase):
         symbol_translator = SymbolTranslator.create(self.mk_path('tomita 1.txt'))
 
         result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
-        t = 6 + 6
+        print(result[1].stop_reasoning_message())
+        print(result[0])
+
+        print('Statistics:')
+        print('fitness:', self.grammar_estimator['fitness'].get_global_max())
+        print('runs:', self.steps_stop_criteria.current_step)
+        print('execution time:', time.clock() - self.time_stop_criteria.start_time)

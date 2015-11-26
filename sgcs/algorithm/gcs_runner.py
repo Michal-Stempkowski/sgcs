@@ -1,6 +1,7 @@
 import sys
 
 import time
+from abc import ABCMeta, abstractmethod
 
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
@@ -45,19 +46,23 @@ class AlgorithmConfiguration(object):
         configuration = AlgorithmConfiguration.create(
             induction_configuration, evolution_configuration, rule_configuration,
             max_algorithm_steps=1,
-            should_run_evolution=True
+            should_run_evolution=True,
+            max_execution_time=900,
+            satisfying_fitness=1
         )
 
         return configuration
 
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
-               max_algorithm_steps, should_run_evolution):
+               max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness):
         configuration = AlgorithmConfiguration()
         configuration.induction = induction_configuration
         configuration.evolution = evolution_configuration
         configuration.rule = rule_configuration
         configuration.max_algorithm_steps = max_algorithm_steps
+        configuration.max_execution_time = max_execution_time
+        configuration.satisfying_fitness = satisfying_fitness
         configuration.should_run_evolution = should_run_evolution
         return configuration
 
@@ -66,6 +71,8 @@ class AlgorithmConfiguration(object):
         self.evolution = None
         self.rule = None
         self.max_algorithm_steps = None
+        self.max_execution_time = None
+        self.satisfying_fitness = None
         self.should_run_evolution = None
 
 
@@ -88,28 +95,77 @@ class RuleConfiguration(object):
         self.max_non_terminal_symbols = None
 
 
-class LoopStopCriteria(object):
-    def __init__(self, max_evolution_steps):
-        self.max_evolution_steps = max_evolution_steps
+class StopCriteria(metaclass=ABCMeta):
+    def __call__(self, *args, **kwargs):
+        self.update_state()
+        return self.has_been_fulfilled()
+
+    @abstractmethod
+    def has_been_fulfilled(self):
+        pass
+
+    def update_state(self):
+        pass
+
+    @abstractmethod
+    def stop_reasoning_message(self):
+        return "Reasoning stopped. Cause: "
+
+
+class StepStopCriteria(StopCriteria):
+    def __init__(self, configuration):
+        self.configuration = configuration
         self.current_step = 0
+
+    def update_state(self):
+        self.current_step += 1
+
+    def has_been_fulfilled(self):
+        return self.current_step > self.configuration.max_algorithm_steps
+
+    def stop_reasoning_message(self):
+        return super().stop_reasoning_message() + \
+                'evolution step {0} reached'.format(self.current_step)
+
+
+class TimeStopCriteria(StopCriteria):
+    def __init__(self, configuration):
+        self.configuration = configuration
         self.start_time = time.clock()
 
-    def __call__(self, *args, **kwargs):
-        print('current step:', self.current_step)
-        self.current_step += 1
-        return self.current_step > self.max_evolution_steps or time.clock() - self.start_time > 900
+    def has_been_fulfilled(self):
+        return time.clock() - self.start_time > self.configuration.max_execution_time
+
+    def stop_reasoning_message(self):
+        return super().stop_reasoning_message() + \
+            'execution time of {0} s exceeded'.format(time.clock() - self.start_time)
+
+
+class FitnessStopCriteria(StopCriteria):
+    def __init__(self, grammar_estimator, configuration):
+        self.grammar_estimator = grammar_estimator
+        self.configuration = configuration
+
+    def has_been_fulfilled(self):
+        return self.grammar_estimator['fitness'].get_global_max() >= \
+               self.configuration.satisfying_fitness
+
+    def stop_reasoning_message(self):
+        return super().stop_reasoning_message() + \
+            'fitness {0}% reached'.format(self.grammar_estimator['fitness'].get_global_max() * 100)
 
 
 class GcsRunner(object):
-    def __init__(self, configuration, randomizer):
+    def __init__(self, configuration, randomizer, grammar_estimator, stop_criteria):
         self.configuration = configuration
         self.rule_adding = AddingRuleSupervisor.default(randomizer)
         self.rule_adding.configuration = self.configuration.rule.adding
         self.grammar_statistics = GrammarStatistics.default(randomizer)
+        self.grammar_estimator = grammar_estimator
         self.induction = CykService.default(self.configuration.induction, randomizer,
                                             self.rule_adding, self.grammar_statistics)
         self.evolution = EvolutionService(self.configuration.evolution, randomizer)
-        self.stop_criteria_creator = LoopStopCriteria
+        self.stop_criteria = stop_criteria
 
     def add_initial_rules(self, initial_rules):
         for rule in initial_rules:
@@ -120,17 +176,25 @@ class GcsRunner(object):
         rule_population = RulePopulation(
             self.configuration.rule.starting_symbol, self.configuration.rule.universal_symbol,
             max_non_terminal_symbols=self.configuration.rule.max_non_terminal_symbols)
-        stop_criteria = self.stop_criteria_creator(self.configuration.max_algorithm_steps)
-        while not stop_criteria():
+
+        evolution_step = 0
+        while not any(cr() for cr in self.stop_criteria):
             sentences = symbol_translator.get_sentences()
             evolution_step_estimator = EvolutionStepEstimator()
             self.induction.perform_cyk_for_all_sentences(rule_population, sentences,
                                                          evolution_step_estimator)
-            # Calculate Fg
+
+            self.grammar_estimator.append_step_estimation(evolution_step, evolution_step_estimator)
+
             if self.configuration.should_run_evolution:
                 self.evolution.run_genetic_algorithm(self.grammar_statistics, rule_population,
                                                      self.rule_adding)
+
+            evolution_step += 1
+
             print('rule_statistics size:', len(self.grammar_statistics.rule_statistics._rule_info))
             # print('rule_population size:', sys.getsizeof(rule_population.all_non_terminal_rules))
 
-        return rule_population
+        stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
+
+        return rule_population, stop_reasoning
