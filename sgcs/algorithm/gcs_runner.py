@@ -110,6 +110,18 @@ class StopCriteria(metaclass=ABCMeta):
         return "Reasoning stopped. Cause: "
 
 
+class NoStopCriteriaSpecifiedError(Exception):
+    pass
+
+
+class NoStopCriteriaSpecified(StopCriteria):
+    def has_been_fulfilled(self):
+        raise NoStopCriteriaSpecifiedError()
+
+    def stop_reasoning_message(self):
+        pass
+
+
 class StepStopCriteria(StopCriteria):
     def __init__(self, configuration):
         self.configuration = configuration
@@ -154,49 +166,58 @@ class FitnessStopCriteria(StopCriteria):
 
 
 class GcsRunner(object):
-    def __init__(self, configuration, randomizer, grammar_estimator, stop_criteria):
-        self.configuration = configuration
+    def __init__(self, randomizer):
+        self.configuration = None
         self.rule_adding = AddingRuleSupervisor.default(randomizer)
-        self.rule_adding.configuration = self.configuration.rule.adding
-        self.grammar_statistics = GrammarStatistics.default(randomizer)
-        self.grammar_estimator = grammar_estimator
-        self.induction = CykService.default(self.configuration.induction, randomizer,
-                                            self.rule_adding, self.grammar_statistics)
-        self.evolution = EvolutionService(self.configuration.evolution, randomizer)
-        self.stop_criteria = stop_criteria
+        self.grammar_estimator = None
+        self.induction = CykService.default(randomizer, self.rule_adding)
+        self.evolution = EvolutionService(randomizer)
+        self.stop_criteria = [NoStopCriteriaSpecified()]
 
-    def add_initial_rules(self, initial_rules):
+    def create_stop_criteria(self):
+        self.stop_criteria = [
+                                 FitnessStopCriteria(self.grammar_estimator, self.configuration),
+                                 StepStopCriteria(self.configuration),
+                                 TimeStopCriteria(self.configuration)
+                             ]
+
+    @staticmethod
+    def add_initial_rules(initial_rules, rule_population, grammar_statistics):
         for rule in initial_rules:
-            self.grammar_statistics.on_added_new_rule(rule)
+            rule_population.add_rule(rule)
+            grammar_statistics.on_added_new_rule(rule)
 
-    def perform_gcs(self, initial_rules, symbol_translator):
-        self.add_initial_rules(initial_rules)
+    def perform_gcs(self, initial_rules, symbol_translator, configuration, grammar_estimator,
+                    grammar_statistics):
+        self.configuration = configuration
+        self.rule_adding.configuration = self.configuration.rule.adding
+        self.grammar_estimator = grammar_estimator
+        self.create_stop_criteria()
+
         rule_population = RulePopulation(
             self.configuration.rule.starting_symbol, self.configuration.rule.universal_symbol,
             max_non_terminal_symbols=self.configuration.rule.max_non_terminal_symbols)
+
+        self.add_initial_rules(initial_rules, rule_population, grammar_statistics)
 
         evolution_step = 0
         while not any(cr() for cr in self.stop_criteria):
             sentences = symbol_translator.get_sentences()
             evolution_step_estimator = EvolutionStepEstimator()
             self.induction.perform_cyk_for_all_sentences(rule_population, sentences,
-                                                         evolution_step_estimator)
+                                                         evolution_step_estimator,
+                                                         self.configuration.induction,
+                                                         grammar_statistics)
 
             self.grammar_estimator.append_step_estimation(evolution_step, evolution_step_estimator)
 
             if self.configuration.should_run_evolution:
-                self.evolution.run_genetic_algorithm(self.grammar_statistics, rule_population,
-                                                     self.rule_adding)
+                self.evolution.run_genetic_algorithm(grammar_statistics, rule_population,
+                                                     self.rule_adding, self.configuration.evolution)
 
             evolution_step += 1
 
-            # print('tss:', time.clock() - startime)
-            # print('evolution step:', evolution_step)
-            # print('fitness:', self.grammar_estimator['fitness'].get(evolution_step-1))
-            # print('rule_population size:', len(list(rule_population.get_all_non_terminal_rules())))
-            # print('rule_statistics size:', len(
-            #     self.grammar_statistics.rule_statistics._rule_info))
-
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
+        fitness_reached = self.grammar_estimator['fitness'].get_global_max()
 
-        return rule_population, stop_reasoning
+        return rule_population, stop_reasoning, fitness_reached

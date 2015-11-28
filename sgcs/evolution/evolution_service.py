@@ -8,9 +8,9 @@ from rule_adding import AddingRuleStrategyHint
 
 
 class EvolutionService(object):
-    def __init__(self, configuration, randomizer):
+    def __init__(self, randomizer):
         self.randomizer = randomizer
-        self.configuration = configuration
+        self.configuration = None
         self.selectors = [RandomSelector(), TournamentSelector(), RouletteSelector()]
         self.operators = [InversionOperator(), ParentMutationOperator(),
                           LeftChildMutationOperator(), RightChildMutationOperator(),
@@ -20,7 +20,9 @@ class EvolutionService(object):
     def _chunk(x, size):
         return zip(*[iter(x)]*size)
 
-    def run_genetic_algorithm(self, grammar_statistics, rule_population, rule_adding):
+    def run_genetic_algorithm(self, grammar_statistics, rule_population, rule_adding,
+                              configuration):
+        self.configuration = configuration
         selector_map = {x.type(): x for x in self.selectors}
         selected_rules = [copy.copy(selector_map[x.type].select(self, grammar_statistics,
                                                                 rule_population))

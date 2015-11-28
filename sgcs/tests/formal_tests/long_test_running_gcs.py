@@ -23,17 +23,9 @@ class LongTestRunningGcs(unittest.TestCase):
         self.randomizer = Randomizer(Random())
 
         self.grammar_estimator = GrammarEstimator()
+        self.grammar_statistics = GrammarStatistics.default(self.randomizer)
 
-        self.fitness_stop_criteria = FitnessStopCriteria(self.grammar_estimator, self.configuration)
-        self.steps_stop_criteria = StepStopCriteria(self.configuration)
-        self.time_stop_criteria = TimeStopCriteria(self.configuration)
-
-        self.sut = GcsRunner(self.configuration, self.randomizer, self.grammar_estimator,
-                             [
-                                 self.fitness_stop_criteria,
-                                 self.steps_stop_criteria,
-                                 self.time_stop_criteria
-                             ])
+        self.sut = GcsRunner(self.randomizer)
 
         self.initial_rules = []
 
@@ -82,11 +74,11 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration.rule.adding.elitism.is_used = True
         self.configuration.rule.adding.elitism.size = 3
 
-        self.sut.grammar_statistics.fitness.positive_weight = 1
-        self.sut.grammar_statistics.fitness.negative_weight = 2
-        self.sut.grammar_statistics.fitness.classical_fitness_weight = 1
-        self.sut.grammar_statistics.fitness.fertility_weight = 0
-        self.sut.grammar_statistics.fitness.base_fitness = 0.5
+        self.grammar_statistics.fitness.positive_weight = 1
+        self.grammar_statistics.fitness.negative_weight = 2
+        self.grammar_statistics.fitness.classical_fitness_weight = 1
+        self.grammar_statistics.fitness.fertility_weight = 0
+        self.grammar_statistics.fitness.base_fitness = 0.5
 
     def generic_gcs(self, path):
         print('TEST FOR:', path)
@@ -97,15 +89,19 @@ class LongTestRunningGcs(unittest.TestCase):
             try:
                 symbol_translator = SymbolTranslator.create(path)
 
-                result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
+                result = self.sut.perform_gcs(self.initial_rules, symbol_translator,
+                                              self.configuration, self.grammar_estimator,
+                                              self.grammar_statistics)
                 print(result[1].stop_reasoning_message())
 
                 print('Statistics:')
-                print('fitness:', self.grammar_estimator['fitness'].get_global_max())
-                print('runs:', self.steps_stop_criteria.current_step)
-                print('execution time:', time.clock() - self.time_stop_criteria.start_time)
+                for sc in self.sut.stop_criteria:
+                    print(sc.stop_reasoning_message().split(':')[1])
+                # print('fitness:', self.grammar_estimator['fitness'].get_global_max())
+                # print('runs:', self.steps_stop_criteria.current_step)
+                # print('execution time:', time.clock() - self.time_stop_criteria.start_time)
             except Exception as ex:
-                print(ex)
+                raise ex
 
     def test_gcs_for_tomita_l1(self):
         self.generic_gcs(self.mk_path('tomita 1.txt'))

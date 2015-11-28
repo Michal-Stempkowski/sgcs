@@ -71,8 +71,10 @@ class TestModule(TestCase):
 
     def service_wire_up(self, rules_population):
         # Given:
-        self.sut = CykService.default(self.cyk_configuration, self.randomizer, self.rule_adding,
-                                      self.statistics)
+        self.sut = CykService.default(self.randomizer, self.rule_adding)
+        self.sut.configuration = self.cyk_configuration
+        self.sut.statistics = self.statistics
+        self.sut.traceback = self.sut._traceback_creator(self.sut.statistics.statistics_visitors)
 
         for rule in rules_population.all_non_terminal_rules:
             self.sut.statistics.on_added_new_rule(rule)
@@ -309,7 +311,8 @@ class TestModule(TestCase):
         evolution_step_estimator = EvolutionStepEstimator()
 
         # When:
-        self.sut.perform_cyk_for_all_sentences(rule_population, sentences, evolution_step_estimator)
+        self.sut.perform_cyk_for_all_sentences(rule_population, sentences, evolution_step_estimator,
+                                               self.cyk_configuration, self.statistics)
 
         # Then:
         assert_that(len(list(rule_population.get_all_non_terminal_rules())),

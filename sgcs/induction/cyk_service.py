@@ -11,7 +11,7 @@ from statistics.grammar_statistics import DummyCykStatistics
 
 class CykService(object):
     @staticmethod
-    def default(configuration, randomizer, adding_rule_supervisor, grammar_statistics):
+    def default(randomizer, adding_rule_supervisor):
         factory = Factory({
             CykTypeId.symbol_pair_executor: cyk_executors.CykSymbolPairExecutor,
             CykTypeId.parent_combination_executor: cyk_executors.CykParentCombinationExecutor,
@@ -28,30 +28,29 @@ class CykService(object):
         })
 
         coverage_operations = CoverageOperations.create_default_set()
-        traceback = Traceback(grammar_statistics.statistics_visitors)
+        traceback_creator = Traceback
 
         return CykService(
             factory,
-            configuration,
             randomizer,
             adding_rule_supervisor,
-            grammar_statistics,
             coverage_operations,
-            traceback
+            traceback_creator
         )
 
-    def __init__(self, factory, configuration, randomizer, adding_rule_supervisor=None,
-                 statistics=None, coverage_operations=None, traceback=None,
+    def __init__(self, factory, randomizer, adding_rule_supervisor=None,
+                 coverage_operations=None, traceback_creator=None,
                  grammar_corrector=None):
         self.factory = factory
         self.table_executor = self.factory.create(CykTypeId.table_executor, self)
-        self._configuration = configuration
+        self._configuration = None
         self._randomizer = randomizer
         self._coverage_operations = coverage_operations \
             if coverage_operations else CoverageOperations()
-        self._statistics = statistics if statistics else DummyCykStatistics()
+        self._statistics = None
         self._rule_adding = adding_rule_supervisor
-        self._traceback = Traceback([]) if traceback is None else traceback
+        self._traceback_creator = traceback_creator
+        self._traceback = None
         self.grammar_corrector = GrammarCorrector() if grammar_corrector is None \
             else grammar_corrector
 
@@ -61,7 +60,12 @@ class CykService(object):
         self.traceback.perform_traceback(self, environment, result, rules_population)
         return result
 
-    def perform_cyk_for_all_sentences(self, rule_population, sentences, evolution_step_estimator):
+    def perform_cyk_for_all_sentences(self, rule_population, sentences, evolution_step_estimator,
+                                      configuration, statistics):
+        self.configuration = configuration
+        self.statistics = statistics
+        self.traceback = self._traceback_creator(self.statistics.statistics_visitors)
+
         if self.configuration.grammar_correction.should_run:
             self.grammar_corrector.correct_grammar(rule_population, self.statistics)
 
@@ -77,7 +81,7 @@ class CykService(object):
 
     @configuration.setter
     def configuration(self, value):
-        self.configuration = value
+        self._configuration = value
 
     @property
     def randomizer(self):

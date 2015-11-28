@@ -37,7 +37,7 @@ class TestEvolution(unittest.TestCase):
         self.create_grammar_statistics()
         self.create_rule_adding()
 
-        self.sut = EvolutionService(self.configuration, self.randomizer)
+        self.sut = EvolutionService(self.randomizer)
 
         self.rules = [
             Rule(Symbol('S'), Symbol('NP'), Symbol('VP')),
@@ -116,7 +116,7 @@ class TestEvolution(unittest.TestCase):
 
         # When:
         self.sut.run_genetic_algorithm(self.grammar_statistics, self.rule_population,
-                                       self.rule_adding)
+                                       self.rule_adding, self.configuration)
 
         # Then:
         self.assert_contains_rules(self.rule_population.get_all_non_terminal_rules(),
@@ -148,7 +148,7 @@ class TestEvolution(unittest.TestCase):
 
         # When:
         self.sut.run_genetic_algorithm(self.grammar_statistics, self.rule_population,
-                                       self.rule_adding)
+                                       self.rule_adding, self.configuration)
 
         # Then:
         self.assert_contains_rules(elite, list(old_population.get_all_non_terminal_rules()))
