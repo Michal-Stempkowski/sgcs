@@ -18,9 +18,7 @@ from utils import Randomizer
 
 
 class LongTestRunningGcs(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
+    def init_data(self):
         self.configuration = AlgorithmConfiguration.default()
         self.randomizer = Randomizer(Random())
 
@@ -40,6 +38,10 @@ class LongTestRunningGcs(unittest.TestCase):
         self.initial_rules = []
 
         self.set_parameters()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
 
     def mk_path(self, relative):
         return os.path.join(r"C:\Users\Michał\PycharmProjects\mgr\sgcs\sgcs\data\example gramatics",
@@ -86,14 +88,42 @@ class LongTestRunningGcs(unittest.TestCase):
         self.sut.grammar_statistics.fitness.fertility_weight = 0
         self.sut.grammar_statistics.fitness.base_fitness = 0.5
 
+    def generic_gcs(self, path):
+        print('TEST FOR:', path)
+
+        for i in range(3):
+            print('RUN', i)
+            self.init_data()
+            try:
+                symbol_translator = SymbolTranslator.create(path)
+
+                result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
+                print(result[1].stop_reasoning_message())
+
+                print('Statistics:')
+                print('fitness:', self.grammar_estimator['fitness'].get_global_max())
+                print('runs:', self.steps_stop_criteria.current_step)
+                print('execution time:', time.clock() - self.time_stop_criteria.start_time)
+            except Exception as ex:
+                print(ex)
+
     def test_gcs_for_tomita_l1(self):
-        symbol_translator = SymbolTranslator.create(self.mk_path('tomita 1.txt'))
+        self.generic_gcs(self.mk_path('tomita 1.txt'))
 
-        result = self.sut.perform_gcs(self.initial_rules, symbol_translator)
-        print(result[1].stop_reasoning_message())
-        print(symbol_translator.rule_population_to_string(result[0]))
+    def test_gcs_for_tomita_l2(self):
+        self.generic_gcs(self.mk_path('tomita 2.txt'))
 
-        print('Statistics:')
-        print('fitness:', self.grammar_estimator['fitness'].get_global_max())
-        print('runs:', self.steps_stop_criteria.current_step)
-        print('execution time:', time.clock() - self.time_stop_criteria.start_time)
+    def test_gcs_for_tomita_l3(self):
+        self.generic_gcs(self.mk_path('tomita 3.txt'))
+
+    def test_gcs_for_tomita_l4(self):
+        self.generic_gcs(self.mk_path('tomita 4.txt'))
+
+    def test_gcs_for_tomita_l5(self):
+        self.generic_gcs(self.mk_path('tomita 5.txt'))
+
+    def test_gcs_for_tomita_l6(self):
+        self.generic_gcs(self.mk_path('tomita 6.txt'))
+
+    def test_gcs_for_tomita_l7(self):
+        self.generic_gcs(self.mk_path('tomita 7.txt'))

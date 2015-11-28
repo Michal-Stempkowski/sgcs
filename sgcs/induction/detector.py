@@ -29,4 +29,4 @@ class Detector(object):
         return hash(self.coordinates)
 
     def __str__(self):
-        return self.__class__.__name__ + '({' + '};{'.join(self.coordinates) + "})"
+        return self.__class__.__name__ + '({' + '};{'.join(str(x) for x in self.coordinates) + "})"

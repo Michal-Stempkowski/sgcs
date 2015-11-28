@@ -236,6 +236,10 @@ class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
                                                             self.controlling_strategy_mock])
         self.sut.strategies = [self.expanding_strategy_mock, self.controlling_strategy_mock]
 
+        self.max_symbols = 24
+        self.rule_population_mock.configure_mock(max_non_terminal_symbols=self.max_symbols)
+        self.rule_population_mock.get_all_non_terminal_rules.return_value = range(5)
+
     def test_valid_rule_strategies_should_be_used(self):
         # Given:
         self.sut.add_rule(self.rule, self.rule_population_mock, self.statistics_mock)
@@ -247,5 +251,18 @@ class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
                           AddingRuleStrategyHint.control_population_size)
 
         # Then:
+        self.controlling_strategy_mock.apply.assert_called_once_with(
+            self.sut, self.statistics_mock, self.rule, self.rule_population_mock)
+
+    def test_given_population_size_exceeded_crowding_should_be_used(self):
+        # Given:
+        self.rule_population_mock.get_all_non_terminal_rules.return_value = range(self.max_symbols)
+
+        # When:
+        self.sut.add_rule(self.rule, self.rule_population_mock, self.statistics_mock,
+                          AddingRuleStrategyHint.expand_population)
+
+        # Then:
+        assert_that(not self.expanding_strategy_mock.apply.called)
         self.controlling_strategy_mock.apply.assert_called_once_with(
             self.sut, self.statistics_mock, self.rule, self.rule_population_mock)

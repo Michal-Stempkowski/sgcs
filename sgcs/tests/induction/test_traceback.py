@@ -82,9 +82,9 @@ class TestTraceback(unittest.TestCase):
 
         # Then:
         assert_that(self.environment_mock.get_last_cell_productions.call_count, is_(equal_to(1)))
-        assert_that(self.visitor1_calls, contains(
+        assert_that(self.visitor1_calls, contains_inanyorder(
             base_production, left_production, left_production_2, right_production))
-        assert_that(self.visitor2_calls, contains(
+        assert_that(self.visitor2_calls, contains_inanyorder(
             base_production, left_production, left_production_2, right_production))
 
     def test_should_start_with_starting_symbol_only(self):

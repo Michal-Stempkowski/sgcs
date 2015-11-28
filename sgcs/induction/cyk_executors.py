@@ -1,5 +1,3 @@
-from enum import Enum
-
 from induction.coverage_operators import CoverageType
 from sgcs.induction.detector import Detector
 

@@ -134,6 +134,12 @@ class AddingRuleSupervisor(object):
 
     def add_rule(self, rule, rule_population, statistics,
                  strategy_hint=AddingRuleStrategyHint.expand_population):
+
+        if strategy_hint == AddingRuleStrategyHint.expand_population and \
+                        len(list(rule_population.get_all_non_terminal_rules())) >= \
+                        rule_population.max_non_terminal_symbols:
+            strategy_hint = AddingRuleStrategyHint.control_population_size
+
         strategy_to_be_used = next(filter(
             lambda strategy: strategy.is_applicable(strategy_hint), self.strategies))
 

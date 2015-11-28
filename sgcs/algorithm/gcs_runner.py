@@ -1,5 +1,3 @@
-import sys
-
 import time
 from abc import ABCMeta, abstractmethod
 
@@ -192,8 +190,12 @@ class GcsRunner(object):
 
             evolution_step += 1
 
-            print('evolution step:', evolution_step)
-            # print('rule_population size:', sys.getsizeof(rule_population.all_non_terminal_rules))
+            # print('tss:', time.clock() - startime)
+            # print('evolution step:', evolution_step)
+            # print('fitness:', self.grammar_estimator['fitness'].get(evolution_step-1))
+            # print('rule_population size:', len(list(rule_population.get_all_non_terminal_rules())))
+            # print('rule_statistics size:', len(
+            #     self.grammar_statistics.rule_statistics._rule_info))
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
 
