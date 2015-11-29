@@ -7,7 +7,8 @@ from core.rule import Rule
 from core.symbol import Symbol
 from sgcs.induction.cyk_service import CykService
 from statistics.grammar_statistics import PasiekaRuleStatistics, GrammarStatistics, PasiekaFitness, PasiekaRuleInfo, \
-    PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo, Fitness
+    PasiekaLeftSideInfo, ClassicRuleStatistics, ClassicRuleUsageInfo, Fitness, \
+    ClassicalStatisticsConfiguration
 from utils import Randomizer
 
 
@@ -197,7 +198,8 @@ class TestGrammarStatistics(unittest.TestCase):
         self.fitness = create_autospec(Fitness)
         self.randomizer_mock = create_autospec(Randomizer)
 
-        self.sut = GrammarStatistics(self.randomizer_mock, self.rule_statistics_mock,
+        self.sut = GrammarStatistics(ClassicalStatisticsConfiguration.default(),
+                                     self.randomizer_mock, self.rule_statistics_mock,
                                      self.fitness)
         self.sut.statistics_visitors = []
         self.rule = Rule(Symbol(hash('A')), Symbol(hash('B')), Symbol(hash('C')))

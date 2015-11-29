@@ -177,9 +177,9 @@ class ClassicRuleStatistics(RuleStatistics):
 
     @staticmethod
     def create_usage(grammar_statistics, cyk_result, sentence):
-        price_value = grammar_statistics.fitness.valid_sentence_price \
+        price_value = grammar_statistics.configuration.valid_sentence_price \
             if sentence.is_positive_sentence or sentence.is_positive_sentence is None \
-            else grammar_statistics.fitness.invalid_sentence_price
+            else grammar_statistics.configuration.invalid_sentence_price
         return ClassicRuleUsageInfo(sentence.is_positive_sentence, 1, price_value)
 
 
@@ -191,16 +191,6 @@ class StatisticsVisitor(object):
 
 
 class ClassicFitness(Fitness):
-    def __init__(self, base_fitness, classical_fitness_weight, fertility_weight, positive_weight,
-                 negative_weight, valid_sentence_price=1, invalid_sentence_price=1):
-        self.base_fitness = base_fitness
-        self.classical_fitness_weight = classical_fitness_weight
-        self.fertility_weight = fertility_weight
-        self.positive_weight = positive_weight
-        self.negative_weight = negative_weight
-        self.valid_sentence_price = valid_sentence_price
-        self.invalid_sentence_price = invalid_sentence_price
-
     def calculate(self, grammar_statistics, rule):
         rule_info, min_fertility, max_fertility = grammar_statistics.get_rule_statistics(rule)
 
@@ -209,15 +199,20 @@ class ClassicFitness(Fitness):
                     (max_fertility - min_fertility if max_fertility != min_fertility else 1)
 
         if rule_info.valid_sentence_usage + rule_info.invalid_sentence_usage == 0:
-            classic_fitness = self.base_fitness
+            classic_fitness = grammar_statistics.configuration.base_fitness
         else:
-            classic_fitness = (self.positive_weight * rule_info.valid_sentence_usage) / \
-                              (self.positive_weight * rule_info.valid_sentence_usage +
-                               self.negative_weight * rule_info.invalid_sentence_usage)
+            classic_fitness = (grammar_statistics.configuration.positive_weight *
+                               rule_info.valid_sentence_usage) / \
+                              (grammar_statistics.configuration.positive_weight *
+                               rule_info.valid_sentence_usage +
+                               grammar_statistics.configuration.negative_weight *
+                               rule_info.invalid_sentence_usage)
 
         fitness = \
-            (self.classical_fitness_weight * classic_fitness + self.fertility_weight * fertility) /\
-            (self.classical_fitness_weight + self.fertility_weight)
+            (grammar_statistics.configuration.classical_fitness_weight * classic_fitness +
+             grammar_statistics.configuration.fertility_weight * fertility) /\
+            (grammar_statistics.configuration.classical_fitness_weight +
+             grammar_statistics.configuration.fertility_weight)
 
         return fitness
 
@@ -244,16 +239,17 @@ class DummyCykStatistics(object):
 
 class GrammarStatistics(DummyCykStatistics):
     @staticmethod
-    def default(randomizer):
-        return GrammarStatistics(randomizer, ClassicRuleStatistics(),
-                                 ClassicFitness(10, 1, 1, 1, 1))
+    def default(randomizer, configuration):
+        return GrammarStatistics(configuration, randomizer, ClassicRuleStatistics(),
+                                 ClassicFitness())
 
-    def __init__(self, randomizer, rule_statistics, fitness):
+    def __init__(self, configuration, randomizer, rule_statistics, fitness):
         super().__init__()
         self.randomizer = randomizer
         self.rule_statistics = rule_statistics
         self.statistics_visitors = [StatisticsVisitor()]
         self.fitness = fitness
+        self.configuration = configuration
 
     def get_rule_statistics(self, rule):
         return self.rule_statistics.get_rule_statistics(rule, self)
@@ -270,3 +266,40 @@ class GrammarStatistics(DummyCykStatistics):
 
     def update_fitness(self):
         self.rule_statistics.update_fitness(self)
+
+
+class ClassicalStatisticsConfiguration(object):
+    @staticmethod
+    def default():
+        return ClassicalStatisticsConfiguration.create(
+            base_fitness=10,
+            classical_fitness_weight=1,
+            fertility_weight=1,
+            positive_weight=1,
+            negative_weight=1,
+            valid_sentence_price=1,
+            invalid_sentence_price=1
+        )
+
+    @staticmethod
+    def create(base_fitness, classical_fitness_weight, fertility_weight, positive_weight,
+               negative_weight, valid_sentence_price, invalid_sentence_price):
+        configuration = ClassicalStatisticsConfiguration()
+        configuration.base_fitness = base_fitness
+        configuration.classical_fitness_weight = classical_fitness_weight
+        configuration.fertility_weight = fertility_weight
+        configuration.positive_weight = positive_weight
+        configuration.negative_weight = negative_weight
+        configuration.valid_sentence_price = valid_sentence_price
+        configuration.invalid_sentence_price = invalid_sentence_price
+
+        return configuration
+
+    def __init__(self):
+        self.base_fitness = None
+        self.classical_fitness_weight = None
+        self.fertility_weight = None
+        self.positive_weight = None
+        self.negative_weight = None
+        self.valid_sentence_price = None
+        self.invalid_sentence_price = None

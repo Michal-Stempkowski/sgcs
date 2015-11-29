@@ -12,7 +12,7 @@ from sgcs.induction.cyk_configuration import CykConfiguration
 from sgcs.induction.cyk_service import CykService
 from sgcs.utils import Randomizer
 from statistics.grammar_statistics import GrammarStatistics, \
-    ClassicRuleStatistics, ClassicFitness
+    ClassicRuleStatistics, ClassicFitness, ClassicalStatisticsConfiguration
 
 
 class TestModule(TestCase):
@@ -27,8 +27,9 @@ class TestModule(TestCase):
             starting_chance=0,
             full_chance=0
         )
+        self.statistics_configuration = ClassicalStatisticsConfiguration.default()
 
-        self.statistics = GrammarStatistics.default(self.randomizer)
+        self.statistics = GrammarStatistics.default(self.randomizer, self.statistics_configuration)
         self.rule_adding = AddingRuleSupervisor.default(self.randomizer)
 
         self.grammar_sentence = self.create_sentence(

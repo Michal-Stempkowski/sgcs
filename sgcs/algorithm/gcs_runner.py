@@ -9,7 +9,7 @@ from grammar_estimator import EvolutionStepEstimator
 from induction.cyk_configuration import CykConfiguration
 from induction.cyk_service import CykService
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
-from statistics.grammar_statistics import GrammarStatistics
+from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration
 
 
 class AlgorithmConfiguration(object):
@@ -46,14 +46,16 @@ class AlgorithmConfiguration(object):
             max_algorithm_steps=1,
             should_run_evolution=True,
             max_execution_time=900,
-            satisfying_fitness=1
+            satisfying_fitness=1,
+            statistics=ClassicalStatisticsConfiguration.default()
         )
 
         return configuration
 
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
-               max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness):
+               max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness,
+               statistics):
         configuration = AlgorithmConfiguration()
         configuration.induction = induction_configuration
         configuration.evolution = evolution_configuration
@@ -62,6 +64,7 @@ class AlgorithmConfiguration(object):
         configuration.max_execution_time = max_execution_time
         configuration.satisfying_fitness = satisfying_fitness
         configuration.should_run_evolution = should_run_evolution
+        configuration.statistics = statistics
         return configuration
 
     def __init__(self):
@@ -72,6 +75,7 @@ class AlgorithmConfiguration(object):
         self.max_execution_time = None
         self.satisfying_fitness = None
         self.should_run_evolution = None
+        self.statistics = None
 
 
 class RuleConfiguration(object):
@@ -108,6 +112,10 @@ class StopCriteria(metaclass=ABCMeta):
     @abstractmethod
     def stop_reasoning_message(self):
         return "Reasoning stopped. Cause: "
+
+    @staticmethod
+    def has_succeeded():
+        return False
 
 
 class NoStopCriteriaSpecifiedError(Exception):
@@ -163,6 +171,10 @@ class FitnessStopCriteria(StopCriteria):
     def stop_reasoning_message(self):
         return super().stop_reasoning_message() + \
             'fitness {0}% reached'.format(self.grammar_estimator['fitness'].get_global_max() * 100)
+
+    @staticmethod
+    def has_succeeded():
+        return True
 
 
 class GcsRunner(object):
@@ -220,4 +232,4 @@ class GcsRunner(object):
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
         fitness_reached = self.grammar_estimator['fitness'].get_global_max()
 
-        return rule_population, stop_reasoning, fitness_reached
+        return rule_population, stop_reasoning, fitness_reached, evolution_step

@@ -23,7 +23,8 @@ class LongTestRunningGcs(unittest.TestCase):
         self.randomizer = Randomizer(Random())
 
         self.grammar_estimator = GrammarEstimator()
-        self.grammar_statistics = GrammarStatistics.default(self.randomizer)
+        self.grammar_statistics = GrammarStatistics.default(
+            self.randomizer, self.configuration.statistics)
 
         self.sut = GcsRunner(self.randomizer)
 
@@ -33,7 +34,6 @@ class LongTestRunningGcs(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def mk_path(self, relative):
         return os.path.join(r"C:\Users\Michał\PycharmProjects\mgr\sgcs\sgcs\data\example gramatics",
@@ -74,11 +74,11 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration.rule.adding.elitism.is_used = True
         self.configuration.rule.adding.elitism.size = 3
 
-        self.grammar_statistics.fitness.positive_weight = 1
-        self.grammar_statistics.fitness.negative_weight = 2
-        self.grammar_statistics.fitness.classical_fitness_weight = 1
-        self.grammar_statistics.fitness.fertility_weight = 0
-        self.grammar_statistics.fitness.base_fitness = 0.5
+        self.configuration.statistics.positive_weight = 1
+        self.configuration.statistics.negative_weight = 2
+        self.configuration.statistics.classical_fitness_weight = 1
+        self.configuration.statistics.fertility_weight = 0
+        self.configuration.statistics.base_fitness = 0.5
 
     def generic_gcs(self, path):
         print('TEST FOR:', path)

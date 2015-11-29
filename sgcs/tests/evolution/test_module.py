@@ -17,7 +17,7 @@ from rule_adding import AddingRuleSupervisor, AddingRuleWithElitismStrategy, \
     AddingRulesConfiguration, CrowdingConfiguration, ElitismConfiguration, SimpleAddingRuleStrategy, \
     AddingRuleWithCrowdingStrategy
 from statistics.grammar_statistics import GrammarStatistics, ClassicRuleStatistics, \
-    StatisticsVisitor, ClassicFitness, ClassicRuleUsageInfo
+    StatisticsVisitor, ClassicFitness, ClassicRuleUsageInfo, ClassicalStatisticsConfiguration
 from utils import Randomizer
 
 
@@ -56,15 +56,16 @@ class TestEvolution(unittest.TestCase):
         self.rule_population = RulePopulation(self.starting_symbol)
 
     def create_grammar_statistics(self):
-        base_fitness = 5
-        classical_fitness_weight = 1
-        fertility_weight = 1
-        positive_weight = 1
-        negative_weight = 1
+        configuration = ClassicalStatisticsConfiguration.default()
+        configuration.base_fitness = 5
+        configuration.classical_fitness_weight = 1
+        configuration.fertility_weight = 1
+        configuration.positive_weight = 1
+        configuration.negative_weight = 1
+
         self.grammar_statistics = GrammarStatistics(
-            self.randomizer, ClassicRuleStatistics(),
-            ClassicFitness(base_fitness, classical_fitness_weight, fertility_weight,
-                           positive_weight, negative_weight))
+            configuration, self.randomizer, ClassicRuleStatistics(),
+            ClassicFitness())
 
     def create_rule_adding(self):
         configuration = AddingRulesConfiguration.create(
