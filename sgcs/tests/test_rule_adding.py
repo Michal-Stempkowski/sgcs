@@ -38,7 +38,8 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
         self.configuration_mock = create_autospec(AddingRulesConfiguration)
         self.configuration_mock.configure_mock(
             crowding=self.crowding_settings_mock,
-            elitism=self.elitism_settings
+            elitism=self.elitism_settings,
+            max_non_terminal_rules=19
         )
 
         self.rule_supervisor_mock = create_autospec(AddingRuleSupervisor)
@@ -237,7 +238,7 @@ class TestAddingRuleSupervisor(TestAddingRuleStrategyCommon):
         self.sut.strategies = [self.expanding_strategy_mock, self.controlling_strategy_mock]
 
         self.max_symbols = 24
-        self.rule_population_mock.configure_mock(max_non_terminal_symbols=self.max_symbols)
+        self.rule_population_mock.configure_mock(max_non_terminal_rules=self.max_symbols)
         self.rule_population_mock.get_all_non_terminal_rules.return_value = range(5)
 
     def test_valid_rule_strategies_should_be_used(self):

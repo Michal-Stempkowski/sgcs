@@ -5,9 +5,11 @@
 !include detector.wsdi
 
 !include core.wsdi
+hide Symbol
 hide Sentence
 hide Rule
 hide TerminalRule
+hide RulePopulationAccessViolationError
 
 !include coverage_operators.wsdi
 
@@ -29,6 +31,7 @@ package cyk_executors {
 
     class CykResult
     CykResult : belongs_to_grammar
+    CykResult : is_positive
 
     class CykExecutor
     CykExecutor : child_level

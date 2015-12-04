@@ -1,9 +1,16 @@
 @startuml
 
+package datalayer #DDDDDD {
+
+class SymbolTranslator
+
+}
+
 package core {
     package rule {
         class Rule
         class RulePopulation
+        class RulePopulationAccessViolationError
         class TerminalRule
     }
     package symbol {
@@ -19,6 +26,7 @@ package core {
 
     class Symbol
     Symbol : __init__(self, symbol_id)
+    Symbol : human_friendly_representation(self, abs_shift)
 
     class SymbolTranslator
     SymbolTranslator --> Symbol: translates
@@ -30,15 +38,18 @@ package core {
     Sentence : get_symbol(self, index)
     Sentence --o Symbol
 
+    class RulePopulationAccessViolationError
+
     class RulePopulation
     RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None, max_non_terminal_symbols=32)
     RulePopulation : starting_symbol
     RulePopulation : universal_symbol
     RulePopulation : max_non_terminal_symbols
+    RulePopulation : symbol_shift()
     RulePopulation : get_all_non_terminal_rules(self)
     RulePopulation : add_rule(self, rule)
     RulePopulation : get_rules_by_right(self, pair)
-    RulePopulation : get_terminal_rules(self, symbol)
+    RulePopulation : get_terminal_rules(self, symbol=None)
     RulePopulation : get_random_non_terminal_symbol(self, randomizer)
     RulePopulation : get_random_rules(self, randomizer, terminal, size)
     RulePopulation : remove_rule(self, rule)
@@ -46,6 +57,7 @@ package core {
     RulePopulation : has_rule(self, rule)
     RulePopulation --o Rule
     RulePopulation --> Symbol: creates
+    RulePopulation --> RulePopulationAccessViolationError: raises
     RulePopulation ..> Randomizer: uses
 
     class Rule
@@ -54,6 +66,7 @@ package core {
     Rule : left_child
     Rule : right_child
     Rule : is_terminal_rule(self)
+    Rule : human_friendly_representation(self, shift, starting_symbol, universal_symbol)
 
     class TerminalRule
     TerminalRule --|> Rule

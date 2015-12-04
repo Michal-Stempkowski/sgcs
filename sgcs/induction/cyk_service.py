@@ -4,7 +4,7 @@ from induction.coverage_operators import CoverageOperations
 from induction.environment import Environment
 from induction.grammar_corrector import GrammarCorrector
 from induction.production import ProductionPool
-from induction.traceback import Traceback
+from induction.traceback import Traceback, ThoroughTraceback
 from sgcs.induction.cyk_executors import CykTypeId
 from statistics.grammar_statistics import DummyCykStatistics
 
@@ -69,7 +69,9 @@ class CykService(object):
         if self.configuration.grammar_correction.should_run:
             self.grammar_corrector.correct_grammar(rule_population, self.statistics)
 
+        cnt = 0
         for sentence in sentences:
+            cnt += 1
             result = self.perform_cyk(rule_population, sentence)
             evolution_step_estimator.append_result(result)
 

@@ -57,7 +57,8 @@ class LongTestRunningGcs(unittest.TestCase):
             AddingRuleStrategyHint.expand_population
 
         self.configuration.max_algorithm_steps = 5000
-        self.configuration.rule.max_non_terminal_symbols = 40
+        self.configuration.rule.max_non_terminal_symbols = 19
+        self.configuration.rule.random_starting_population_size = 30
         self.configuration.max_execution_time = 900
         self.configuration.satisfying_fitness = 1
 
@@ -73,6 +74,7 @@ class LongTestRunningGcs(unittest.TestCase):
         self.configuration.rule.adding.crowding.size = 3
         self.configuration.rule.adding.elitism.is_used = True
         self.configuration.rule.adding.elitism.size = 3
+        self.configuration.rule.adding.max_non_terminal_rules = 40
 
         self.configuration.statistics.positive_weight = 1
         self.configuration.statistics.negative_weight = 2

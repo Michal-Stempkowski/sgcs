@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from enum import Enum
 
 
 class AddingRuleStrategyHint(object):
@@ -116,7 +115,8 @@ class AddingRuleSupervisor(object):
                                     AddingRulesConfiguration.create(
                                         crowding_factor=0,
                                         crowding_size=0,
-                                        elitism_size=0),
+                                        elitism_size=0,
+                                        max_non_terminal_rules=19),
                                     AddingRuleSupervisor.get_default_strategies())
 
     @staticmethod
@@ -137,7 +137,7 @@ class AddingRuleSupervisor(object):
 
         if strategy_hint == AddingRuleStrategyHint.expand_population and \
                         len(list(rule_population.get_all_non_terminal_rules())) >= \
-                        rule_population.max_non_terminal_symbols:
+                        self.configuration.max_non_terminal_rules:
             strategy_hint = AddingRuleStrategyHint.control_population_size
 
         strategy_to_be_used = next(filter(
@@ -154,15 +154,17 @@ class AddingRuleSupervisor(object):
 
 class AddingRulesConfiguration(object):
     @staticmethod
-    def create(crowding_factor, crowding_size, elitism_size):
+    def create(crowding_factor, crowding_size, elitism_size, max_non_terminal_rules):
         configuration = AddingRulesConfiguration()
         configuration.crowding = CrowdingConfiguration.create(crowding_factor, crowding_size)
         configuration.elitism = ElitismConfiguration.create(elitism_size)
+        configuration.max_non_terminal_rules = max_non_terminal_rules
         return configuration
 
     def __init__(self):
         self._crowding = None
         self.elitism = None
+        self.max_non_terminal_rules = None
 
     @property
     def crowding(self):

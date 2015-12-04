@@ -4,6 +4,8 @@
 
 !include core.wsdi
 hide Sentence
+hide RulePopulationAccessViolationError
+hide Symbol
 
 !include coverage_operators.wsdi
 
@@ -42,6 +44,7 @@ package coverage_operators  {
     CoverageOperator : cover_impl(self, cyk_service, environment, rule_population, coordinates)
     CoverageOperator : __init__(self, coverage_type, adding_rule_strategy_type=AddingRuleStrategyHint.expand_population)
     CoverageOperator : get_chance(self, cyk_service)
+    CoverageOperator : get_custom_adding_strategy(self, cyk_service)
     CoverageOperator --> AddingRuleStrategyHint: uses
     CoverageOperator --> Production: creates
     CoverageOperator --> EmptyProduction: creates

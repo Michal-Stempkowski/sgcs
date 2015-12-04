@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod, abstractstaticmethod
-from enum import Enum
 
 
 class RuleInfo(object):

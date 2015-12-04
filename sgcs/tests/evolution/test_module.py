@@ -71,7 +71,8 @@ class TestEvolution(unittest.TestCase):
         configuration = AddingRulesConfiguration.create(
             crowding_factor=2,
             crowding_size=3,
-            elitism_size=2
+            elitism_size=2,
+            max_non_terminal_rules=19
         )
 
         adding_strategies = [SimpleAddingRuleStrategy(),

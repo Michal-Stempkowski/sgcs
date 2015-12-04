@@ -1,8 +1,12 @@
 @startuml
 
+!include evolution.wsdi
+
 !include core.wsdi
 hide TerminalRule
 hide Sentence
+hide Symbol
+hide RulePopulationAccessViolationError
 
 !include grammar_statistics.wsdi
 hide RuleInfo

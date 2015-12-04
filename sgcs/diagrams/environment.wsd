@@ -4,6 +4,8 @@
 hide RulePopulation
 hide Rule
 hide TerminalRule
+hide Symbol
+hide RulePopulationAccessViolationError
 
 !include production.wsdi
 hide EmptyProduction

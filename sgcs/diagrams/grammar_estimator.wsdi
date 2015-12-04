@@ -1,0 +1,11 @@
+@startuml
+
+package grammar_estimator #DDDDDD {
+
+    class EvolutionStepEstimator
+
+    class GrammarEstimator
+
+}
+
+@enduml

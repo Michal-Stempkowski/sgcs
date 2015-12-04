@@ -5,6 +5,8 @@
 !include core.wsdi
 hide Sentence
 hide TerminalRule
+hide Symbol
+hide RulePopulationAccessViolationError
 
 !include grammar_statistics.wsdi
 hide RuleInfo
@@ -46,9 +48,11 @@ package rule_adding {
     AddingRuleWithElitismStrategy --|> AddingRuleStrategy
 
     class AddingRuleSupervisor
+    AddingRuleSupervisor : default(randomizer)
     AddingRuleSupervisor : get_default_strategies()
     AddingRuleSupervisor : __init__(self, randomizer, configuration, strategies)
     AddingRuleSupervisor : add_rule(self, rule, rule_population, statistics, strategy_hint=AddingRuleStrategyHint.expand_population)
+    AddingRuleSupervisor : update_elite_if_supported(self, rule_population, statistics)
     AddingRuleSupervisor --* Randomizer
     AddingRuleSupervisor --* AddingRulesConfiguration
     AddingRuleSupervisor "1" --o "0..*"  AddingRuleStrategy
@@ -56,20 +60,6 @@ package rule_adding {
     AddingRuleSupervisor ..> RulePopulation: uses
     AddingRuleSupervisor ..> GrammarStatistics: uses
     AddingRuleSupervisor --> AddingRuleStrategyHint: uses
-
-    class AddingRulesConfiguration
-    AddingRulesConfiguration : crowding
-    AddingRulesConfiguration : elitism
-    AddingRulesConfiguration ..* CrowdingConfiguration: uses
-    AddingRulesConfiguration ..* ElitismConfiguration: uses
-
-    class CrowdingConfiguration
-    CrowdingConfiguration : factor
-    CrowdingConfiguration : size
-
-    class ElitismConfiguration
-    ElitismConfiguration : is_used
-    ElitismConfiguration : size
 }
 
 @enduml

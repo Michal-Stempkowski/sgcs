@@ -1,8 +1,20 @@
 @startuml
 
+!include core.wsdi
+hide Sentence
+hide TerminalRule
+hide Rule
+hide RulePopulation
+hide RulePopulationAccessViolationError
+
 package datalayer {
     class SymbolTranslator
+    SymbolTranslator : get_sentences(self)
+    SymbolTranslator : symbol_to_word(self, symbol)
+    SymbolTranslator : word_to_symbol(self, word)
+    SymbolTranslator : rule_population_to_string(self, rule_population)
     SymbolTranslator ..> EagerTokenizer: uses
+    SymbolTranslator --> Symbol: translates
 
     class EagerFileFetcher
     EagerFileFetcher : __init__(self, path)

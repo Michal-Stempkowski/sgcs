@@ -32,3 +32,12 @@ class RunEstimator(object):
 
     def append_success(self, steps):
         self.successes.append(steps)
+
+    def __str__(self):
+        return '\n'.join([
+            type(self).__name__.center(50, '+'),
+            'n_success={0}'.format(self.n_success),
+            'n_evals={0}'.format(self.n_evals),
+            's={0}'.format(self.s),
+            'min_evals={0}'.format(self.min_evals),
+            ''.center(50, '+')])

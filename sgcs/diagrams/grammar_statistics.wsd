@@ -4,6 +4,8 @@
 
 !include core.wsdi
 hide TerminalRule
+hide Symbol
+hide RulePopulationAccessViolationError
 
 !include production.wsdi
 hide ProductionPool

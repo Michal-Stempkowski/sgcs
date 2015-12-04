@@ -1,0 +1,83 @@
+@startuml
+
+!include core.wsdi
+hide Sentence
+hide Symbol
+hide Rule
+hide RulePopulationAccessViolationError
+hide TerminalRule
+
+!include utils.wsdi
+
+!include grammar_estimator.wsdi
+
+!include rule_adding.wsdi
+hide AddingRuleStrategyHint
+
+!include cyk_service.wsdi
+
+!include evolution.wsdi
+
+package algorithm {
+    class StopCriteria
+    StopCriteria : has_succeeded()
+    StopCriteria : __call__(self, *args, **kwargs)
+    StopCriteria : has_been_fulfilled(self)
+    StopCriteria : update_state(self)
+    StopCriteria : stop_reasoning_message(self)
+
+    class NoStopCriteriaSpecified
+    NoStopCriteriaSpecified --|> StopCriteria
+
+    class StepStopCriteria
+    StepStopCriteria : __init__(self, configuration)
+    StepStopCriteria --|> StopCriteria
+
+    class TimeStopCriteria
+    TimeStopCriteria : __init__(self, configuration)
+    TimeStopCriteria --|> StopCriteria
+
+    class FitnessStopCriteria
+    FitnessStopCriteria : __init__(self, configuration)
+    FitnessStopCriteria --|> StopCriteria
+
+    class GcsRunner
+    GcsRunner : __init__(self, randomizer)
+    GcsRunner : randomizer
+    GcsRunner : configuration
+    GcsRunner : rule_adding
+    GcsRunner : grammar_estimator
+    GcsRunner : induction
+    GcsRunner : evolution
+    GcsRunner : stop_criteria
+    GcsRunner : create_stop_criteria(self)
+    GcsRunner : generate_random_rules(self, provided_rules)
+    GcsRunner : add_initial_rules(initial_rules, rule_population, grammar_statistics)
+    GcsRunner : perform_gcs(self, initial_rules, symbol_translator, configuration, grammar_estimator, grammar_statistics)
+    GcsRunner --* StopCriteria
+    GcsRunner ..> Randomizer: uses
+    GcsRunner ..> GrammarEstimator: uses
+    GcsRunner --> AddingRuleSupervisor: creates
+    GcsRunner --> CykService: creates
+    GcsRunner --> EvolutionService: creates
+    GcsRunner --> RulePopulation: creates
+    GcsRunner --> EvolutionStepEstimator: creates
+
+    class RunEstimator
+    RunEstimator : n_success
+    RunEstimator : n_evals
+    RunEstimator : s
+    RunEstimator : min_evals
+    RunEstimator : append_failure(self)
+    RunEstimator : append_success(self, steps)
+
+    class GcsSimulator
+    GcsSimulator : __init__(self, randomizer)
+    GcsSimulator : perform_simulation(self, learning_set, testing_set, configuration)
+    GcsSimulator ..> Randomizer: uses
+    GcsSimulator --> RunEstimator: creates
+    GcsSimulator --> GcsRunner: creates
+    GcsSimulator --> GrammarEstimator: creates
+}
+
+@enduml

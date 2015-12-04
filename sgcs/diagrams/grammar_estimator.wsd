@@ -1,0 +1,53 @@
+@startuml
+
+!include grammar_estimator.wsdi
+
+package grammar_estimator #FFFFFF {
+
+    class EvolutionStepEstimator
+    EvolutionStepEstimator : true_positive
+    EvolutionStepEstimator : true_negative
+    EvolutionStepEstimator : false_positive
+    EvolutionStepEstimator : false_negative
+    EvolutionStepEstimator : total
+    EvolutionStepEstimator : positives_that_has_occurred
+    EvolutionStepEstimator : negatives_that_has_occurred
+    EvolutionStepEstimator : parsed_correctly
+    EvolutionStepEstimator : fitness
+    EvolutionStepEstimator : append_result(self, cyk_result)
+
+    class GrammarCriteria
+    GrammarCriteria : nan_safe_min(a, b)
+    GrammarCriteria : nan_safe_max(a, b)
+    GrammarCriteria : nan_safe_ladd(a, b)
+    GrammarCriteria : nan_safe_rsub(a, b)
+    GrammarCriteria : update(self, step, estimation)
+    GrammarCriteria : _data_guard(self, estimation)
+    GrammarCriteria : _calculate(self, estimation)
+    GrammarCriteria : get(self, step)
+    GrammarCriteria : get_min(self, step)
+    GrammarCriteria : get_max(self, step)
+    GrammarCriteria : get_global_average(self)
+    GrammarCriteria : get_global_min(self)
+    GrammarCriteria : get_global_max(self)
+    GrammarCriteria --> EvolutionStepEstimator: uses
+
+    class FitnessGrammarCriteria
+    FitnessGrammarCriteria --|> GrammarCriteria
+
+    class PositiveGrammarCriteria
+    PositiveGrammarCriteria --|> GrammarCriteria
+
+    class NegativeGrammarCriteria
+    NegativeGrammarCriteria --|> GrammarCriteria
+
+    class GrammarEstimator
+    GrammarEstimator : criterias
+    GrammarEstimator : __getitem__(self, item)
+    GrammarEstimator : append_step_estimation(self, step, estimation)
+    GrammarEstimator --* "0..*" GrammarCriteria
+    GrammarEstimator --> EvolutionStepEstimator: uses
+
+}
+
+@enduml

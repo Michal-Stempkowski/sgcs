@@ -1,6 +1,7 @@
 import time
 from abc import ABCMeta, abstractmethod
 
+from core.rule import Rule
 from core.rule_population import RulePopulation
 from core.symbol import Symbol
 from evolution.evolution_configuration import EvolutionConfiguration
@@ -38,7 +39,9 @@ class AlgorithmConfiguration(object):
             elitism_size=0,
             starting_symbol=1,
             universal_symbol=None,
-            max_non_terminal_symbols=32
+            max_non_terminal_symbols=32,
+            random_starting_population_size=20,
+            max_non_terminal_rules=40
         )
 
         configuration = AlgorithmConfiguration.create(
@@ -47,7 +50,8 @@ class AlgorithmConfiguration(object):
             should_run_evolution=True,
             max_execution_time=900,
             satisfying_fitness=1,
-            statistics=ClassicalStatisticsConfiguration.default()
+            statistics=ClassicalStatisticsConfiguration.default(),
+            max_algorithm_runs=50
         )
 
         return configuration
@@ -55,7 +59,7 @@ class AlgorithmConfiguration(object):
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
                max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness,
-               statistics):
+               statistics, max_algorithm_runs):
         configuration = AlgorithmConfiguration()
         configuration.induction = induction_configuration
         configuration.evolution = evolution_configuration
@@ -65,6 +69,7 @@ class AlgorithmConfiguration(object):
         configuration.satisfying_fitness = satisfying_fitness
         configuration.should_run_evolution = should_run_evolution
         configuration.statistics = statistics
+        configuration.max_algorithm_runs = max_algorithm_runs
         return configuration
 
     def __init__(self):
@@ -76,25 +81,29 @@ class AlgorithmConfiguration(object):
         self.satisfying_fitness = None
         self.should_run_evolution = None
         self.statistics = None
+        self.max_algorithm_runs = None
 
 
 class RuleConfiguration(object):
     @staticmethod
     def create(crowding_factor, crowding_size, elitism_size, starting_symbol, universal_symbol,
-               max_non_terminal_symbols):
+               max_non_terminal_symbols, random_starting_population_size, max_non_terminal_rules):
         configuration = RuleConfiguration()
         configuration.adding = AddingRulesConfiguration.create(
-            crowding_factor, crowding_size, elitism_size)
+            crowding_factor, crowding_size, elitism_size, max_non_terminal_rules)
         configuration.starting_symbol = Symbol(starting_symbol)
         configuration.universal_symbol = Symbol(universal_symbol) if universal_symbol else None
         configuration.max_non_terminal_symbols = max_non_terminal_symbols
+        configuration.random_starting_population_size = random_starting_population_size
         return configuration
 
     def __init__(self):
         self.adding = None
         self.starting_symbol = None
         self.universal_symbol = None
+        self.random_starting_population_size = None
         self.max_non_terminal_symbols = None
+        self.max_non_terminal_rules = None
 
 
 class StopCriteria(metaclass=ABCMeta):
@@ -179,6 +188,7 @@ class FitnessStopCriteria(StopCriteria):
 
 class GcsRunner(object):
     def __init__(self, randomizer):
+        self.randomizer = randomizer
         self.configuration = None
         self.rule_adding = AddingRuleSupervisor.default(randomizer)
         self.grammar_estimator = None
@@ -192,6 +202,21 @@ class GcsRunner(object):
                                  StepStopCriteria(self.configuration),
                                  TimeStopCriteria(self.configuration)
                              ]
+
+    def _random_symbol_id(self, configuration):
+        return self.randomizer.randint(
+            RulePopulation.symbol_shift(),
+            RulePopulation.symbol_shift() + configuration.rule.max_non_terminal_symbols)
+
+    def generate_random_rules(self, provided_rules):
+        rules = set()
+        rules |= set(provided_rules)
+        while len(rules) < self.configuration.rule.random_starting_population_size:
+            rules.add(Rule(Symbol(self._random_symbol_id(self.configuration)),
+                           Symbol(self._random_symbol_id(self.configuration)),
+                           Symbol(self._random_symbol_id(self.configuration))))
+
+        return list(rules)
 
     @staticmethod
     def add_initial_rules(initial_rules, rule_population, grammar_statistics):
@@ -210,10 +235,14 @@ class GcsRunner(object):
             self.configuration.rule.starting_symbol, self.configuration.rule.universal_symbol,
             max_non_terminal_symbols=self.configuration.rule.max_non_terminal_symbols)
 
-        self.add_initial_rules(initial_rules, rule_population, grammar_statistics)
+        self.add_initial_rules(self.generate_random_rules(initial_rules), rule_population,
+                               grammar_statistics)
 
         evolution_step = 0
+
+        # print('')
         while not any(cr() for cr in self.stop_criteria):
+            # print('.', end='')
             sentences = symbol_translator.get_sentences()
             evolution_step_estimator = EvolutionStepEstimator()
             self.induction.perform_cyk_for_all_sentences(rule_population, sentences,
@@ -231,5 +260,9 @@ class GcsRunner(object):
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
         fitness_reached = self.grammar_estimator['fitness'].get_global_max()
+        for x in rule_population.get_all_non_terminal_rules():
+            print(x)
+        for x in rule_population.get_terminal_rules():
+            print(x)
 
         return rule_population, stop_reasoning, fitness_reached, evolution_step

@@ -8,6 +8,8 @@
 hide Sentence
 hide RulePopulation
 hide TerminalRule
+hide Symbol
+hide RulePopulationAccessViolationError
 
 package production #FFFFFF {
 

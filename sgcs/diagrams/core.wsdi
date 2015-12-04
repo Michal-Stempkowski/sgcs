@@ -2,8 +2,10 @@
 package core #DDDDDD {
 
 class Sentence
+class Symbol
 class RulePopulation
 class Rule
+class RulePopulationAccessViolationError
 class TerminalRule
 
 }

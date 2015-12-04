@@ -42,7 +42,6 @@ class Sentence(object):
     def get_symbol(self, index):
         return self.symbols[index]
 
-
     def __eq__(self, other):
         return len(self.symbols) == len(other.symbols) and \
             all(self.symbols[i] == other.symbols[i] for i in range(len(self.symbols)))
