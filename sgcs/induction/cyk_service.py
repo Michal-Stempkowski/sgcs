@@ -1,3 +1,5 @@
+import logging
+
 from factory import Factory
 from induction import cyk_executors
 from induction.coverage_operators import CoverageOperations
@@ -55,6 +57,7 @@ class CykService(object):
             else grammar_corrector
 
     def perform_cyk(self, rules_population, sentence):
+        logging.debug(str(sentence))
         environment = self.factory.create(CykTypeId.environment, sentence, self.factory)
         result = self.table_executor.execute(environment, rules_population)
         self.traceback.perform_traceback(self, environment, result, rules_population)

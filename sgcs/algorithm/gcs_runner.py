@@ -1,3 +1,4 @@
+import logging
 import time
 from abc import ABCMeta, abstractmethod
 
@@ -260,9 +261,9 @@ class GcsRunner(object):
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
         fitness_reached = self.grammar_estimator['fitness'].get_global_max()
-        for x in rule_population.get_all_non_terminal_rules():
-            print(x)
-        for x in rule_population.get_terminal_rules():
-            print(x)
+        # for x in rule_population.get_all_non_terminal_rules():
+        #     print(x)
+        # for x in rule_population.get_terminal_rules():
+        #     print(x)
 
         return rule_population, stop_reasoning, fitness_reached, evolution_step

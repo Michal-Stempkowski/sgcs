@@ -136,7 +136,7 @@ class AddingRuleSupervisor(object):
                  strategy_hint=AddingRuleStrategyHint.expand_population):
 
         if strategy_hint == AddingRuleStrategyHint.expand_population and \
-                        len(list(rule_population.get_all_non_terminal_rules())) >= \
+                        len(rule_population.get_all_non_terminal_rules()) >= \
                         self.configuration.max_non_terminal_rules:
             strategy_hint = AddingRuleStrategyHint.control_population_size
 

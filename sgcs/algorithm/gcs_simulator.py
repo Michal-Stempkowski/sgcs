@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from algorithm.gcs_runner import GcsRunner
 from algorithm.run_estimator import RunEstimator
@@ -33,11 +34,16 @@ class GcsSimulator(object):
 
         return configuration
 
+    @staticmethod
+    def _rules_population_size_keyfunc(rp):
+        return float('inf') if rp is None else rp.terminal_rule_count + rp.non_terminal_rule_count
+
     def perform_simulation(self, learning_set, testing_set, configuration):
         run_estimator = RunEstimator()
         rule_population = None
 
         for i in range(configuration.max_algorithm_runs):
+            logging.info('Run: %s', str(i))
             grammar_estimator = GrammarEstimator()
             grammar_statistics = GrammarStatistics.default(
                 self.randomizer, configuration.statistics)
@@ -51,12 +57,14 @@ class GcsSimulator(object):
 
             if stop_reasoning.has_succeeded():
                 run_estimator.append_success(evolution_step)
-                rule_population = rp
+                rule_population = min(rp, rule_population, key=self._rules_population_size_keyfunc)
             else:
                 run_estimator.append_failure()
 
-            print(i, ':', 'Success: {0}'.format(evolution_step)
-                  if stop_reasoning.has_succeeded() else 'Failure')
+            msg = 'Success: {0}'.format(evolution_step) if stop_reasoning.has_succeeded() \
+                else 'Failure'
+            print(i, ':', msg)
+            logging.info('%s : %s', str(i), str(msg))
 
         conf = self._prepare_configuration_for_generalization_test(configuration)
 
@@ -66,6 +74,7 @@ class GcsSimulator(object):
         runner = GcsRunner(self.randomizer)
 
         print('nGen starting')
+        logging.info('nGen starting')
 
         rules = list(rule_population.get_all_non_terminal_rules())
         rules += rule_population.get_terminal_rules()

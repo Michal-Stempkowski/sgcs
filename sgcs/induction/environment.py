@@ -26,15 +26,17 @@ class Environment(object):
         return self._get_production_pool(absolute_coordinates).get_effectors()
 
     def _get_production_pool(self, absolute_coordinates):
-        self.validate_absolute_coordinates(absolute_coordinates)
-
-        return self.cyk_table[absolute_coordinates]
+        try:
+            return self.cyk_table[absolute_coordinates]
+        except IndexError:
+            raise CykTableIndexError(absolute_coordinates)
 
     def add_production(self, production):
         absolute_coordinates = production.get_coordinates()[:2]
-        self.validate_absolute_coordinates(absolute_coordinates)
-
-        self.cyk_table[absolute_coordinates].add_production(production)
+        try:
+            self.cyk_table[absolute_coordinates].add_production(production)
+        except KeyError:
+            raise CykTableIndexError(production.get_coordinates())
 
     @staticmethod
     def _left_coord(row, col, shift, left_id, right_id):
@@ -75,12 +77,6 @@ class Environment(object):
 
     def is_sentence_positive(self):
         return self.sentence.is_positive_sentence
-
-    def validate_absolute_coordinates(self, coordinates):
-        if len(coordinates) != 2 \
-            or not value_in_bounds(0, coordinates[0], self.get_sentence_length()) \
-                or not value_in_bounds(0, coordinates[1], self.get_sentence_length()):
-            raise CykTableIndexError(coordinates)
 
     def get_sentence_symbol(self, index):
         return self.sentence.get_symbol(index)

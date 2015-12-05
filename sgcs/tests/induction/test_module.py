@@ -77,7 +77,7 @@ class TestModule(TestCase):
         self.sut.statistics = self.statistics
         self.sut.traceback = self.sut._traceback_creator(self.sut.statistics.statistics_visitors)
 
-        for rule in rules_population.all_non_terminal_rules:
+        for rule in rules_population.get_all_non_terminal_rules():
             self.sut.statistics.on_added_new_rule(rule)
 
     def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
@@ -194,7 +194,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
 
         # Then:
-        assert_that(len(rules_population.terminal_rules), is_(equal_to(6)))
+        assert_that(len(rules_population._terminal_rules), is_(equal_to(6)))
 
     def test_universal_coverage_operator_should_work(self):
         # Given:
@@ -206,7 +206,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
 
         # Then:
-        d = rules_population.terminal_rules
+        d = rules_population._terminal_rules
         assert_that([d[k] for k in d], only_contains(
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('fork'))},
             {Symbol('U'): TerminalRule(Symbol('U'), Symbol('she'))},
@@ -230,7 +230,7 @@ class TestModule(TestCase):
         self.perform_cyk_scenario(sentence, rules_population, True)
 
         # Then:
-        d = rules_population.terminal_rules
+        d = rules_population._terminal_rules
         assert_that([d[k] for k in d], only_contains(
             {Symbol('S'): TerminalRule(Symbol('S'), Symbol('fork'))}
         ))
@@ -241,17 +241,17 @@ class TestModule(TestCase):
         self.cyk_configuration.coverage.operators.terminal.chance = 1
         self.cyk_configuration.coverage.operators.aggressive.chance = 1
         rules_population = self.example_rule_population
-        old_rules = list(rules_population.all_non_terminal_rules.copy())
+        old_rules = list(rules_population._all_non_terminal_rules.copy())
 
         # When:
         self.perform_cyk_scenario(self.grammar_sentence, rules_population, False)
 
         # Then:
-        assert_that(rules_population.all_non_terminal_rules, has_length(4))
+        assert_that(rules_population._all_non_terminal_rules, has_length(4))
 
-        d = rules_population.terminal_rules
+        d = rules_population._terminal_rules
         assert_that([d[k] for k in d], has_length(6))
-        assert_that(list(rules_population.all_non_terminal_rules),
+        assert_that(list(rules_population._all_non_terminal_rules),
                     is_not(contains_inanyorder(*old_rules)))
 
     def test_full_coverage_operator_should_work(self):

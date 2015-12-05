@@ -1,3 +1,6 @@
+import logging
+
+
 class Traceback(object):
     def __init__(self, visitors):
         self.visitors = visitors
@@ -34,6 +37,7 @@ class ThoroughTraceback(object):
 
         while traceback_queue:
             next_production_to_visit = traceback_queue.pop()
+            logging.debug('%s: %s', str(next_production_to_visit.detector.coordinates), str(next_production_to_visit.rule))
             self._visit(next_production_to_visit, cyk_service.statistics,
                         environment.sentence, cyk_result, rules_population)
 

@@ -47,7 +47,7 @@ class TestRulePopulation(unittest.TestCase):
         self.sut.add_rule(rule_a)
         self.sut.add_rule(rule_b)
 
-        assert_that(self.sut.rules_by_right, is_(empty()))
+        assert_that(self.sut._rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a, rule_b))
         assert_that(self.sut.get_terminal_rules(Symbol('b')), is_(empty()))
         assert_that(self.sut.get_terminal_rules(), only_contains(rule_a, rule_b))
@@ -63,7 +63,7 @@ class TestRulePopulation(unittest.TestCase):
         tmp = self.sut.get_terminal_rules()
 
         # Then:
-        assert_that(self.sut.rules_by_right, is_(empty()))
+        assert_that(self.sut._rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a))
         assert_that(self.sut.get_terminal_rules(Symbol('b')), only_contains(rule_b))
         assert_that(self.sut.get_terminal_rules(), only_contains(rule_a, rule_b))

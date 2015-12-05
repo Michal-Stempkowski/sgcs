@@ -1,3 +1,4 @@
+import logging
 import os
 import unittest
 from random import Random
@@ -21,6 +22,9 @@ from utils import Randomizer
 class LongTestGcsSimulator(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        logging.basicConfig(level=logging.INFO,
+                            filename=r"C:\Users\Michał\PycharmProjects\mgr\sgcs\log.log",
+                            format='%(asctime)s %(message)s')
 
         self.configuration = AlgorithmConfiguration.default()
         self.randomizer = Randomizer(Random())
@@ -78,6 +82,7 @@ class LongTestGcsSimulator(unittest.TestCase):
         self.configuration.max_algorithm_runs = 50
 
     def generic_simulation(self, learning_path, testing_path, name):
+        logging.info('starting %s', name)
         with open(os.path.join(r'C:\Users\Michał\PycharmProjects\mgr\runs\auto',
                                name + '.txt'), 'w+') as file:
             result, ngen = self.sut.perform_simulation(

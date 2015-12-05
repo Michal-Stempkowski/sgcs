@@ -53,4 +53,5 @@ class Sentence(object):
         return self.symbols.__hash__()
 
     def __str__(self):
-        return self.__class__.__name__ + '({' + ', '.join(x.symbol_id for x in self.symbols) + "})"
+        return self.__class__.__name__ + '({' + \
+               ', '.join(str(x.symbol_id) for x in self.symbols) + "})"
