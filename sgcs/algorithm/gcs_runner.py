@@ -258,6 +258,7 @@ class GcsRunner(object):
                                                      self.rule_adding, self.configuration.evolution)
 
             evolution_step += 1
+            print(evolution_step)
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
         fitness_reached = self.grammar_estimator['fitness'].get_global_max()

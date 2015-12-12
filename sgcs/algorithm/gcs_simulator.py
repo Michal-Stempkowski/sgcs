@@ -41,6 +41,7 @@ class GcsSimulator(object):
     def perform_simulation(self, learning_set, testing_set, configuration):
         run_estimator = RunEstimator()
         rule_population = None
+        auxiliary_rule_population, aux_fitness = None, 0
 
         for i in range(configuration.max_algorithm_runs):
             logging.info('Run: %s', str(i))
@@ -55,11 +56,16 @@ class GcsSimulator(object):
             rp, stop_reasoning, fitness_reached, evolution_step = runner.perform_gcs(
                 initial_rules, learning_set, configuration, grammar_estimator, grammar_statistics)
 
+            logging.info(learning_set.rule_population_to_string(rp))
+
             if stop_reasoning.has_succeeded():
                 run_estimator.append_success(evolution_step)
                 rule_population = min(rp, rule_population, key=self._rules_population_size_keyfunc)
             else:
                 run_estimator.append_failure()
+
+            if fitness_reached > aux_fitness:
+                auxiliary_rule_population, aux_fitness = rp, fitness_reached
 
             msg = 'Success: {0}'.format(evolution_step) if stop_reasoning.has_succeeded() \
                 else 'Failure'
@@ -76,10 +82,15 @@ class GcsSimulator(object):
         print('nGen starting')
         logging.info('nGen starting')
 
+        rule_population = rule_population if rule_population is not None \
+            else auxiliary_rule_population
+
         rules = list(rule_population.get_all_non_terminal_rules())
         rules += rule_population.get_terminal_rules()
 
-        _, _, n_gen, *_ = runner.perform_gcs(
+        rule_population, _, n_gen, *_ = runner.perform_gcs(
             rules, testing_set, conf, grammar_estimator, grammar_statistics)
+
+        logging.info(testing_set.rule_population_to_string(rule_population))
 
         return run_estimator, n_gen

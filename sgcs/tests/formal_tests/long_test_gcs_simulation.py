@@ -57,7 +57,7 @@ class LongTestGcsSimulator(unittest.TestCase):
         self.configuration.max_algorithm_steps = 5000
         self.configuration.rule.max_non_terminal_symbols = 19
         self.configuration.rule.random_starting_population_size = 30
-        self.configuration.max_execution_time = 6000
+        self.configuration.max_execution_time = 8000
         self.configuration.satisfying_fitness = 1
 
         self.configuration.evolution.operators.crossover.chance = 0.2
@@ -169,14 +169,16 @@ class LongTestGcsSimulator(unittest.TestCase):
         self.generic_simulation(self.mk_path('tomita 7.txt'), self.mk_path('t7 opt 15 max'), 'tomita 7')
 
     def test_simulation_for_other_gramatics(self):
-        self.generic_simulation(self.mk_path('ab los 200 30'), self.mk_path('ab opt max 15'), 'ab')
-
-        self.generic_simulation(self.mk_path('anbn los 200 30'), self.mk_path('anbn opt max 15'), 'anbn')
-
-        self.generic_simulation(self.mk_path('bra1 los2 200 30'), self.mk_path('bra1 opt 15 max'), 'bra1')
-
-        self.generic_simulation(self.mk_path('bra3 los 200 30'), self.mk_path('bra3 opt los 65534'), 'bra3')
-
-        self.generic_simulation(self.mk_path('pal2 parz los 200'), self.mk_path('pal2 opt parzysty max 15'), 'pal2')
+        self.configuration.max_algorithm_steps = 1000
+        self.configuration.max_algorithm_runs = 10
+        # self.generic_simulation(self.mk_path('ab los 200 30'), self.mk_path('ab opt max 15'), 'ab')
+        #
+        # self.generic_simulation(self.mk_path('anbn los 200 15'), self.mk_path('anbn opt 15 max'), 'anbn')
+        #
+        # self.generic_simulation(self.mk_path('bra1 los2 200 30'), self.mk_path('bra1 opt 15 max'), 'bra1')
+        #
+        # self.generic_simulation(self.mk_path('bra3 los 200 30'), self.mk_path('bra3 opt los 65534'), 'bra3')
 
         self.generic_simulation(self.mk_path('toy los2 200 30'), self.mk_path('toy opt los 65534'), 'toy')
+
+        self.generic_simulation(self.mk_path('pal2 parz los 200'), self.mk_path('pal2 opt parzysty max 15'), 'pal2')
