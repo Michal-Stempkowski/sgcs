@@ -49,7 +49,8 @@ class TestAddingRuleStrategyCommon(unittest.TestCase):
         )
 
         self.statistics_mock = create_autospec(GrammarStatistics)
-        self.statistics_mock.configure_mock(fitness=self.fitness_mock)
+        self.statistics_mock.configure_mock(fitness=self.fitness_mock,
+                                            randomizer=self.randomizer_mock)
 
         self.rule_population_mock.has_rule.return_value = False
 
@@ -78,7 +79,7 @@ class TestSimpleAddingRuleStrategy(TestAddingRuleStrategyCommon):
     def test_should_be_able_to_apply_strategy(self):
         self.sut.apply(self.rule_supervisor_mock, self.statistics_mock, self.rule,
                        self.rule_population_mock)
-        self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.rule_population_mock.add_rule.assert_called_once_with(self.rule, self.randomizer_mock)
         self.statistics_mock.on_added_new_rule.assert_called_once_with(self.rule)
 
 
@@ -122,7 +123,7 @@ class TestAddingRuleWithCrowdingStrategy(TestAddingRuleStrategyCommon):
         self.rule_population_mock.remove_rule.assert_called_once_with(rule_to_be_replaced)
         self.statistics_mock.on_rule_removed.\
             assert_called_once_with(rule_to_be_replaced)
-        self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.rule_population_mock.add_rule.assert_called_once_with(self.rule, self.randomizer_mock)
         self.statistics_mock.on_added_new_rule.\
             assert_called_once_with(self.rule)
 
@@ -190,7 +191,7 @@ class TestAddingRuleWithCrowdingStrategyAndElitism(TestAddingRuleStrategyCommon)
         self.rule_population_mock.remove_rule.assert_called_once_with(rule_to_be_replaced)
         self.statistics_mock.on_rule_removed.\
             assert_called_once_with(rule_to_be_replaced)
-        self.rule_population_mock.add_rule.assert_called_once_with(self.rule)
+        self.rule_population_mock.add_rule.assert_called_once_with(self.rule, self.randomizer_mock)
         self.statistics_mock.on_added_new_rule.\
             assert_called_once_with(self.rule)
 

@@ -1,10 +1,10 @@
 import unittest
-from unittest.mock import create_autospec
-
+from unittest.mock import create_autospec, call
 from hamcrest import *
 
 from core.rule import Rule, TerminalRule
-from core.rule_population import RulePopulation, RulePopulationAccessViolationError
+from core.rule_population import RulePopulation, RulePopulationAccessViolationError, \
+    StochasticRulePopulation
 from core.symbol import Symbol
 from sgcs.utils import Randomizer
 
@@ -21,9 +21,11 @@ class TestRulePopulation(unittest.TestCase):
             Rule('A', 'B', 'J')
         ]
 
+        self.randomizer_mock = create_autospec(Randomizer)
+
     def add_rules(self):
         for rule in self.rules:
-            self.sut.add_rule(rule)
+            self.sut.add_rule(rule, self.randomizer_mock)
 
         assert_that(self.sut.get_all_non_terminal_rules(), contains_inanyorder(*self.rules))
 
@@ -44,8 +46,8 @@ class TestRulePopulation(unittest.TestCase):
     def test_should_be_able_to_add_terminal_rule(self):
         rule_a = TerminalRule(Symbol('A'), Symbol('a'))
         rule_b = TerminalRule(Symbol('B'), Symbol('a'))
-        self.sut.add_rule(rule_a)
-        self.sut.add_rule(rule_b)
+        self.sut.add_rule(rule_a, self.randomizer_mock)
+        self.sut.add_rule(rule_b, self.randomizer_mock)
 
         assert_that(self.sut._rules_by_right, is_(empty()))
         assert_that(self.sut.get_terminal_rules(Symbol('a')), only_contains(rule_a, rule_b))
@@ -58,9 +60,8 @@ class TestRulePopulation(unittest.TestCase):
         rule_b = TerminalRule(self.sut.universal_symbol, Symbol('b'))
 
         # When:
-        self.sut.add_rule(rule_a)
-        self.sut.add_rule(rule_b)
-        tmp = self.sut.get_terminal_rules()
+        self.sut.add_rule(rule_a, self.randomizer_mock)
+        self.sut.add_rule(rule_b, self.randomizer_mock)
 
         # Then:
         assert_that(self.sut._rules_by_right, is_(empty()))
@@ -72,15 +73,14 @@ class TestRulePopulation(unittest.TestCase):
         # Given:
         self.add_rules()
 
-        randomizer_mock = create_autospec(Randomizer)
-        randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
+        self.randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
 
         # When:
-        rules = self.sut.get_random_rules(randomizer_mock, False, 2)
+        rules = self.sut.get_random_rules(self.randomizer_mock, False, 2)
 
         # Then:
         assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
-        assert_that(randomizer_mock.sample.called)
+        assert_that(self.randomizer_mock.sample.called)
 
     def test_should_be_able_to_remove_a_rule(self):
         # Given:
@@ -105,15 +105,14 @@ class TestRulePopulation(unittest.TestCase):
 
         filter = lambda x: x.right_child == 'C'
 
-        randomizer_mock = create_autospec(Randomizer)
-        randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
+        self.randomizer_mock.sample.return_value = [Rule('A', 'J', 'C'), Rule('D', 'B', 'C')]
 
         # When:
-        rules = self.sut.get_random_rules_matching_filter(randomizer_mock, False, 2, filter)
+        rules = self.sut.get_random_rules_matching_filter(self.randomizer_mock, False, 2, filter)
 
         # Then:
         assert_that(rules, only_contains(Rule('D', 'B', 'C'), Rule('A', 'J', 'C')))
-        assert_that(randomizer_mock.sample.call_count, is_(equal_to(1)))
+        assert_that(self.randomizer_mock.sample.call_count, is_(equal_to(1)))
 
     def test_should_know_if_rule_already_exists(self):
         # Given:
@@ -124,3 +123,65 @@ class TestRulePopulation(unittest.TestCase):
         for rule in self.rules:
             assert_that(self.sut.has_rule(rule))
         assert_that(not_(self.sut.has_rule(not_added_rule)))
+
+
+class TestStochasticRulePopulation(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.sut = StochasticRulePopulation('S')
+        self.new_rule = self.mk_rule('A', 'B', 'C')
+        self.another_rule_with_parent_a = self.mk_rule('A', 'E', 'F')
+        self.randomizer_mock = create_autospec(Randomizer)
+
+    @staticmethod
+    def mk_rule(parent, left_child, right_child):
+        return Rule(hash(parent), hash(left_child), hash(right_child))
+
+    def test_adding_new_rule_should_result_in_generating_probability_for_it(self):
+        # Given:
+        self.randomizer_mock.uniform.return_value = 0.3
+
+        # When:
+        self.sut.add_rule(self.new_rule, self.randomizer_mock)
+
+        # Then:
+        self.randomizer_mock.uniform.assert_called_once_with(0.01, 1)
+        assert_that(self.sut.has_rule(self.new_rule))
+        assert_that(self.sut.get_normalized_rule_probability(self.new_rule), is_(equal_to(1)))
+
+    def test_not_existing_rule_should_have_0_probability(self):
+        assert_that(self.sut.get_normalized_rule_probability(self.new_rule), is_(equal_to(0)))
+
+    def test_normalization_should_be_performed_after_rule_adding(self):
+        # Given:
+        self.randomizer_mock.uniform.side_effect = [0.1, 0.3]
+
+        # When:
+        self.sut.add_rule(self.new_rule, self.randomizer_mock)
+        self.sut.add_rule(self.another_rule_with_parent_a, self.randomizer_mock)
+
+        # Then:
+        self.randomizer_mock.uniform.assert_has_calls([call(0.01, 1), call(0.01, 1)])
+        assert_that(self.sut.has_rule(self.new_rule))
+        assert_that(self.sut.has_rule(self.another_rule_with_parent_a))
+        assert_that(self.sut.get_normalized_rule_probability(self.new_rule), is_(close_to(0.25, delta=0.01)))
+        assert_that(self.sut.get_normalized_rule_probability(self.another_rule_with_parent_a),
+                    is_(close_to(0.75, delta=0.01)))
+
+    def test_normalization_should_be_performed_after_rule_removal(self):
+        # Given:
+        self.randomizer_mock.uniform.side_effect = [0.1, 0.3]
+        self.sut.add_rule(self.new_rule, self.randomizer_mock)
+        self.sut.add_rule(self.another_rule_with_parent_a, self.randomizer_mock)
+
+        # When:
+        self.sut.remove_rule(self.new_rule)
+
+        # Then:
+        self.randomizer_mock.uniform.assert_has_calls([call(0.01, 1), call(0.01, 1)])
+        assert_that(self.sut.has_rule(self.new_rule), is_(False))
+        assert_that(self.sut.has_rule(self.another_rule_with_parent_a))
+        assert_that(self.sut.get_normalized_rule_probability(self.new_rule), is_(equal_to(0)))
+        assert_that(self.sut.get_normalized_rule_probability(self.another_rule_with_parent_a),
+                    is_(close_to(1, delta=0.01)))

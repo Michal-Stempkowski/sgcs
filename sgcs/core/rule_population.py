@@ -55,15 +55,15 @@ class RulePopulation(object):
     def get_all_non_terminal_rules(self):
         return self._all_non_terminal_rules
 
-    def add_rule(self, rule):
+    def add_rule(self, rule, randomizer):
         if rule.is_terminal_rule():
-            self._add_terminal_rule(rule)
+            self._add_terminal_rule(rule, randomizer)
             self._all_terminal_rules.add(rule)
         else:
-            self._add_non_terminal_rule(rule)
+            self._add_non_terminal_rule(rule, randomizer)
             self._all_non_terminal_rules.add(rule)
 
-    def _add_non_terminal_rule(self, rule):
+    def _add_non_terminal_rule(self, rule, randomizer):
         by_right_key = (rule.left_child, rule.right_child)
         if by_right_key not in self._rules_by_right:
             self._rules_by_right[by_right_key] = dict()
@@ -71,7 +71,7 @@ class RulePopulation(object):
         # if there is already such an rule, then make mess
         self._rules_by_right[by_right_key][rule.parent] = rule
 
-    def _add_terminal_rule(self, rule):
+    def _add_terminal_rule(self, rule, randomizer):
         if rule.left_child not in self._terminal_rules:
             self._terminal_rules[rule.left_child] = dict()
 
@@ -113,3 +113,32 @@ class RulePopulation(object):
     def has_rule(self, rule):
         return rule in (self._terminal_rules if rule.is_terminal_rule()
                         else self._all_non_terminal_rules)
+
+
+class StochasticRulePopulation(RulePopulation):
+    def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None,
+                 max_non_terminal_symbols=32):
+        super().__init__(starting_symbol, universal_symbol, previous_instance,
+                         max_non_terminal_symbols)
+        self.rule_probabilities = dict()
+        self.left_side_probabilities = dict()
+
+    def add_rule(self, rule, randomizer):
+        super().add_rule(rule, randomizer)
+        new_rule_probability = randomizer.uniform(0.01, 1)
+        self.rule_probabilities[rule] = new_rule_probability
+
+        if rule.parent not in self.left_side_probabilities:
+            self.left_side_probabilities[rule.parent] = new_rule_probability
+        else:
+            self.left_side_probabilities[rule.parent] += new_rule_probability
+
+    def remove_rule(self, rule):
+        super().remove_rule(rule)
+        probability_of_removed = self.rule_probabilities[rule]
+        del self.rule_probabilities[rule]
+        self.left_side_probabilities[rule.parent] -= probability_of_removed
+
+    def get_normalized_rule_probability(self, rule):
+        return self.rule_probabilities.get(rule, 0) / \
+               self.left_side_probabilities.get(rule.parent, 1)

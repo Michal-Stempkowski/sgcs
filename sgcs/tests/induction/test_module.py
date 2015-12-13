@@ -66,7 +66,7 @@ class TestModule(TestCase):
     def create_rules(self, rules):
         rule_population = RulePopulation(Symbol('S'), universal_symbol=Symbol('U'))
         for rule in rules:
-            rule_population.add_rule(rule)
+            rule_population.add_rule(rule, self.randomizer)
 
         return rule_population
 

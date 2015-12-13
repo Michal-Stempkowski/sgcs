@@ -12,6 +12,7 @@ package core {
         class RulePopulation
         class RulePopulationAccessViolationError
         class TerminalRule
+        class StochasticRulePopulation
     }
     package symbol {
         class Sentence
@@ -47,7 +48,7 @@ package core {
     RulePopulation : max_non_terminal_symbols
     RulePopulation : symbol_shift()
     RulePopulation : get_all_non_terminal_rules(self)
-    RulePopulation : add_rule(self, rule)
+    RulePopulation : add_rule(self, rule, randomizer)
     RulePopulation : get_rules_by_right(self, pair)
     RulePopulation : get_terminal_rules(self, symbol=None)
     RulePopulation : get_random_non_terminal_symbol(self, randomizer)
@@ -59,6 +60,12 @@ package core {
     RulePopulation --> Symbol: creates
     RulePopulation --> RulePopulationAccessViolationError: raises
     RulePopulation ..> Randomizer: uses
+
+    class StochasticRulePopulation
+    StochasticRulePopulation : rule_probabilities
+    StochasticRulePopulation : left_side_probabilities
+    StochasticRulePopulation : get_normalized_rule_probability(self, rule)
+    StochasticRulePopulation --|> RulePopulation
 
     class Rule
     Rule : __init__(self, parent, left_child, right_child)

@@ -25,7 +25,7 @@ class SimpleAddingRuleStrategy(AddingRuleStrategy):
         self.hints.append(AddingRuleStrategyHint.expand_population)
 
     def apply(self, adding_supervisor, statistics, rule, rule_population):
-        rule_population.add_rule(rule)
+        rule_population.add_rule(rule, adding_supervisor.randomizer)
         statistics.on_added_new_rule(rule)
 
 
@@ -51,7 +51,7 @@ class AddingRuleWithCrowdingStrategy(AddingRuleStrategy):
             rule_population.remove_rule(old)
             statistics.on_rule_removed(old)
 
-        rule_population.add_rule(new)
+        rule_population.add_rule(new, statistics.randomizer)
         statistics.on_added_new_rule(new)
 
     @staticmethod
