@@ -36,6 +36,7 @@ Environment : get_unsatisfied_detectors(self, coordinates)
 Environment : has_no_productions(self, coordinates)
 Environment : get_child_productions(self, production)
 Environment : simple_get_child_productions(self, production)
+Environment : get_most_probable_production_for(self, symbol, coordinates=None)
 Environment --* Sentence
 Environment ..> ProductionPool: creates(factory)
 Environment ..> Production: uses

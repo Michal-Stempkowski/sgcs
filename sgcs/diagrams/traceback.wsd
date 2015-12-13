@@ -41,6 +41,9 @@ package traceback #FFFFFF {
     Traceback ..> CykResult
     Traceback ..> RulePopulation
     Traceback ..> Rule
+
+    class StochasticBestTreeTraceback
+    StochasticBestTreeTraceback --|> Traceback
 }
 
 @enduml

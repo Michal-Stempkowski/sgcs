@@ -11,7 +11,7 @@ from induction.cyk_service import CykService
 from induction.detector import Detector
 from induction.environment import Environment
 from induction.production import Production
-from induction.traceback import Traceback
+from induction.traceback import Traceback, StochasticBestTreeTraceback
 from statistics.grammar_statistics import GrammarStatistics
 
 
@@ -103,3 +103,73 @@ class TestTraceback(unittest.TestCase):
         assert_that(self.environment_mock.get_last_cell_productions.call_count, is_(equal_to(1)))
         assert_that(self.visitor1_calls, is_(empty()))
         assert_that(self.visitor2_calls, is_(empty()))
+
+
+class TestStochasticBestTreeTraceback(unittest.TestCase):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.visitor1_calls = []
+        self.visitor2_calls = []
+        self.sut = StochasticBestTreeTraceback([
+            lambda x, _1, _2, _3, _4: self.visitor1_calls.append(x),
+            lambda x, _1, _2, _3, _4: self.visitor2_calls.append(x)
+        ])
+
+        self.grammar_statistics_mock = create_autospec(GrammarStatistics)
+
+        self.cyk_service_mock = create_autospec(CykService)
+        self.cyk_service_mock.configure_mock(statistics=self.grammar_statistics_mock)
+
+        self.environment_mock = create_autospec(Environment)
+        self.environment_mock.configure_mock(sentence=create_autospec(Sentence))
+
+        self.rule_population_mock = create_autospec(RulePopulation)
+        self.rule_population_mock.configure_mock(starting_symbol=Symbol('S'))
+
+        self.cyk_result = CykResult()
+
+        self.rule_probabilities = dict()
+        self.rule_probabilities['SAB'] = 0
+        self.rule_probabilities['Aa'] = 0
+        self.rule_probabilities['Ae'] = 0
+        self.rule_probabilities['Bb'] = 0
+
+        self.base_production = self.mk_production((1, 0, 1, 0, 0), 'S', 'A', 'B')
+        self.left_production = self.mk_production((0, 0, 0, 0, 0), 'A', 'a')
+        self.left_production_2 = self.mk_production((0, 0, 0, 0, 0), 'A', 'e')
+        self.right_production = self.mk_production((0, 1, 0, 0, 0), 'B', 'b')
+
+    def mk_production(self, coordinates, parent, left_child, right_child=None):
+        if right_child is None:
+            rule = TerminalRule(Symbol(parent), Symbol(left_child))
+        else:
+            rule = Rule(Symbol(parent), Symbol(left_child), Symbol(right_child))
+
+        production = Production(Detector(coordinates), rule)
+        production.probability = self.rule_probabilities[parent + left_child +
+                                                         (right_child if right_child is not None
+                                                          else '')]
+        return production
+
+    def _best_production(self, symbol, _=anything()):
+        return {x: y for x, y in [
+            (Symbol('S'), self.base_production),
+            (Symbol('A'), self.left_production),
+            (Symbol('B'), self.right_production)
+        ]}[symbol]
+
+    def test_for_non_terminal_rule_traceback_should_traverse_table(self):
+        # Given:
+        self.cyk_result.belongs_to_grammar = True
+        self.environment_mock.get_most_probable_production_for.side_effect = self._best_production
+
+        # When:
+        self.sut.perform_traceback(self.cyk_service_mock, self.environment_mock,
+                                   self.cyk_result, self.rule_population_mock)
+
+        # Then:
+        assert_that(self.visitor1_calls, contains_inanyorder(
+            self.base_production,self.left_production, self.right_production))
+        assert_that(self.visitor2_calls, contains_inanyorder(
+            self.base_production, self.left_production, self.right_production))

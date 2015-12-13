@@ -162,6 +162,11 @@ class Environment(object):
         return (p for p in production_pool.find_non_empty_productions(
             lambda x: x.rule.parent == symbol))
 
+    def get_most_probable_production_for(self, symbol, coordinates=None):
+        coordinates = coordinates if coordinates is not None else (self.size - 1, 0)
+        production_pool = self._get_production_pool(coordinates)
+        return production_pool.get_best_production_for(symbol)
+
 
 def viterbi_probability_approach(current, parent, children):
     if children is not None:

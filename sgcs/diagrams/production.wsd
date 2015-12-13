@@ -35,6 +35,7 @@ package production #FFFFFF {
     ProductionPool : get_unsatisfied_detectors(self)
     ProductionPool : get_non_empty_productions(self)
     ProductionPool : find_non_empty_productions(self, predicate)
+    ProductionPool : get_best_production_for(self, symbol)
     ProductionPool ..o Production
 }
 

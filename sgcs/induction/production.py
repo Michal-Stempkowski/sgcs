@@ -42,6 +42,8 @@ class ProductionPool(object):
         self.all_productions = []
         self.effectors = list()
         self.effector_probabilities = dict()
+        self._best_productions_per_effector = dict()
+        self._best_productions_per_effector__probabilities = dict()
 
     def add_production(self, production, child_productions, probability_approach):
         self.all_productions.append(production)
@@ -53,12 +55,20 @@ class ProductionPool(object):
             if effector not in self.effectors:
                 self.effectors.append(effector)
                 self.effector_probabilities[effector] = 0
+                self._best_productions_per_effector[effector] = production
+                self._best_productions_per_effector__probabilities[effector] = 0
 
             if probability_approach is not None:
-                self.effector_probabilities[effector] = probability_approach(
+                prob = probability_approach(
                     self.effector_probabilities[effector],
                     production,
                     child_productions)
+
+                self.effector_probabilities[effector] = prob
+
+                if self._best_productions_per_effector__probabilities[effector] < prob:
+                    self._best_productions_per_effector[effector] = production
+                    self._best_productions_per_effector__probabilities[effector] = prob
 
     def is_empty(self):
         return not self.non_empty_productions
@@ -83,3 +93,6 @@ class ProductionPool(object):
 
     def find_non_empty_productions(self, predicate):
         return filter(predicate, self.non_empty_productions)
+
+    def get_best_production_for(self, symbol):
+        return self._best_productions_per_effector.get(symbol, None)
