@@ -65,6 +65,7 @@ package core {
     StochasticRulePopulation : rule_probabilities
     StochasticRulePopulation : left_side_probabilities
     StochasticRulePopulation : get_normalized_rule_probability(self, rule)
+    StochasticRulePopulation : perform_probability_estimation(self, rule, fitness_getter)
     StochasticRulePopulation --|> RulePopulation
 
     class Rule

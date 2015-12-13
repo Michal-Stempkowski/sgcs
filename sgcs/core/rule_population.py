@@ -126,6 +126,9 @@ class StochasticRulePopulation(RulePopulation):
     def add_rule(self, rule, randomizer):
         super().add_rule(rule, randomizer)
         new_rule_probability = randomizer.uniform(0.01, 1)
+        self._add_new_rule_probability(rule, new_rule_probability)
+
+    def _add_new_rule_probability(self, rule, new_rule_probability):
         self.rule_probabilities[rule] = new_rule_probability
 
         if rule.parent not in self.left_side_probabilities:
@@ -142,3 +145,19 @@ class StochasticRulePopulation(RulePopulation):
     def get_normalized_rule_probability(self, rule):
         return self.rule_probabilities.get(rule, 0) / \
                self.left_side_probabilities.get(rule.parent, 1)
+
+    def perform_probability_estimation(self, rule, fitness_getter):
+        for parent in self.left_side_probabilities:
+            self.left_side_probabilities[parent] = 0
+
+        for rule in self.get_all_non_terminal_rules():
+            fitness = fitness_getter(rule)
+            self._add_new_rule_probability(rule, fitness)
+        for rule in self.get_terminal_rules():
+            fitness = fitness_getter(rule)
+            self._add_new_rule_probability(rule, fitness)
+
+        for rule in self.rule_probabilities:
+            self.rule_probabilities[rule] = self.get_normalized_rule_probability(rule)
+        for parent in self.left_side_probabilities:
+            self.left_side_probabilities[parent] = 1

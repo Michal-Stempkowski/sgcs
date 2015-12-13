@@ -123,3 +123,18 @@ class CykService(object):
     @traceback.setter
     def traceback(self, value):
         self._traceback = value
+
+
+class StochasticCykService(CykService):
+    def __init__(self, factory, randomizer, adding_rule_supervisor=None,
+                 coverage_operations=None, traceback_creator=None,
+                 grammar_corrector=None):
+        super().__init__(factory, randomizer, adding_rule_supervisor, coverage_operations,
+                         traceback_creator, grammar_corrector)
+
+    def perform_cyk_for_all_sentences(self, rule_population, sentences, evolution_step_estimator,
+                                      configuration, statistics):
+        super().perform_cyk_for_all_sentences(rule_population, sentences, evolution_step_estimator,
+                                              configuration, statistics)
+        rule_population.perform_probability_estimation(
+            statistics.fitness.get_keyfunc_getter(statistics))
