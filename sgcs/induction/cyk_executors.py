@@ -133,18 +133,23 @@ class CykCellExecutor(CykExecutor):
 
 class CykTerminalCellExecutor(CykCellExecutor):
     def execute(self, environment, rule_population):
-        detector = Detector(self.get_coordinates())
-        productions = detector.generate_production(environment, rule_population)
-        # terminal_symbol = environment.get_sentence_symbol(self.current_col)
+        productions = self._generate_productions(environment, rule_population)
 
-        # for rule in rule_population.get_terminal_rules(terminal_symbol):
+        self._add_productions(environment, productions)
+
+        self._perform_coverage_if_required(environment, rule_population)
+
+    def _generate_productions(self, environment, rule_population):
+        detector = Detector(self.get_coordinates())
+        return detector.generate_production(environment, rule_population)
+
+    @staticmethod
+    def _add_productions(environment, productions):
         for production in productions:
-            # new_production = TerminalProduction(rule, (self.current_row,
-            #                                            self.current_col))
             environment.add_production(production)
 
+    def _perform_coverage_if_required(self, environment, rule_population):
         if environment.has_no_productions(self.get_coordinates()):
-            # If production_pool is empty, then perform some coverage
             self.cyk_service.coverage_operations.perform_coverage(
                 self.cyk_service,
                 CoverageType.unknown_terminal_symbol,
@@ -197,11 +202,17 @@ class CykSymbolPairExecutor(CykExecutor):
         self.right_id = right_id
 
     def execute(self, environment, rule_population):
-        coordinates = self.get_coordinates()
+        productions = self._generate_productions(environment, rule_population)
 
-        detector = Detector(coordinates)
+        self._add_productions(environment, productions)
 
-        for production in detector.generate_production(environment, rule_population):
+    def _generate_productions(self, environment, rule_population):
+        detector = Detector(self.get_coordinates())
+        return detector.generate_production(environment, rule_population)
+
+    @staticmethod
+    def _add_productions(environment, productions):
+        for production in productions:
             environment.add_production(production)
 
     def get_coordinates(self):
@@ -210,3 +221,30 @@ class CykSymbolPairExecutor(CykExecutor):
                 self.parent_executor.shift,
                 self.left_id,
                 self.right_id)
+
+
+def set_probabilities(productions, rule_population):
+    for production in productions:
+            if not production.is_empty():
+                production.probability = rule_population.get_normalized_rule_probability(
+                    production.rule)
+
+
+class CykStochasticTerminalCellExecutor(CykTerminalCellExecutor):
+    def execute(self, environment, rule_population):
+        productions = self._generate_productions(environment, rule_population)
+
+        set_probabilities(productions, rule_population)
+
+        self._add_productions(environment, productions)
+
+        self._perform_coverage_if_required(environment, rule_population)
+
+
+class CykStochasticSymbolPairExecutor(CykSymbolPairExecutor):
+    def execute(self, environment, rule_population):
+        productions = self._generate_productions(environment, rule_population)
+
+        set_probabilities(productions, rule_population)
+
+        self._add_productions(environment, productions)

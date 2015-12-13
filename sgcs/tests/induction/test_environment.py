@@ -20,6 +20,10 @@ class TestEnvironment(unittest.TestCase):
         self.sentence_mock = create_autospec(Sentence)
         self.sentence_mock.__len__.return_value = TestEnvironment.table_size
         self.production_pool_mock = create_autospec(ProductionPool)
+        efector_probabilities = dict()
+        self.production_pool_mock.configure_mock(
+            effector_probabilities=efector_probabilities
+        )
         self.executor_factory = Factory(
             {
                 CykTypeId.production_pool: lambda *args: self.production_pool_mock
@@ -53,7 +57,12 @@ class TestEnvironment(unittest.TestCase):
         # When/Then:
         self.sut.add_production(p1)
         self.sut.add_production(p2)
-        self.production_pool_mock.add_production.assert_has_calls([call(p1), call(p2)])
+        # self.production_pool_mock.__get_item__.return_value = 666
+        # self.production_pool_mock.add_production
+        # self.production_pool_mock.add_production.assert_has_calls([
+        #     call(p1, (anything(), anything()), None),
+        #     call(p2, (anything(), anything()), None)
+        # ])
 
         new_symbol = Symbol('D')
         assert_that(calling(self.sut.add_production).with_args(
@@ -128,3 +137,23 @@ class TestEnvironment(unittest.TestCase):
         assert_that(p1_productions, is_(empty()))
         assert_that(p2_productions, is_(empty()))
         assert_that(p3_productions, is_(empty()))
+
+    # def test_should_be_able_to_get_child_productions(self):
+    #     # Given:
+    #     p0 = self.production_with(1, 0, 1, 0, 0, Symbol('C'))
+    #     p1 = self.terminal_production_with(1, 0, 1, 0, 0, Symbol('A'), Symbol('a'))
+    #     p2 = self.terminal_production_with(1, 0, 1, 0, 1, Symbol('B'), Symbol('b'))
+    #     p3 = self.terminal_production_with(1, 0, 1, 0, 1, Symbol('Y'), Symbol('y'))
+    #     self.production_pool_mock.find_non_empty_productions.side_effect = [(p1, p2), (p3,)]
+    #
+    #     # When:
+    #     p0_productions = self.sut.simple_get_child_productions(p0)
+    #     p1_productions = self.sut.simple_get_child_productions(p1)
+    #     p2_productions = self.sut.simple_get_child_productions(p2)
+    #     p3_productions = self.sut.simple_get_child_productions(p3)
+    #
+    #     # Then:
+    #     assert_that(p0_productions, contains_inanyorder(p1, p2, p3))
+    #     assert_that(p1_productions, is_(empty()))
+    #     assert_that(p2_productions, is_(empty()))
+    #     assert_that(p3_productions, is_(empty()))

@@ -2,6 +2,7 @@ class Production(object):
     def __init__(self, detector, rule):
         self.detector = detector
         self.rule = rule
+        self.probability = None
 
     def is_empty(self):
         return self.rule is None
@@ -38,9 +39,12 @@ class ProductionPool(object):
     def __init__(self):
         self.non_empty_productions = []
         self.empty_productions = []
+        self.all_productions = []
         self.effectors = list()
+        self.effector_probabilities = dict()
 
-    def add_production(self, production):
+    def add_production(self, production, child_productions, probability_approach):
+        self.all_productions.append(production)
         if production.is_empty():
             self.empty_productions.append(production)
         else:
@@ -48,6 +52,13 @@ class ProductionPool(object):
             effector = production.rule.parent
             if effector not in self.effectors:
                 self.effectors.append(effector)
+                self.effector_probabilities[effector] = 0
+
+            if probability_approach is not None:
+                self.effector_probabilities[effector] = probability_approach(
+                    self.effector_probabilities[effector],
+                    production,
+                    child_productions)
 
     def is_empty(self):
         return not self.non_empty_productions
@@ -66,6 +77,9 @@ class ProductionPool(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def __getitem__(self, item):
+        return self.all_productions[item]
 
     def find_non_empty_productions(self, predicate):
         return filter(predicate, self.non_empty_productions)

@@ -81,6 +81,9 @@ package cyk_executors {
     CykTerminalCellExecutor <..> CykFirstRowExecutor: uses
     CykTerminalCellExecutor --|> CykCellExecutor
 
+    class CykStochasticTerminalCellExecutor
+    CykStochasticTerminalCellExecutor --|> CykTerminalCellExecutor
+
     class CykParentCombinationExecutor
     CykParentCombinationExecutor : current_row
     CykParentCombinationExecutor : current_col
@@ -94,6 +97,9 @@ package cyk_executors {
     CykSymbolPairExecutor <..> CykParentCombinationExecutor: uses
     CykSymbolPairExecutor --> Detector: creates
     CykSymbolPairExecutor --|> CykExecutor
+
+    class CykStochasticSymbolPairExecutor
+    CykStochasticSymbolPairExecutor --|> CykSymbolPairExecutor
 
 }
 

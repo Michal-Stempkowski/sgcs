@@ -17,6 +17,7 @@ package production #FFFFFF {
     class Production
     Production : detector
     Production : rule
+    Production : probability
     Production : __init__(self, detector, rule)
     Production : is_empty(self)
     Production : get_coordinates(self)
@@ -28,7 +29,7 @@ package production #FFFFFF {
     EmptyProduction --|> Production
 
     class ProductionPool
-    ProductionPool : add_production(self, production)
+    ProductionPool : add_production(self, production, child_productions, probability_approach)
     ProductionPool : is_empty(self)
     ProductionPool : get_effectors(self)
     ProductionPool : get_unsatisfied_detectors(self)

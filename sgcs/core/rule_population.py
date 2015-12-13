@@ -146,7 +146,7 @@ class StochasticRulePopulation(RulePopulation):
         return self.rule_probabilities.get(rule, 0) / \
                self.left_side_probabilities.get(rule.parent, 1)
 
-    def perform_probability_estimation(self, rule, fitness_getter):
+    def perform_probability_estimation(self, fitness_getter):
         for parent in self.left_side_probabilities:
             self.left_side_probabilities[parent] = 0
 

@@ -14,6 +14,18 @@ class CykTableIndexError(Exception):
 
 
 class Environment(object):
+    @staticmethod
+    def with_viterbi_approach(sentence, factory):
+        environment = Environment(sentence, factory)
+        environment.probability_approach = viterbi_probability_approach
+        return environment
+
+    @staticmethod
+    def with_baum_welch_approach(sentence, factory):
+        environment = Environment(sentence, factory)
+        environment.probability_approach = baum_welch_probability_approach
+        return environment
+
     def __init__(self, sentence, factory):
         self.sentence = sentence
         self.size = self.get_sentence_length()
@@ -21,6 +33,7 @@ class Environment(object):
             (x, y): factory.create(CykTypeId.production_pool)
             for x in range(self.size) for y in range(self.size)
         }
+        self.probability_approach = None
 
     def get_symbols(self, absolute_coordinates):
         return self._get_production_pool(absolute_coordinates).get_effectors()
@@ -34,7 +47,9 @@ class Environment(object):
     def add_production(self, production):
         absolute_coordinates = production.get_coordinates()[:2]
         try:
-            self.cyk_table[absolute_coordinates].add_production(production)
+            child_productions = self.simple_get_child_productions(production)
+            self.cyk_table[absolute_coordinates].add_production(
+                production, child_productions, self.probability_approach)
         except KeyError:
             raise CykTableIndexError(production.get_coordinates())
 
@@ -106,6 +121,7 @@ class Environment(object):
         production_pool = self.cyk_table[coordinates]
         return production_pool.is_empty()
 
+    # Na tym przy tracebacku jest chyba rozp...
     def get_child_productions(self, production):
         result = []
         if not production.rule.is_terminal_rule():
@@ -123,8 +139,41 @@ class Environment(object):
 
         return result
 
+    def simple_get_child_productions(self, production):
+        if production.is_empty() or production.rule.is_terminal_rule():
+            return None
+        else:
+            parent_detector = production.detector
+            left_production_pool = self.cyk_table[self._left_coord(*parent_detector.coordinates)]
+            left_production = left_production_pool[parent_detector.coordinates[3]]
+            left_probability = left_production_pool.effector_probabilities.get(
+                production.rule.left_child, 0)
+
+            right_production_pool = self.cyk_table[self._left_coord(*parent_detector.coordinates)]
+            right_production = right_production_pool[parent_detector.coordinates[4] - 1]
+            right_probability = right_production_pool.effector_probabilities.get(
+                production.rule.right_child, 0)
+
+            return left_production, left_probability, right_production, right_probability
+
     def _child_production_generator(self, coordinates, symbol):
         production_pool = self._get_production_pool(coordinates)
 
         return (p for p in production_pool.find_non_empty_productions(
             lambda x: x.rule.parent == symbol))
+
+
+def viterbi_probability_approach(current, parent, children):
+    if children is not None:
+        _, left_prob, _, right_prob = children
+        return max(current, parent.probability * left_prob * right_prob)
+    else:
+        return max(current, parent.probability)
+
+
+def baum_welch_probability_approach(current, parent, children):
+    if children is not None:
+        _, left_prob, _, right_prob = children
+        return current + parent.probability * left_prob * right_prob
+    else:
+        return current + parent.probability

@@ -179,9 +179,38 @@ class TestStochasticRulePopulation(unittest.TestCase):
         self.sut.remove_rule(self.new_rule)
 
         # Then:
-        self.randomizer_mock.uniform.assert_has_calls([call(0.01, 1), call(0.01, 1)])
         assert_that(self.sut.has_rule(self.new_rule), is_(False))
         assert_that(self.sut.has_rule(self.another_rule_with_parent_a))
         assert_that(self.sut.get_normalized_rule_probability(self.new_rule), is_(equal_to(0)))
         assert_that(self.sut.get_normalized_rule_probability(self.another_rule_with_parent_a),
+                    is_(close_to(1, delta=0.01)))
+
+    @staticmethod
+    def create_fitness_getter_mock(rule_usages):
+        return lambda rule: rule_usages[rule]
+
+    def test_probability_estimation_should_work(self):
+        # Given:
+        self.randomizer_mock.uniform.side_effect = [0.1, 0.3]
+        self.sut.add_rule(self.new_rule, self.randomizer_mock)
+        self.sut.add_rule(self.another_rule_with_parent_a, self.randomizer_mock)
+
+        rule_usages = dict()
+        rule_usages[self.new_rule] = 1
+        rule_usages[self.another_rule_with_parent_a] = 2
+        fitness_getter = self.create_fitness_getter_mock(rule_usages)
+
+        # When:
+        self.sut.perform_probability_estimation(fitness_getter)
+
+        # Then:
+        assert_that(self.sut.rule_probabilities[self.new_rule],
+                    is_(close_to(0.33, delta=0.01)))
+        assert_that(self.sut.get_normalized_rule_probability(self.new_rule),
+                    is_(close_to(0.33, delta=0.01)))
+        assert_that(self.sut.get_normalized_rule_probability(self.another_rule_with_parent_a),
+                    is_(close_to(0.67, delta=0.01)))
+        assert_that(self.sut.rule_probabilities[self.another_rule_with_parent_a],
+                    is_(close_to(0.67, delta=0.01)))
+        assert_that(self.sut.left_side_probabilities[self.new_rule.parent],
                     is_(close_to(1, delta=0.01)))

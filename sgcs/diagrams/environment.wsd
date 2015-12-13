@@ -17,7 +17,10 @@ package environment #FFFFFF {
 class CykTableIndexError
 
 class Environment
+Environment : with_viterbi_approach(sentence, factory)
+Environment : with_baum_welch_approach(sentence, factory)
 Environment : __init__(self, sentence, factory)
+Environment : probability_approach
 Environment : get_symbols(self, absolute_coordinates)
 Environment : add_production(self, production)
 Environment : get_left_parent_symbol_count(self, coordinates_with_shift)
@@ -32,6 +35,7 @@ Environment : get_detector_symbols(self, coord)
 Environment : get_unsatisfied_detectors(self, coordinates)
 Environment : has_no_productions(self, coordinates)
 Environment : get_child_productions(self, production)
+Environment : simple_get_child_productions(self, production)
 Environment --* Sentence
 Environment ..> ProductionPool: creates(factory)
 Environment ..> Production: uses
