@@ -59,3 +59,14 @@ class TestSymbolTranslator(unittest.TestCase):
         sentences = self.sut.get_sentences()
         self.perform_get_sentences_scenario(sentences)
         assert_that(is_not(self.tokenizer_mock.get_token_generator.called))
+
+    def test_if_negative_sentences_disabled__they_should_be_ignored(self):
+        self.sut.negative_allowed = False
+        self.tokenizer_mock.get_token_generator.return_value = (iter([
+            [True, 'ala', 'ma', 'kota'],
+            [False, 'kot', 'ma', 'ale']
+        ]))
+
+        sentences = self.sut.get_sentences()
+        assert_that(list(sentences), has_length(1))
+

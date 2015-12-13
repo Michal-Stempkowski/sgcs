@@ -26,12 +26,13 @@ class SymbolTranslator(object):
         tokenizer = EagerTokenizer(file_fetcher)
         return SymbolTranslator(tokenizer)
 
-    def __init__(self, tokenizer):
+    def __init__(self, tokenizer, negative_allowed=True):
         self.tokenizer = tokenizer
         self.new_id = -101
         self.word_to_id_map = dict()
         self.id_to_word_map = dict()
         self.sentences = list()
+        self.negative_allowed = negative_allowed
 
     def get_sentences(self):
         if not self.sentences:
@@ -40,17 +41,18 @@ class SymbolTranslator(object):
             for tokenized_sentence in tokenized_sentences:
                 words = list()
                 is_positive = tokenized_sentence[0]
-                for word in tokenized_sentence[1:]:
-                    if word not in self.word_to_id_map:
-                        self.word_to_id_map[word] = self.new_id
-                        self.id_to_word_map[self.new_id] = word
-                        self.new_id -= 1
+                if is_positive or self.negative_allowed:
+                    for word in tokenized_sentence[1:]:
+                        if word not in self.word_to_id_map:
+                            self.word_to_id_map[word] = self.new_id
+                            self.id_to_word_map[self.new_id] = word
+                            self.new_id -= 1
 
-                    words.append(self.word_to_symbol(word))
+                        words.append(self.word_to_symbol(word))
 
-                sentence = Sentence(words, is_positive)
-                self.sentences.append(sentence)
-                yield sentence
+                    sentence = Sentence(words, is_positive)
+                    self.sentences.append(sentence)
+                    yield sentence
         else:
             for sentence in self.sentences:
                 yield sentence

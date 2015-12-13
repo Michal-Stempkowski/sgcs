@@ -9,6 +9,7 @@ hide RulePopulationAccessViolationError
 
 package datalayer {
     class SymbolTranslator
+    SymbolTranslator : __init__(self, tokenizer, negative_allowed=True)
     SymbolTranslator : get_sentences(self)
     SymbolTranslator : symbol_to_word(self, symbol)
     SymbolTranslator : word_to_symbol(self, word)
