@@ -163,12 +163,39 @@ class NegativeGrammarCriteria(GrammarCriteria):
         return estimation.negatives_that_has_occurred != 0
 
 
+class SensitivityGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.true_negative / estimation.positives_that_has_occurred
+
+    def _data_guard(self, estimation):
+        return estimation.positives_that_has_occurred != 0
+
+
+class SpecifityGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.true_negative / estimation.negatives_that_has_occurred
+
+    def _data_guard(self, estimation):
+        return estimation.negatives_that_has_occurred != 0
+
+
+class AccuracyGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.parsed_correctly / estimation.total
+
+    def _data_guard(self, estimation):
+        return estimation.total != 0
+
+
 class GrammarEstimator(object):
     def __init__(self):
         self.criterias = dict(
             fitness=FitnessGrammarCriteria(),
             positive=PositiveGrammarCriteria(),
-            negative=NegativeGrammarCriteria()
+            negative=NegativeGrammarCriteria(),
+            sensivity=SensitivityGrammarCriteria(),
+            specifity=SpecifityGrammarCriteria(),
+            accuracy=AccuracyGrammarCriteria()
         )
 
     def __getitem__(self, item):

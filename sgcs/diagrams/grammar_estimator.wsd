@@ -41,6 +41,15 @@ package grammar_estimator #FFFFFF {
     class NegativeGrammarCriteria
     NegativeGrammarCriteria --|> GrammarCriteria
 
+    class SensivityGrammarCriteria
+    SensivityGrammarCriteria --|> GrammarCriteria
+
+    class SpecifityGrammarCriteria
+    SpecifityGrammarCriteria --|> GrammarCriteria
+
+    class AccuracyGrammarCriteria
+    AccuracyGrammarCriteria --|> GrammarCriteria
+
     class GrammarEstimator
     GrammarEstimator : criterias
     GrammarEstimator : __getitem__(self, item)
