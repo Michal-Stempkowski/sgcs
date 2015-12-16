@@ -34,6 +34,7 @@ class CoverageOperatorTestCommon(unittest.TestCase):
         self.cyk_service_mock.configuration.return_value = self.cyk_configuration_mock
 
         self.environment_mock = create_autospec(Environment)
+        self.environment_mock.configure_mock(probability_approach=None)
 
         self.rule_population_mock = create_autospec(RulePopulation)
 

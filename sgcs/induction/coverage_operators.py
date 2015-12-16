@@ -41,6 +41,9 @@ class CoverageOperations(object):
                                                      cyk_service.statistics,
                                                      operator.adding_rule_strategy_type(
                                                          cyk_service))
+                    if environment.probability_approach is not None:
+                        production.probability = rule_population.get_normalized_rule_probability(
+                            production.rule)
                     environment.add_production(production)
 
 

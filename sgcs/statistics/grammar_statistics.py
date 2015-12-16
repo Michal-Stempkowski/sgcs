@@ -242,6 +242,11 @@ class GrammarStatistics(DummyCykStatistics):
         return GrammarStatistics(configuration, randomizer, ClassicRuleStatistics(),
                                  ClassicFitness())
 
+    @staticmethod
+    def sgcs_variant(randomizer, configuration):
+        return GrammarStatistics(configuration, randomizer, PasiekaRuleStatistics(),
+                                 PasiekaFitness())
+
     def __init__(self, configuration, randomizer, rule_statistics, fitness):
         super().__init__()
         self.randomizer = randomizer

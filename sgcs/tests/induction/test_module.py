@@ -4,18 +4,18 @@ from unittest import TestCase
 from hamcrest import *
 
 from core.rule import Rule, TerminalRule
-from core.rule_population import RulePopulation
+from core.rule_population import RulePopulation, StochasticRulePopulation
 from core.symbol import Symbol, Sentence
 from grammar_estimator import EvolutionStepEstimator
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
 from sgcs.induction.cyk_configuration import CykConfiguration
-from sgcs.induction.cyk_service import CykService
+from sgcs.induction.cyk_service import CykService, StochasticCykService
 from sgcs.utils import Randomizer
 from statistics.grammar_statistics import GrammarStatistics, \
     ClassicRuleStatistics, ClassicFitness, ClassicalStatisticsConfiguration
 
 
-class TestModule(TestCase):
+class TestModuleCommon(TestCase):
     def setUp(self):
         self.sut = None
         self.randomizer = Randomizer(Random())
@@ -27,9 +27,7 @@ class TestModule(TestCase):
             starting_chance=0,
             full_chance=0
         )
-        self.statistics_configuration = ClassicalStatisticsConfiguration.default()
 
-        self.statistics = GrammarStatistics.default(self.randomizer, self.statistics_configuration)
         self.rule_adding = AddingRuleSupervisor.default(self.randomizer)
 
         self.grammar_sentence = self.create_sentence(
@@ -40,6 +38,41 @@ class TestModule(TestCase):
             Symbol('with'),
             Symbol('a'),
             Symbol('fork'))
+
+        self.service_creator = None
+        self.statistics = None
+
+    def create_sentence(self, *sentence_seq, is_positive_sentence=True):
+        return Sentence(sentence_seq, is_positive_sentence)
+
+    def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
+        # Given:
+        self.service_wire_up(rules_population)
+
+        # When:
+        cyk_result = self.sut.perform_cyk(rules_population, sentence)
+
+        # Then:
+        assert_that(cyk_result.belongs_to_grammar, is_(equal_to(belongs_to_grammar)))
+
+    def service_wire_up(self, rules_population):
+        # Given:
+        self.sut = self.service_creator.default(self.randomizer, self.rule_adding)
+        self.sut.configuration = self.cyk_configuration
+        self.sut.statistics = self.statistics
+        self.sut.traceback = self.sut._traceback_creator(self.sut.statistics.statistics_visitors)
+
+        for rule in rules_population.get_all_non_terminal_rules():
+            self.sut.statistics.on_added_new_rule(rule)
+
+
+class TestModuleGCS(TestModuleCommon):
+    def setUp(self):
+        super().setUp()
+
+        self.statistics_configuration = ClassicalStatisticsConfiguration.default()
+        self.service_creator = CykService
+        self.statistics = GrammarStatistics.default(self.randomizer, self.statistics_configuration)
 
         self.empty_rule_population = self.create_rules([])
         self.example_rule_population = self.create_rules([
@@ -60,35 +93,12 @@ class TestModule(TestCase):
             Rule(Symbol('B'), Symbol('B'), Symbol('B'))
         ])
 
-    def create_sentence(self, *sentence_seq, is_positive_sentence=True):
-        return Sentence(sentence_seq, is_positive_sentence)
-
     def create_rules(self, rules):
         rule_population = RulePopulation(Symbol('S'), universal_symbol=Symbol('U'))
         for rule in rules:
             rule_population.add_rule(rule, self.randomizer)
 
         return rule_population
-
-    def service_wire_up(self, rules_population):
-        # Given:
-        self.sut = CykService.default(self.randomizer, self.rule_adding)
-        self.sut.configuration = self.cyk_configuration
-        self.sut.statistics = self.statistics
-        self.sut.traceback = self.sut._traceback_creator(self.sut.statistics.statistics_visitors)
-
-        for rule in rules_population.get_all_non_terminal_rules():
-            self.sut.statistics.on_added_new_rule(rule)
-
-    def perform_cyk_scenario(self, sentence, rules_population, belongs_to_grammar):
-        # Given:
-        self.service_wire_up(rules_population)
-
-        # When:
-        cyk_result = self.sut.perform_cyk(rules_population, sentence)
-
-        # Then:
-        assert_that(cyk_result.belongs_to_grammar, is_(equal_to(belongs_to_grammar)))
 
     def test_nok_scenario(self):
         sentence = self.create_sentence(
@@ -318,3 +328,40 @@ class TestModule(TestCase):
         # Then:
         assert_that(len(list(rule_population.get_all_non_terminal_rules())),
                     is_(equal_to(len_of_non_terminal_rules)))
+
+
+class TestModuleSGCS(TestModuleGCS):
+    def setUp(self):
+        super().setUp()
+        self.statistics_configuration = None
+
+        self.statistics = GrammarStatistics.sgcs_variant(
+            self.randomizer, self.statistics_configuration)
+
+        self.service_creator = StochasticCykService
+
+        self.empty_rule_population = self.create_rules([])
+        self.example_rule_population = self.create_rules([
+            Rule(Symbol('S'), Symbol('A'), Symbol('B')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('C')),
+            Rule(Symbol('C'), Symbol('S'), Symbol('B')),
+            Rule(Symbol('B'), Symbol('B'), Symbol('B'))
+        ])
+        self.random_rules = self.create_rules([
+            Rule(Symbol('S'), Symbol('NP'), Symbol('VP')),
+            Rule(Symbol('VP'), Symbol('VP'), Symbol('PP')),
+            Rule(Symbol('VP'), Symbol('V'), Symbol('NP')),
+            Rule(Symbol('PP'), Symbol('P'), Symbol('NP')),
+            Rule(Symbol('NP'), Symbol('Det'), Symbol('N')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('B')),
+            Rule(Symbol('S'), Symbol('A'), Symbol('C')),
+            Rule(Symbol('C'), Symbol('S'), Symbol('B')),
+            Rule(Symbol('B'), Symbol('B'), Symbol('B'))
+        ])
+
+    def create_rules(self, rules):
+        rule_population = StochasticRulePopulation(Symbol('S'), universal_symbol=Symbol('U'))
+        for rule in rules:
+            rule_population.add_rule(rule, self.randomizer)
+
+        return rule_population

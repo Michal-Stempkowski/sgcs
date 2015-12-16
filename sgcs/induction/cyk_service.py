@@ -6,7 +6,7 @@ from induction.coverage_operators import CoverageOperations
 from induction.environment import Environment
 from induction.grammar_corrector import GrammarCorrector
 from induction.production import ProductionPool
-from induction.traceback import Traceback, ThoroughTraceback
+from induction.traceback import Traceback, ThoroughTraceback, StochasticBestTreeTraceback
 from sgcs.induction.cyk_executors import CykTypeId
 from statistics.grammar_statistics import DummyCykStatistics
 
@@ -126,11 +126,33 @@ class CykService(object):
 
 
 class StochasticCykService(CykService):
-    def __init__(self, factory, randomizer, adding_rule_supervisor=None,
-                 coverage_operations=None, traceback_creator=None,
-                 grammar_corrector=None):
-        super().__init__(factory, randomizer, adding_rule_supervisor, coverage_operations,
-                         traceback_creator, grammar_corrector)
+    @staticmethod
+    def default(randomizer, adding_rule_supervisor):
+        factory = Factory({
+            CykTypeId.symbol_pair_executor: cyk_executors.CykStochasticSymbolPairExecutor,
+            CykTypeId.parent_combination_executor: cyk_executors.CykParentCombinationExecutor,
+            CykTypeId.cell_executor: cyk_executors.CykCellExecutor,
+            CykTypeId.row_executor:
+                lambda table_executor, row, executor_factory:
+                cyk_executors.CykRowExecutor(table_executor, row, executor_factory) if row > 0
+                else cyk_executors.CykFirstRowExecutor(table_executor, row, executor_factory),
+            CykTypeId.table_executor: cyk_executors.CykStochasticTableExecutor,
+            CykTypeId.production_pool: ProductionPool,
+            CykTypeId.environment: Environment.with_viterbi_approach,
+            CykTypeId.cyk_result: cyk_executors.CykResult,
+            CykTypeId.terminal_cell_executor: cyk_executors.CykStochasticTerminalCellExecutor
+        })
+
+        coverage_operations = CoverageOperations.create_default_set()
+        traceback_creator = StochasticBestTreeTraceback
+
+        return StochasticCykService(
+            factory,
+            randomizer,
+            adding_rule_supervisor,
+            coverage_operations,
+            traceback_creator
+        )
 
     def perform_cyk_for_all_sentences(self, rule_population, sentences, evolution_step_estimator,
                                       configuration, statistics):

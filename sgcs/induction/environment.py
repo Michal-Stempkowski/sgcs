@@ -149,8 +149,8 @@ class Environment(object):
             left_probability = left_production_pool.effector_probabilities.get(
                 production.rule.left_child, 0)
 
-            right_production_pool = self.cyk_table[self._left_coord(*parent_detector.coordinates)]
-            right_production = right_production_pool[parent_detector.coordinates[4] - 1]
+            right_production_pool = self.cyk_table[self._right_coord(*parent_detector.coordinates)]
+            right_production = right_production_pool[parent_detector.coordinates[4]]
             right_probability = right_production_pool.effector_probabilities.get(
                 production.rule.right_child, 0)
 

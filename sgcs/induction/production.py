@@ -95,4 +95,7 @@ class ProductionPool(object):
         return filter(predicate, self.non_empty_productions)
 
     def get_best_production_for(self, symbol):
-        return self._best_productions_per_effector.get(symbol, None)
+        best_production = self._best_productions_per_effector.get(symbol, None)
+
+        return None if best_production is None or \
+            self._best_productions_per_effector__probabilities[symbol] <= 0 else best_production

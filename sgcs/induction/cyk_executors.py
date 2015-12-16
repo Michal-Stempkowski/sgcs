@@ -71,6 +71,13 @@ class CykTableExecutor(CykExecutor):
         return result
 
 
+class CykStochasticTableExecutor(CykTableExecutor):
+    @staticmethod
+    def _belongs_to_grammar(rule_population, environment):
+        return environment.get_most_probable_production_for(
+            rule_population.starting_symbol) is not None
+
+
 class CykRowExecutor(CykExecutor):
     def __init__(self, table_executor, row, cyk_service):
         super().__init__(CykTypeId.cell_executor, cyk_service)
