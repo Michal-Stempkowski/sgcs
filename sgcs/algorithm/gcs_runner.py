@@ -3,13 +3,13 @@ import time
 from abc import ABCMeta, abstractmethod
 
 from core.rule import Rule
-from core.rule_population import RulePopulation
+from core.rule_population import RulePopulation, StochasticRulePopulation
 from core.symbol import Symbol
 from evolution.evolution_configuration import EvolutionConfiguration
 from evolution.evolution_service import EvolutionService
 from grammar_estimator import EvolutionStepEstimator
 from induction.cyk_configuration import CykConfiguration
-from induction.cyk_service import CykService
+from induction.cyk_service import CykService, StochasticCykService
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
 from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration
 
@@ -58,6 +58,48 @@ class AlgorithmConfiguration(object):
         return configuration
 
     @staticmethod
+    def sgcs_variant():
+        ga_selectors_configuration = []
+        evolution_configuration = EvolutionConfiguration.create(
+            selectors=ga_selectors_configuration,
+            inversion_chance=0,
+            mutation_chance=0,
+            crossover_chance=0
+        )
+
+        induction_configuration = CykConfiguration.create(
+            should_correct_grammar=False,
+            terminal_chance=0,
+            universal_chance=0,
+            aggressive_chance=0,
+            starting_chance=0,
+            full_chance=0
+        )
+
+        rule_configuration = RuleConfiguration.create(
+            crowding_factor=0,
+            crowding_size=0,
+            elitism_size=0,
+            starting_symbol=1,
+            universal_symbol=None,
+            max_non_terminal_symbols=32,
+            random_starting_population_size=20,
+            max_non_terminal_rules=40
+        )
+
+        configuration = AlgorithmConfiguration.create(
+            induction_configuration, evolution_configuration, rule_configuration,
+            max_algorithm_steps=1,
+            should_run_evolution=True,
+            max_execution_time=900,
+            satisfying_fitness=1,
+            statistics=None,
+            max_algorithm_runs=50
+        )
+
+        return configuration
+
+    @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
                max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness,
                statistics, max_algorithm_runs):
@@ -83,6 +125,38 @@ class AlgorithmConfiguration(object):
         self.should_run_evolution = None
         self.statistics = None
         self.max_algorithm_runs = None
+
+
+class CykServiceVariationManager(object):
+    def __init__(self, is_stochastic):
+        self.is_stochastic = is_stochastic
+
+    def create_cyk_service(self, randomizer, adding_rule_supervisor):
+        if self.is_stochastic:
+            return StochasticCykService.default(randomizer, adding_rule_supervisor)
+        else:
+            return CykService.default(randomizer, adding_rule_supervisor)
+
+    def create_rule_population(self, starting_symbol, universal_symbol=None, previous_instance=None,
+                               max_non_terminal_symbols=32):
+        if self.is_stochastic:
+            return StochasticRulePopulation(starting_symbol, universal_symbol, previous_instance,
+                                            max_non_terminal_symbols)
+        else:
+            return RulePopulation(starting_symbol, universal_symbol, previous_instance,
+                                  max_non_terminal_symbols)
+
+    def create_grammar_statistics(self, randomizer, statistics_configuration):
+        if self.is_stochastic:
+            return GrammarStatistics.sgcs_variant(randomizer, statistics_configuration)
+        else:
+            return GrammarStatistics.default(randomizer, statistics_configuration)
+
+    def create_default_configuration(self):
+        if self.is_stochastic:
+            return AlgorithmConfiguration.sgcs_variant()
+        else:
+            return AlgorithmConfiguration.default()
 
 
 class RuleConfiguration(object):
@@ -188,12 +262,14 @@ class FitnessStopCriteria(StopCriteria):
 
 
 class GcsRunner(object):
-    def __init__(self, randomizer):
+    def __init__(self, randomizer, cyk_service_variant=None):
+        self.cyk_service_variant = cyk_service_variant if cyk_service_variant is not None \
+            else CykServiceVariationManager(False)
         self.randomizer = randomizer
         self.configuration = None
         self.rule_adding = AddingRuleSupervisor.default(randomizer)
         self.grammar_estimator = None
-        self.induction = CykService.default(randomizer, self.rule_adding)
+        self.induction = self.cyk_service_variant.create_cyk_service(randomizer, self.rule_adding)
         self.evolution = EvolutionService(randomizer)
         self.stop_criteria = [NoStopCriteriaSpecified()]
 
@@ -219,10 +295,9 @@ class GcsRunner(object):
 
         return list(rules)
 
-    @staticmethod
-    def add_initial_rules(initial_rules, rule_population, grammar_statistics):
+    def add_initial_rules(self, initial_rules, rule_population, grammar_statistics):
         for rule in initial_rules:
-            rule_population.add_rule(rule)
+            rule_population.add_rule(rule, self.randomizer)
             grammar_statistics.on_added_new_rule(rule)
 
     def perform_gcs(self, initial_rules, symbol_translator, configuration, grammar_estimator,
@@ -232,7 +307,7 @@ class GcsRunner(object):
         self.grammar_estimator = grammar_estimator
         self.create_stop_criteria()
 
-        rule_population = RulePopulation(
+        rule_population = self.cyk_service_variant.create_rule_population(
             self.configuration.rule.starting_symbol, self.configuration.rule.universal_symbol,
             max_non_terminal_symbols=self.configuration.rule.max_non_terminal_symbols)
 

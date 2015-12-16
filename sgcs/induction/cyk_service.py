@@ -1,5 +1,6 @@
 import logging
 
+from core.rule_population import StochasticRulePopulation
 from factory import Factory
 from induction import cyk_executors
 from induction.coverage_operators import CoverageOperations
@@ -8,7 +9,6 @@ from induction.grammar_corrector import GrammarCorrector
 from induction.production import ProductionPool
 from induction.traceback import Traceback, ThoroughTraceback, StochasticBestTreeTraceback
 from sgcs.induction.cyk_executors import CykTypeId
-from statistics.grammar_statistics import DummyCykStatistics
 
 
 class CykService(object):
