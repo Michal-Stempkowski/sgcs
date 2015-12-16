@@ -8,8 +8,9 @@ from statistics.grammar_statistics import GrammarStatistics
 
 
 class GcsSimulator(object):
-    def __init__(self, randomizer):
+    def __init__(self, randomizer, algorithm_variant):
         self.randomizer = randomizer
+        self.algorithm_variant = algorithm_variant
 
     @staticmethod
     def _prepare_configuration_for_generalization_test(conf):
@@ -46,10 +47,10 @@ class GcsSimulator(object):
         for i in range(configuration.max_algorithm_runs):
             logging.info('Run: %s', str(i))
             grammar_estimator = GrammarEstimator()
-            grammar_statistics = GrammarStatistics.default(
+            grammar_statistics = self.algorithm_variant.create_grammar_statistics(
                 self.randomizer, configuration.statistics)
 
-            runner = GcsRunner(self.randomizer)
+            runner = GcsRunner(self.randomizer, self.algorithm_variant)
 
             initial_rules = []
 
@@ -75,9 +76,10 @@ class GcsSimulator(object):
         conf = self._prepare_configuration_for_generalization_test(configuration)
 
         grammar_estimator = GrammarEstimator()
-        grammar_statistics = GrammarStatistics.default(self.randomizer, conf.statistics)
+        grammar_statistics = self.algorithm_variant.create_grammar_statistics(self.randomizer,
+                                                                              conf.statistics)
 
-        runner = GcsRunner(self.randomizer)
+        runner = GcsRunner(self.randomizer, self.algorithm_variant)
 
         print('nGen starting')
         logging.info('nGen starting')

@@ -8,7 +8,7 @@ import time
 from hamcrest import *
 
 from algorithm.gcs_runner import GcsRunner, AlgorithmConfiguration, FitnessStopCriteria, \
-    StepStopCriteria, TimeStopCriteria
+    StepStopCriteria, TimeStopCriteria, CykServiceVariationManager
 from algorithm.gcs_simulator import GcsSimulator
 from datalayer.symbol_translator import SymbolTranslator
 from evolution.evolution_configuration import EvolutionRouletteSelectorConfiguration
@@ -26,10 +26,12 @@ class LongTestGcsSimulator(unittest.TestCase):
                             filename=r"C:\Users\Michał\PycharmProjects\mgr\sgcs\log.log",
                             format='%(asctime)s %(message)s')
 
-        self.configuration = AlgorithmConfiguration.default()
+        self.algorithm_variant = CykServiceVariationManager(is_stochastic=False)
+
+        self.configuration = self.algorithm_variant.create_default_configuration()
         self.randomizer = Randomizer(Random())
 
-        self.sut = GcsSimulator(self.randomizer)
+        self.sut = GcsSimulator(self.randomizer, self.algorithm_variant)
 
         self.set_parameters()
 
@@ -85,10 +87,12 @@ class LongTestGcsSimulator(unittest.TestCase):
         logging.info('starting %s', name)
         with open(os.path.join(r'C:\Users\Michał\PycharmProjects\mgr\runs\auto',
                                name + '.txt'), 'w+') as file:
-            result, ngen = self.sut.perform_simulation(
-                SymbolTranslator.create(learning_path),
-                SymbolTranslator.create(testing_path),
-                self.configuration)
+            learning_set = SymbolTranslator.create(learning_path)
+            learning_set.negative_allowed = not self.algorithm_variant.is_stochastic
+            testing_set = SymbolTranslator.create(learning_path)
+            testing_set.negative_allowed = True
+            result, ngen = self.sut.perform_simulation(learning_set, testing_set,
+                                                       self.configuration)
 
             print(result)
             print('NGen:', ngen)
@@ -171,14 +175,63 @@ class LongTestGcsSimulator(unittest.TestCase):
     def test_simulation_for_other_gramatics(self):
         self.configuration.max_algorithm_steps = 1000
         self.configuration.max_algorithm_runs = 10
-        # self.generic_simulation(self.mk_path('ab los 200 30'), self.mk_path('ab opt max 15'), 'ab')
-        #
-        # self.generic_simulation(self.mk_path('anbn los 200 15'), self.mk_path('anbn opt 15 max'), 'anbn')
-        #
-        # self.generic_simulation(self.mk_path('bra1 los2 200 30'), self.mk_path('bra1 opt 15 max'), 'bra1')
-        #
-        # self.generic_simulation(self.mk_path('bra3 los 200 30'), self.mk_path('bra3 opt los 65534'), 'bra3')
+        self.generic_simulation(self.mk_path('ab los 200 30'), self.mk_path('ab opt max 15'), 'ab')
+
+        self.generic_simulation(self.mk_path('anbn los 200 15'), self.mk_path('anbn opt 15 max'), 'anbn')
+
+        self.generic_simulation(self.mk_path('bra1 los2 200 30'), self.mk_path('bra1 opt 15 max'), 'bra1')
+
+        self.generic_simulation(self.mk_path('bra3 los 200 30'), self.mk_path('bra3 opt los 65534'), 'bra3')
 
         self.generic_simulation(self.mk_path('toy los2 200 30'), self.mk_path('toy opt los 65534'), 'toy')
 
         self.generic_simulation(self.mk_path('pal2 parz los 200'), self.mk_path('pal2 opt parzysty max 15'), 'pal2')
+
+
+class LongTestSGcsSimulator(LongTestGcsSimulator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.algorithm_variant = CykServiceVariationManager(is_stochastic=True)
+
+        self.configuration = self.algorithm_variant.create_default_configuration()
+
+        self.sut = GcsSimulator(self.randomizer, self.algorithm_variant)
+
+        self.set_parameters()
+
+    def set_parameters(self):
+        self.configuration.should_run_evolution = True
+        self.configuration.evolution.selectors = [
+            EvolutionRouletteSelectorConfiguration.create(),
+            EvolutionRouletteSelectorConfiguration.create()
+        ]
+
+        self.configuration.induction.grammar_correction.should_run = False
+        self.configuration.induction.coverage.operators.terminal.chance = 1
+        self.configuration.induction.coverage.operators.universal.chance = 0
+        self.configuration.induction.coverage.operators.starting.chance = 1
+        self.configuration.induction.coverage.operators.starting.adding_hint = \
+            AddingRuleStrategyHint.expand_population
+        self.configuration.induction.coverage.operators.full.chance = 1
+        self.configuration.induction.coverage.operators.full.adding_hint = \
+            AddingRuleStrategyHint.expand_population
+
+        self.configuration.max_algorithm_steps = 5000
+        self.configuration.rule.max_non_terminal_symbols = 19
+        self.configuration.rule.random_starting_population_size = 30
+        self.configuration.max_execution_time = 8000
+        self.configuration.satisfying_fitness = 1
+
+        self.configuration.evolution.operators.crossover.chance = 0.2
+        self.configuration.evolution.operators.mutation.chance = 0.8
+        self.configuration.evolution.operators.inversion.chance = 0.8
+
+        self.configuration.induction.coverage.operators.aggressive.chance = 0
+        self.configuration.induction.coverage.operators.aggressive.adding_hint = \
+            AddingRuleStrategyHint.expand_population
+
+        self.configuration.rule.adding.crowding.factor = 18
+        self.configuration.rule.adding.crowding.size = 3
+        self.configuration.rule.adding.elitism.is_used = True
+        self.configuration.rule.adding.elitism.size = 3
+        self.configuration.rule.adding.max_non_terminal_rules = 40
