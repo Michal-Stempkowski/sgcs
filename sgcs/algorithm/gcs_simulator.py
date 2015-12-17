@@ -2,6 +2,8 @@ import copy
 import logging
 
 import multiprocessing
+import os
+import random
 
 from algorithm.gcs_runner import GcsRunner
 from algorithm.run_estimator import RunEstimator
@@ -58,7 +60,8 @@ class GcsSimulator(object):
         runner = GcsRunner(self.randomizer, self.algorithm_variant)
 
         return runner.perform_gcs(
-            initial_rules, configuration, grammar_estimator, grammar_statistics, sentences)
+            initial_rules, copy.deepcopy(configuration), grammar_estimator, grammar_statistics,
+            sentences) + (grammar_estimator, )
 
     def _handle_run_result(self, stop_reasoning, learning_set, run_estimator, rp, rule_population,
                            fitness_reached, auxiliary_rule_population, aux_fitness, evolution_step,
@@ -107,8 +110,8 @@ class GcsSimulator(object):
 
         for i in range(configuration.max_algorithm_runs):
             logging.info('Run: %s', str(i))
-            rp, stop_reasoning, fitness_reached, evolution_step = self._perform_run(
-                configuration, [], sentences)
+            rp, stop_reasoning, fitness_reached, evolution_step, grammar_estimator = \
+                self._perform_run(configuration, [], sentences)
 
             rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
                 stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
@@ -124,7 +127,8 @@ class AsyncGcsSimulator(GcsSimulator):
         return func(*args)
 
     def calculate_star(self, args):
-        func, args_, run_no = args
+        func, args_, run_no, seed = args
+        self.randomizer.generator = random.Random(seed)
         return self.calculate(func, args_), run_no
 
     def perform_simulation(self, learning_set, testing_set, configuration):
@@ -135,17 +139,21 @@ class AsyncGcsSimulator(GcsSimulator):
 
         with multiprocessing.Pool(worker_pool_size) as pool:
             runs_to_be_performed = range(configuration.max_algorithm_runs)
-            tasks = [(self._perform_run, (configuration, [], sentences), run_no)
+            tasks = [(self._perform_run, (
+                copy.deepcopy(configuration), copy.deepcopy([]), copy.deepcopy(sentences)),
+                      run_no, random.randint(0, 10**10))
                      for run_no in runs_to_be_performed]
 
             async_results = pool.imap_unordered(self.calculate_star, tasks)
 
             for result in async_results:
-                (rp, stop_reasoning, fitness_reached, evolution_step), run_no = result
+                # print(result)
+                (rp, stop_reasoning, fitness_reached, evolution_step, grammar_estimator), run_no = \
+                    result
 
                 rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
-                    stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
-                    auxiliary_rule_population, aux_fitness, evolution_step, run_no)
+                    stop_reasoning, learning_set, run_estimator, rp, rule_population,
+                    fitness_reached, auxiliary_rule_population, aux_fitness, evolution_step, run_no)
 
         # for i in range(configuration.max_algorithm_runs):
         #     logging.info('Run: %s', str(i))
