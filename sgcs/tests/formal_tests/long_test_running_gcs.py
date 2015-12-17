@@ -96,7 +96,8 @@ class LongTestRunningGcs(unittest.TestCase):
             try:
                 symbol_translator = self.create_symbol_translator(path)
 
-                result = self.sut.perform_gcs(self.initial_rules, symbol_translator,
+                result = self.sut.perform_gcs(self.initial_rules,
+                                              list(symbol_translator.get_sentences()),
                                               self.configuration, self.grammar_estimator,
                                               self.grammar_statistics)
                 print(result[1].stop_reasoning_message())

@@ -1,6 +1,8 @@
 import copy
 import logging
 
+import multiprocessing
+
 from algorithm.gcs_runner import GcsRunner
 from algorithm.run_estimator import RunEstimator
 from grammar_estimator import GrammarEstimator
@@ -39,47 +41,49 @@ class GcsSimulator(object):
     def _rules_population_size_keyfunc(rp):
         return float('inf') if rp is None else rp.terminal_rule_count + rp.non_terminal_rule_count
 
-    def perform_simulation(self, learning_set, testing_set, configuration):
+    def _prepare_for_run(self, learning_set):
         run_estimator = RunEstimator()
         rule_population = None
         auxiliary_rule_population, aux_fitness = None, 0
 
-        for i in range(configuration.max_algorithm_runs):
-            logging.info('Run: %s', str(i))
-            grammar_estimator = GrammarEstimator()
-            grammar_statistics = self.algorithm_variant.create_grammar_statistics(
-                self.randomizer, configuration.statistics)
+        sentences = list(learning_set.get_sentences())
 
-            runner = GcsRunner(self.randomizer, self.algorithm_variant)
+        return run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences
 
-            initial_rules = []
-
-            rp, stop_reasoning, fitness_reached, evolution_step = runner.perform_gcs(
-                initial_rules, learning_set, configuration, grammar_estimator, grammar_statistics)
-
-            logging.info(learning_set.rule_population_to_string(rp))
-
-            if stop_reasoning.has_succeeded():
-                run_estimator.append_success(evolution_step)
-                rule_population = min(rp, rule_population, key=self._rules_population_size_keyfunc)
-            else:
-                run_estimator.append_failure()
-
-            if fitness_reached > aux_fitness:
-                auxiliary_rule_population, aux_fitness = rp, fitness_reached
-
-            msg = 'Success: {0}'.format(evolution_step) if stop_reasoning.has_succeeded() \
-                else 'Failure'
-            print(i, ':', msg)
-            logging.info('%s : %s', str(i), str(msg))
-
-        conf = self._prepare_configuration_for_generalization_test(configuration)
-
+    def _perform_run(self, configuration, initial_rules, sentences):
         grammar_estimator = GrammarEstimator()
-        grammar_statistics = self.algorithm_variant.create_grammar_statistics(self.randomizer,
-                                                                              conf.statistics)
+        grammar_statistics = self.algorithm_variant.create_grammar_statistics(
+            self.randomizer, configuration.statistics)
 
         runner = GcsRunner(self.randomizer, self.algorithm_variant)
+
+        return runner.perform_gcs(
+            initial_rules, configuration, grammar_estimator, grammar_statistics, sentences)
+
+    def _handle_run_result(self, stop_reasoning, learning_set, run_estimator, rp, rule_population,
+                           fitness_reached, auxiliary_rule_population, aux_fitness, evolution_step,
+                           run_no):
+        logging.info(learning_set.rule_population_to_string(rp))
+
+        if stop_reasoning.has_succeeded():
+            run_estimator.append_success(evolution_step)
+            rule_population = min(rp, rule_population, key=self._rules_population_size_keyfunc)
+        else:
+            run_estimator.append_failure()
+
+        if fitness_reached > aux_fitness:
+            auxiliary_rule_population, aux_fitness = rp, fitness_reached
+
+        msg = 'Success: {0}'.format(evolution_step) if stop_reasoning.has_succeeded() \
+            else 'Failure'
+        print(run_no, ':', msg)
+        logging.info('%s : %s', str(run_no), str(msg))
+
+        return rule_population, auxiliary_rule_population, aux_fitness
+
+    def _perform_generalization_test(self, configuration, rule_population, auxiliary_rule_population,
+                                     testing_set, run_estimator):
+        conf = self._prepare_configuration_for_generalization_test(configuration)
 
         print('nGen starting')
         logging.info('nGen starting')
@@ -90,9 +94,67 @@ class GcsSimulator(object):
         rules = list(rule_population.get_all_non_terminal_rules())
         rules += rule_population.get_terminal_rules()
 
-        rule_population, _, n_gen, *_ = runner.perform_gcs(
-            rules, testing_set, conf, grammar_estimator, grammar_statistics)
+        rule_population, _, n_gen, *_ = self._perform_run(conf, rules,
+                                                          list(testing_set.get_sentences()))
 
         logging.info(testing_set.rule_population_to_string(rule_population))
 
         return run_estimator, n_gen
+
+    def perform_simulation(self, learning_set, testing_set, configuration):
+        run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
+            self._prepare_for_run(learning_set)
+
+        for i in range(configuration.max_algorithm_runs):
+            logging.info('Run: %s', str(i))
+            rp, stop_reasoning, fitness_reached, evolution_step = self._perform_run(
+                configuration, [], sentences)
+
+            rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
+                stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
+                auxiliary_rule_population, aux_fitness, evolution_step, i)
+
+        return self._perform_generalization_test(
+            configuration, rule_population, auxiliary_rule_population, testing_set, run_estimator)
+
+
+class AsyncGcsSimulator(GcsSimulator):
+    @staticmethod
+    def calculate(func, args):
+        return func(*args)
+
+    def calculate_star(self, args):
+        func, args_, run_no = args
+        return self.calculate(func, args_), run_no
+
+    def perform_simulation(self, learning_set, testing_set, configuration):
+        run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
+            self._prepare_for_run(learning_set)
+
+        worker_pool_size = multiprocessing.cpu_count()
+
+        with multiprocessing.Pool(worker_pool_size) as pool:
+            runs_to_be_performed = range(configuration.max_algorithm_runs)
+            tasks = [(self._perform_run, (configuration, [], sentences), run_no)
+                     for run_no in runs_to_be_performed]
+
+            async_results = pool.imap_unordered(self.calculate_star, tasks)
+
+            for result in async_results:
+                (rp, stop_reasoning, fitness_reached, evolution_step), run_no = result
+
+                rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
+                    stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
+                    auxiliary_rule_population, aux_fitness, evolution_step, run_no)
+
+        # for i in range(configuration.max_algorithm_runs):
+        #     logging.info('Run: %s', str(i))
+        #     rp, stop_reasoning, fitness_reached, evolution_step = self._perform_run(
+        #         configuration, [], sentences)
+        #
+        #     rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
+        #         stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
+        #         auxiliary_rule_population, aux_fitness, evolution_step, i)
+
+        return self._perform_generalization_test(
+            configuration, rule_population, auxiliary_rule_population, testing_set, run_estimator)

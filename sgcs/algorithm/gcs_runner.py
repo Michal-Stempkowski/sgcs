@@ -300,8 +300,8 @@ class GcsRunner(object):
             rule_population.add_rule(rule, self.randomizer)
             grammar_statistics.on_added_new_rule(rule)
 
-    def perform_gcs(self, initial_rules, symbol_translator, configuration, grammar_estimator,
-                    grammar_statistics):
+    def perform_gcs(self, initial_rules, configuration, grammar_estimator,
+                    grammar_statistics, sentences):
         self.configuration = configuration
         self.rule_adding.configuration = self.configuration.rule.adding
         self.grammar_estimator = grammar_estimator
@@ -319,7 +319,6 @@ class GcsRunner(object):
         # print('')
         while not any(cr() for cr in self.stop_criteria):
             # print('.', end='')
-            sentences = symbol_translator.get_sentences()
             evolution_step_estimator = EvolutionStepEstimator()
             self.induction.perform_cyk_for_all_sentences(rule_population, sentences,
                                                          evolution_step_estimator,

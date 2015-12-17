@@ -9,7 +9,7 @@ from hamcrest import *
 
 from algorithm.gcs_runner import GcsRunner, AlgorithmConfiguration, FitnessStopCriteria, \
     StepStopCriteria, TimeStopCriteria, CykServiceVariationManager
-from algorithm.gcs_simulator import GcsSimulator
+from algorithm.gcs_simulator import GcsSimulator, AsyncGcsSimulator
 from datalayer.symbol_translator import SymbolTranslator
 from evolution.evolution_configuration import EvolutionRouletteSelectorConfiguration
 from grammar_estimator import GrammarEstimator
@@ -235,3 +235,9 @@ class LongTestSGcsSimulator(LongTestGcsSimulator):
         self.configuration.rule.adding.elitism.is_used = True
         self.configuration.rule.adding.elitism.size = 3
         self.configuration.rule.adding.max_non_terminal_rules = 40
+
+
+class LongTestAsyncSGcsSimulator(LongTestSGcsSimulator):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.sut = AsyncGcsSimulator(self.randomizer, self.algorithm_variant)
