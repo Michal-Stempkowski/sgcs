@@ -9,6 +9,7 @@ import time
 import subprocess
 
 DIAG_FOLDER_NAME = ''
+GENERATED_FOLDER = 'generated'
 IN_FILE_EXT = '.ui'
 OUT_FILE_EXT = '.py'
 GEN_SUFF = '__gen'
@@ -32,7 +33,7 @@ def dest_absolute_path(diag_folder_path, filename):
     """
     Returns destination file's absolute path
     """
-    return os.path.join(diag_folder_path, dest_filename(filename))
+    return os.path.join(diag_folder_path, GENERATED_FOLDER, dest_filename(filename))
 
 
 def perform_filtering(folder, filename):

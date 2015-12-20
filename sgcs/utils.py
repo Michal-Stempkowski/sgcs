@@ -1,3 +1,6 @@
+import itertools
+
+
 class Randomizer(object):
     def __init__(self, generator):
         self.generator = generator
@@ -29,3 +32,7 @@ class RunTimes(object):
         result = self.times > 0
         self.times -= 1
         return result
+
+
+def chunk(x, size):
+    return itertools.zip_longest(fillvalue=None, *([iter(x)] * size))
