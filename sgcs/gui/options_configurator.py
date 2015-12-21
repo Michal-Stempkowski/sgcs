@@ -6,7 +6,7 @@ from algorithm.gcs_runner import AlgorithmConfiguration
 from evolution.evolution_configuration import *
 from gui.generated.options_configurator__gen import Ui_OptionsConfiguratorGen
 from gui.generic_widget import GenericWidget
-from utils import MethodDecoratorWrapper
+from utils import MethodDecoratorWrapper, Context
 
 NONE_LABEL = '<None>'
 
@@ -117,6 +117,26 @@ class GcsAlgorithmVariant(AlgorithmVariant):
         return AlgorithmConfiguration.default()
 
 
+class BlockSignals(Context):
+    def _block_signals(self, widgets):
+        for w in widgets:
+            if w.signalsBlocked():
+                self.ignore_exit.add(w)
+            else:
+                w.blockSignals(True)
+
+    def _unblock_signals(self, widgets):
+        for w in widgets:
+            if w not in self.ignore_exit:
+                w.blockSignals(False)
+
+    def __init__(self, *widgets):
+        super().__init__(
+            lambda: self._block_signals(widgets),
+            lambda: self._unblock_signals(widgets))
+        self.ignore_exit = set()
+
+
 class OptionsConfigurator(GenericWidget):
     ALGORITHM_VARIANTS = {n: v for n, v in AlgorithmVariant.mk_pairs(
         SGcsAlgorithmVariant(),
@@ -162,13 +182,15 @@ class OptionsConfigurator(GenericWidget):
 
         self.bind_logic()
 
-        feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()))
-        self.current_variant = self.ALGORITHM_VARIANTS[
-            self.ui.algorithmVariantComboBox.currentText()]
+        with BlockSignals(*map(lambda x: x.tournament_widget, self.selector_bindings)) as _:
 
-        self.selected_statistics = None
+            feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()))
+            self.current_variant = self.ALGORITHM_VARIANTS[
+                self.ui.algorithmVariantComboBox.currentText()]
 
-        self.init_gui()
+            self.selected_statistics = None
+
+            self.init_gui()
 
     def init_gui(self):
         self.logger.info('GUI initialization')
@@ -307,14 +329,16 @@ class EvolutionSelectorBinding(object):
         self.tournament_widget.setMaximum(20)
 
     def reset_gui(self):
-        self.logger.debug('reset gui %s', str(self.index))
-        text = self.RIGHT_EVOLUTION_SELECTOR_MAP[self.internal_state]
-        index = self.type_widget.findText(text)
-        self.type_widget.setCurrentIndex(index)
-        self.tournament_widget.setValue(1)
+        with BlockSignals(self.tournament_widget) as _:
+            self.logger.debug('reset gui %s', str(self.index))
+            text = self.RIGHT_EVOLUTION_SELECTOR_MAP[self.internal_state]
+            index = self.type_widget.findText(text)
+            self.type_widget.setCurrentIndex(index)
+            self.tournament_widget.setValue(1)
 
     def pull_new_state(self, new_state):
         self.internal_state = new_state
+        # with BlockSignal(se)
         self.reset_gui()
 
     def on_selector_changed(self, selector_name):

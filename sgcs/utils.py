@@ -45,3 +45,24 @@ class MethodDecoratorWrapper(object):
 
     def __call__(self, *args, **kwargs):
         return self.desc(self.subj, *args, **kwargs)
+
+
+class Guard(object):
+    def __init__(self, enter_func, exit_func):
+        self.enter_func = enter_func
+        self.exit_func = exit_func
+
+    def __enter__(self):
+        return self.enter_func()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.exit_func(exc_type, exc_val, exc_tb)
+
+
+class Context(Guard):
+    @staticmethod
+    def exit_wrapper(exit_func):
+        return lambda _1, _2, _3: (exit_func(), False)[1]
+
+    def __init__(self, enter_func, exit_func):
+        super().__init__(enter_func, self.exit_wrapper(exit_func))
