@@ -16,7 +16,7 @@ from statistics.grammar_statistics import GrammarStatistics, ClassicalStatistics
 
 class AlgorithmConfiguration(object):
     @staticmethod
-    def default():
+    def common_configuration(statistics_configuration):
         ga_selectors_configuration = []
         evolution_configuration = EvolutionConfiguration.create(
             selectors=ga_selectors_configuration,
@@ -51,53 +51,20 @@ class AlgorithmConfiguration(object):
             should_run_evolution=True,
             max_execution_time=900,
             satisfying_fitness=1,
-            statistics=ClassicalStatisticsConfiguration.default(),
+            statistics=statistics_configuration,
             max_algorithm_runs=50
         )
 
         return configuration
 
     @staticmethod
+    def default():
+        return AlgorithmConfiguration.common_configuration(
+            ClassicalStatisticsConfiguration.default())
+
+    @staticmethod
     def sgcs_variant():
-        ga_selectors_configuration = []
-        evolution_configuration = EvolutionConfiguration.create(
-            selectors=ga_selectors_configuration,
-            inversion_chance=0,
-            mutation_chance=0,
-            crossover_chance=0
-        )
-
-        induction_configuration = CykConfiguration.create(
-            should_correct_grammar=False,
-            terminal_chance=0,
-            universal_chance=0,
-            aggressive_chance=0,
-            starting_chance=0,
-            full_chance=0
-        )
-
-        rule_configuration = RuleConfiguration.create(
-            crowding_factor=0,
-            crowding_size=0,
-            elitism_size=0,
-            starting_symbol=1,
-            universal_symbol=None,
-            max_non_terminal_symbols=32,
-            random_starting_population_size=20,
-            max_non_terminal_rules=40
-        )
-
-        configuration = AlgorithmConfiguration.create(
-            induction_configuration, evolution_configuration, rule_configuration,
-            max_algorithm_steps=1,
-            should_run_evolution=True,
-            max_execution_time=900,
-            satisfying_fitness=1,
-            statistics=None,
-            max_algorithm_runs=50
-        )
-
-        return configuration
+        return AlgorithmConfiguration.common_configuration(None)
 
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,

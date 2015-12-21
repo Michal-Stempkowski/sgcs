@@ -69,7 +69,7 @@ class EvolutionRandomSelectorConfiguration(EvolutionSelectorConfiguration):
 
 class EvolutionTournamentSelectorConfiguration(EvolutionSelectorConfiguration):
     @staticmethod
-    def create(tournament_size):
+    def create(tournament_size=3):
         configuration = EvolutionTournamentSelectorConfiguration()
         configuration.tournament_size = tournament_size
 
