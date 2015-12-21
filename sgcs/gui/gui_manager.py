@@ -8,7 +8,7 @@ from gui.input_data_lookup import InputDataLookup
 from gui.options_configurator import OptionsConfigurator
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARN)
     app = QtGui.QApplication(sys.argv)
     input_data_lookup = OptionsConfigurator(os.getcwd())
     input_data_lookup.show()

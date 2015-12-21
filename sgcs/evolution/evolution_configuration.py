@@ -56,6 +56,15 @@ class EvolutionSelectorConfiguration(object):
     def __init__(self):
         self.type = None
 
+    def __eq__(self, other):
+        return other is not None and self.type == other.type
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.type)
+
 
 class EvolutionRandomSelectorConfiguration(EvolutionSelectorConfiguration):
     @staticmethod
@@ -72,6 +81,7 @@ class EvolutionTournamentSelectorConfiguration(EvolutionSelectorConfiguration):
     def create(tournament_size=3):
         configuration = EvolutionTournamentSelectorConfiguration()
         configuration.tournament_size = tournament_size
+        return configuration
 
     def __init__(self):
         super().__init__()
