@@ -1,10 +1,12 @@
 import logging
+from PyQt4 import QtCore
 from abc import abstractmethod
 
 from algorithm.gcs_runner import AlgorithmConfiguration
 from evolution.evolution_configuration import *
 from gui.generated.options_configurator__gen import Ui_OptionsConfiguratorGen
 from gui.generic_widget import GenericWidget
+from utils import MethodDecoratorWrapper
 
 NONE_LABEL = '<None>'
 
@@ -19,10 +21,15 @@ class VisibilityGroup(object):
 
 
 class DynamicNode(object):
-    def __init__(self, visibility_condition, *widgets):
+    @staticmethod
+    def always(_):
+        return True
+
+    def __init__(self, visibility_condition, enabling_condition, *widgets):
         self.logger = logging.getLogger(__name__)
         self.widgets = widgets
         self.visibility_condition = visibility_condition
+        self.enabling_condition = enabling_condition
 
     def update_visibility(self, options_configurator):
         for w in self.widgets:
@@ -32,6 +39,36 @@ class DynamicNode(object):
             else:
                 self.logger.debug('Hiding widget: %s', str(w))
                 w.hide()
+
+    def update_availability(self, options_configurator):
+        for w in self.widgets:
+            if self.enabling_condition(options_configurator):
+                w.setEnabled(True)
+            else:
+                w.setEnabled(False)
+
+
+def refreshes_dynamics(func):
+    class RefreshesDynamicsDecorator(object):
+        NO_REFRESH = 'no_refresh'
+
+        def __init__(self, func):
+            self.func = func
+
+        def __call__(self, *args, **kwargs):
+            refresh_required = not kwargs.get(self.NO_REFRESH, None)
+            options_configurator, *_ = args
+            kwargs.pop(self.NO_REFRESH, None)
+
+            self.func(*args, **kwargs)
+
+            if refresh_required:
+                options_configurator.update_dynamic_nodes()
+
+        def __get__(self, instance, _):
+            return MethodDecoratorWrapper(self, instance)
+
+    return RefreshesDynamicsDecorator(func)
 
 
 class AlgorithmVariant(object):
@@ -159,7 +196,12 @@ class OptionsConfigurator(GenericWidget):
         self.dynamic_nodes = [
             DynamicNode(
                 lambda main: main.selected_statistics == Statistics.classical,
-                self.ui.classicalStatisticsGroup)
+                DynamicNode.always,
+                self.ui.classicalStatisticsGroup),
+            DynamicNode(
+                DynamicNode.always,
+                lambda main: main.configuration.should_run_evolution,
+                self.ui.evolutionGroupBox)
         ]
 
         self.configuration = None
@@ -182,26 +224,28 @@ class OptionsConfigurator(GenericWidget):
 
         self.on_variant_changed(self.DEFAULT_ALGORITHM_VARIANT_STR)
 
+    @refreshes_dynamics
     def reset_gui(self):
         self.logger.info('GUI reset')
         for spinner in self.selector_spin_boxes:
             spinner.setValue(1)
             spinner.setMinimum(1)
             spinner.setMaximum(20)
-
-        # if self.current_variant
-        self.update_dynamic_nodes()
+        self.ui.shouldRunEvolutionCheckBox.setCheckState(
+            QtCore.Qt.Checked if self.configuration.should_run_evolution else QtCore.Qt.Unchecked)
 
     def update_dynamic_nodes(self):
         self.logger.info('Dynamic nodes updated')
         for node in self.dynamic_nodes:
             node.update_visibility(self)
+            node.update_availability(self)
 
     def bind_logic(self):
         self.logger.info('Binding logic')
         self.ui.algorithmVariantComboBox.activated[str].connect(self.on_variant_changed)
         self.ui.selectedStatisticsComboBox.activated[str].connect(
             self.on_selected_statistics_changed)
+        self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(self.on_run_evolution_state_changed)
 
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
@@ -212,10 +256,14 @@ class OptionsConfigurator(GenericWidget):
                                  if x in self.current_variant.supported_statistics), clear=True)
 
         self.selected_statistics = self.current_variant.supported_statistics[0]
-        self.on_selected_statistics_changed(self.selected_statistics)
+        self.on_selected_statistics_changed(self.selected_statistics, no_refresh=True)
         self.reset_gui()
 
+    @refreshes_dynamics
     def on_selected_statistics_changed(self, selected_statistics_str):
         self.logger.info('Selected statistics changed')
         self.selected_statistics = selected_statistics_str
-        self.update_dynamic_nodes()
+
+    @refreshes_dynamics
+    def on_run_evolution_state_changed(self, state):
+        self.configuration.should_run_evolution = state == QtCore.Qt.Checked

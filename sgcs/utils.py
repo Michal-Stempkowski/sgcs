@@ -36,3 +36,12 @@ class RunTimes(object):
 
 def chunk(x, size):
     return itertools.zip_longest(fillvalue=None, *([iter(x)] * size))
+
+
+class MethodDecoratorWrapper(object):
+    def __init__(self, desc, subj):
+        self.desc = desc
+        self.subj = subj
+
+    def __call__(self, *args, **kwargs):
+        return self.desc(self.subj, *args, **kwargs)
