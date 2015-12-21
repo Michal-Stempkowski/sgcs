@@ -1,7 +1,37 @@
+import logging
+from abc import abstractmethod
+
 from algorithm.gcs_runner import AlgorithmConfiguration
 from evolution.evolution_configuration import *
 from gui.generated.options_configurator__gen import Ui_OptionsConfiguratorGen
 from gui.generic_widget import GenericWidget
+
+NONE_LABEL = '<None>'
+
+
+class Statistics(object):
+    pasieka = 'pasieka'
+    classical = 'classical'
+
+
+class VisibilityGroup(object):
+    classical_statistics_conf = 0
+
+
+class DynamicNode(object):
+    def __init__(self, visibility_condition, *widgets):
+        self.logger = logging.getLogger(__name__)
+        self.widgets = widgets
+        self.visibility_condition = visibility_condition
+
+    def update_visibility(self, options_configurator):
+        for w in self.widgets:
+            if self.visibility_condition(options_configurator):
+                self.logger.debug('Showing widget: %s', str(w))
+                w.show()
+            else:
+                self.logger.debug('Hiding widget: %s', str(w))
+                w.hide()
 
 
 class AlgorithmVariant(object):
@@ -11,16 +41,43 @@ class AlgorithmVariant(object):
 
     def __init__(self, name):
         self.name = name
+        self._visible_nodes = []
+        self._supported_statistics = [NONE_LABEL]
+
+    @abstractmethod
+    def create_new_configuration(self):
+        pass
+
+    @property
+    def visible_nodes(self):
+        return self._visible_nodes
+
+    @property
+    def supported_statistics(self):
+        return self._supported_statistics
 
 
 class SGcsAlgorithmVariant(AlgorithmVariant):
     def __init__(self):
         super().__init__('sGCS')
+        self._supported_statistics += [
+            Statistics.pasieka
+        ]
+
+    def create_new_configuration(self):
+        return AlgorithmConfiguration.sgcs_variant()
 
 
 class GcsAlgorithmVariant(AlgorithmVariant):
     def __init__(self):
         super().__init__('GCS')
+        self._visible_nodes.append(VisibilityGroup.classical_statistics_conf)
+        self._supported_statistics += [
+            Statistics.classical
+        ]
+
+    def create_new_configuration(self):
+        return AlgorithmConfiguration.default()
 
 
 class OptionsConfigurator(GenericWidget):
@@ -28,6 +85,7 @@ class OptionsConfigurator(GenericWidget):
         SGcsAlgorithmVariant(),
         GcsAlgorithmVariant()
     )}
+    DEFAULT_ALGORITHM_VARIANT_STR = 'sGCS'
     EVOLUTION_SELECTOR_MAP = {name: conf for name, conf in [
         ('no selector', None),
         ('random', EvolutionRandomSelectorConfiguration.create),
@@ -36,7 +94,6 @@ class OptionsConfigurator(GenericWidget):
     ]}
     DEFAULT_SELECTOR = 'no selector'
     LETTER_SYMBOLS = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
-    NONE_LABEL = '<None>'
     LETTER_SYMBOLS_WITH_NONE = [NONE_LABEL] + LETTER_SYMBOLS
     DEFAULT_STARTING_SYMBOL = 'S'
     RULE_ADDING_HINTS = [NONE_LABEL] + [
@@ -44,13 +101,15 @@ class OptionsConfigurator(GenericWidget):
         'control population size (elitism DISABLED)',
         'control population size (elitism ENABLED)'
     ]
-    VARIANT_CREATOR_MAP = dict(
-        sGCS=AlgorithmConfiguration.sgcs_variant,
-        GCS=AlgorithmConfiguration.default
-    )
+    STATISTICS_CONFIGURATIONS = [NONE_LABEL] + [
+        Statistics.classical,
+        Statistics.pasieka
+    ]
 
     @staticmethod
-    def feed_with_data(widget, data, default_item=None):
+    def feed_with_data(widget, data, default_item=None, clear=False):
+        if clear:
+            widget.clear()
         if default_item is None:
             items = data
         else:
@@ -59,8 +118,14 @@ class OptionsConfigurator(GenericWidget):
         widget.addItems(items)
         widget.setCurrentIndex(0)
 
+    def is_group_supported(self, group):
+        result = group in self.current_variant.visible_nodes
+        self.logger.info('Group %s is %s', str(group), 'supported' if result else 'not supported')
+        return result
+
     def __init__(self, last_directory):
         super().__init__(Ui_OptionsConfiguratorGen)
+        self.logger = logging.getLogger(__name__)
         self.last_directory = last_directory
 
         self.selector_combo_boxes = [
@@ -88,13 +153,22 @@ class OptionsConfigurator(GenericWidget):
             self.ui.selectorSpinBox_10
         ]
         self.feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()))
-        self.configuration = self.VARIANT_CREATOR_MAP[
-            self.ui.algorithmVariantComboBox.currentText()]()
+        self.current_variant = self.ALGORITHM_VARIANTS[
+            self.ui.algorithmVariantComboBox.currentText()]
+
+        self.dynamic_nodes = [
+            DynamicNode(
+                lambda main: main.selected_statistics == Statistics.classical,
+                self.ui.classicalStatisticsGroup)
+        ]
+
+        self.configuration = None
+        self.selected_statistics = None
 
         self.init_gui()
 
     def init_gui(self):
-
+        self.logger.info('GUI initialization')
         fields = list(self.EVOLUTION_SELECTOR_MAP.keys())
         for combo in self.selector_combo_boxes:
             self.feed_with_data(combo, fields, self.DEFAULT_SELECTOR)
@@ -104,10 +178,44 @@ class OptionsConfigurator(GenericWidget):
         self.feed_with_data(self.ui.universalSymbolComboBox, self.LETTER_SYMBOLS_WITH_NONE)
         self.feed_with_data(self.ui.ruleAddingHintComboBox, self.RULE_ADDING_HINTS)
 
-        self.reset_gui()
+        self.bind_logic()
+
+        self.on_variant_changed(self.DEFAULT_ALGORITHM_VARIANT_STR)
 
     def reset_gui(self):
+        self.logger.info('GUI reset')
         for spinner in self.selector_spin_boxes:
             spinner.setValue(1)
             spinner.setMinimum(1)
             spinner.setMaximum(20)
+
+        # if self.current_variant
+        self.update_dynamic_nodes()
+
+    def update_dynamic_nodes(self):
+        self.logger.info('Dynamic nodes updated')
+        for node in self.dynamic_nodes:
+            node.update_visibility(self)
+
+    def bind_logic(self):
+        self.logger.info('Binding logic')
+        self.ui.algorithmVariantComboBox.activated[str].connect(self.on_variant_changed)
+        self.ui.selectedStatisticsComboBox.activated[str].connect(
+            self.on_selected_statistics_changed)
+
+    def on_variant_changed(self, variant_str):
+        self.logger.info('Variant changing from to %s', variant_str)
+        self.configuration = self.current_variant.create_new_configuration()
+        self.current_variant = self.ALGORITHM_VARIANTS[variant_str]
+        self.feed_with_data(self.ui.selectedStatisticsComboBox,
+                            list(x for x in self.STATISTICS_CONFIGURATIONS
+                                 if x in self.current_variant.supported_statistics), clear=True)
+
+        self.selected_statistics = self.current_variant.supported_statistics[0]
+        self.on_selected_statistics_changed(self.selected_statistics)
+        self.reset_gui()
+
+    def on_selected_statistics_changed(self, selected_statistics_str):
+        self.logger.info('Selected statistics changed')
+        self.selected_statistics = selected_statistics_str
+        self.update_dynamic_nodes()
