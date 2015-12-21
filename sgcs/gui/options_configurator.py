@@ -260,7 +260,8 @@ class OptionsConfigurator(GenericWidget):
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
         self.configuration = self.current_variant.create_new_configuration()
-        self.configuration.evolution.selectors.append(EvolutionRouletteSelectorConfiguration.create())
+        self.configuration.evolution.selectors.append(
+            EvolutionRouletteSelectorConfiguration.create())
         self.current_variant = self.ALGORITHM_VARIANTS[variant_str]
         feed_with_data(self.ui.selectedStatisticsComboBox,
                        list(x for x in self.STATISTICS_CONFIGURATIONS
@@ -334,11 +335,13 @@ class EvolutionSelectorBinding(object):
             text = self.RIGHT_EVOLUTION_SELECTOR_MAP[self.internal_state]
             index = self.type_widget.findText(text)
             self.type_widget.setCurrentIndex(index)
-            self.tournament_widget.setValue(1)
+            if self.is_in_tournament_mode():
+                self.tournament_widget.setValue(self.internal_state.tournament_size)
+            else:
+                self.tournament_widget.setValue(1)
 
     def pull_new_state(self, new_state):
         self.internal_state = new_state
-        # with BlockSignal(se)
         self.reset_gui()
 
     def on_selector_changed(self, selector_name):
@@ -359,3 +362,12 @@ class EvolutionSelectorBinding(object):
 
     def on_tournament_size_changed(self):
         self.on_selector_changed(self.RIGHT_EVOLUTION_SELECTOR_MAP[self.internal_state])
+
+
+class SpinBoxBinding(object):
+    def __init__(self, getter, setter):
+        self.getter = getter
+        self.setter = setter
+
+    def on_value_changed(self, new_value):
+        self.setter(new_value)
