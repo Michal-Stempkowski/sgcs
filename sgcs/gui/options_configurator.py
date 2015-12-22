@@ -25,6 +25,7 @@ class RootAutoUpdater(AutoUpdater):
 
     @staticmethod
     def _bind(options_configurator):
+        options_configurator.bind_checkbox(options_configurator.ui.shouldRunEvolutionCheckBox)
         options_configurator.bind_spinner(options_configurator.ui.maxAlgorithmRunsSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.maxExecutionTimeSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.maxEvolutionStepsSpinBox)
@@ -32,6 +33,8 @@ class RootAutoUpdater(AutoUpdater):
 
     @staticmethod
     def _update_gui(options_configurator):
+        options_configurator.ui.shouldRunEvolutionCheckBox.setChecked(
+            options_configurator.configuration.should_run_evolution)
         options_configurator.ui.maxAlgorithmRunsSpinBox.setValue(
             options_configurator.configuration.max_algorithm_runs)
         options_configurator.ui.maxExecutionTimeSpinBox.setValue(
@@ -43,6 +46,8 @@ class RootAutoUpdater(AutoUpdater):
 
     @staticmethod
     def _update_model(options_configurator):
+        options_configurator.configuration.should_run_evolution = \
+            options_configurator.ui.shouldRunEvolutionCheckBox.isChecked()
         options_configurator.configuration.max_algorithm_runs = \
             options_configurator.ui.maxAlgorithmRunsSpinBox.value()
         options_configurator.configuration.max_execution_time = \
@@ -290,7 +295,7 @@ class OptionsConfigurator(GenericWidget):
         self.selector_bindings = None
         self.configuration = None
 
-        self.dynamic_nodes = [
+        self.dynamic_nodes += [
             DynamicNode(
                 self.ui.classicalStatisticsGroup,
                 visibility_condition=lambda main: main.selected_statistics == Statistics.classical
@@ -325,8 +330,7 @@ class OptionsConfigurator(GenericWidget):
 
         self.bind_logic()
 
-        with BlockSignals(*map(lambda x: x.tournament_widget, self.selector_bindings)) as _:
-
+        with BlockSignals(*self.ui.__dict__.values()) as _:
             feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()))
             self.current_variant = self.ALGORITHM_VARIANTS[
                 self.ui.algorithmVariantComboBox.currentText()]
@@ -358,17 +362,14 @@ class OptionsConfigurator(GenericWidget):
         for b in self.selector_bindings:
             b.pull_new_state(selectors[b.index] if b.index < len(selectors) else None)
 
-        self.ui.shouldRunEvolutionCheckBox.setCheckState(
-            QtCore.Qt.Checked if self.configuration.should_run_evolution else QtCore.Qt.Unchecked)
+        # self.ui.shouldRunEvolutionCheckBox.setCheckState(
+        #     QtCore.Qt.Checked if self.configuration.should_run_evolution else QtCore.Qt.Unchecked)
 
-        for node in self.dynamic_nodes:
-            node.update_gui()
+        self.update_dn_gui()
 
     def update_dynamic_nodes(self):
         self.logger.info('Dynamic nodes updated')
-        for node in self.dynamic_nodes:
-            node.update_visibility(self)
-            node.update_availability(self)
+        super().update_dynamic_nodes()
 
     def bind_logic(self):
         self.logger.info('Binding logic')
@@ -391,22 +392,24 @@ class OptionsConfigurator(GenericWidget):
         for b in self.selector_bindings:
             b.bind_logic()
             
-        for node in self.dynamic_nodes:
-            node.bind()
+        self.bind_dn()
 
         self.ui.algorithmVariantComboBox.activated[str].connect(self.on_variant_changed)
-        self.ui.selectedStatisticsComboBox.activated[str].connect(
-            self.on_selected_statistics_changed)
-        self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(
-            self.on_run_evolution_state_changed)
+        # self.ui.selectedStatisticsComboBox.activated[str].connect(
+        #     self.on_selected_statistics_changed)
+        # self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(
+        #     self.on_run_evolution_state_changed)
 
     def bind_spinner(self, widget):
         widget.valueChanged.connect(self.on_gui_change)
 
+    def bind_checkbox(self, widget):
+        widget.stateChanged.connect(self.on_gui_change)
+
     def on_gui_change(self):
         self.logger.debug('Updating model')
-        for node in self.dynamic_nodes:
-            node.update_model(self)
+        self.update_model_dn()
+        self.update_dynamic_nodes()
 
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
@@ -419,17 +422,17 @@ class OptionsConfigurator(GenericWidget):
                             if x in self.current_variant.supported_statistics), clear=True)
 
         self.selected_statistics = self.current_variant.supported_statistics[0]
-        self.on_selected_statistics_changed(self.selected_statistics, no_refresh=True)
+        # self.on_selected_statistics_changed(self.selected_statistics, no_refresh=True)
         self.reset_gui()
 
-    @refreshes_dynamics
-    def on_selected_statistics_changed(self, selected_statistics_str):
-        self.logger.info('Selected statistics changed')
-        self.selected_statistics = selected_statistics_str
+    # @refreshes_dynamics
+    # def on_selected_statistics_changed(self, selected_statistics_str):
+    #     self.logger.info('Selected statistics changed')
+    #     self.selected_statistics = selected_statistics_str
 
-    @refreshes_dynamics
-    def on_run_evolution_state_changed(self, state):
-        self.configuration.should_run_evolution = state == QtCore.Qt.Checked
+    # @refreshes_dynamics
+    # def on_run_evolution_state_changed(self, state):
+    #     self.configuration.should_run_evolution = state == QtCore.Qt.Checked
 
     @refreshes_dynamics
     def update_selectors(self):

@@ -1,4 +1,5 @@
 import logging
+from abc import abstractmethod
 
 from utils import MethodDecoratorWrapper, Context
 
@@ -25,18 +26,18 @@ class DynamicNode(object):
         self.enabling_condition = enabling_condition if enabling_condition else self.always
         self.auto_updater = auto_updater
 
-    def update_visibility(self, options_configurator):
+    def update_visibility(self, root):
         for w in self.widgets:
-            if self.visibility_condition(options_configurator):
+            if self.visibility_condition(root):
                 # self.logger.debug('Showing widget: %s', str(w))
                 w.show()
             else:
                 # self.logger.debug('Hiding widget: %s', str(w))
                 w.hide()
 
-    def update_availability(self, options_configurator):
+    def update_availability(self, root):
         for w in self.widgets:
-            if self.enabling_condition(options_configurator):
+            if self.enabling_condition(root):
                 w.setEnabled(True)
             else:
                 w.setEnabled(False)
@@ -45,13 +46,35 @@ class DynamicNode(object):
         if self.auto_updater is not None:
             self.auto_updater.bind()
 
-    def update_model(self, options_configurator):
-        if self.auto_updater is not None and self.visibility_condition(options_configurator):
+    def update_model(self, root):
+        if self.auto_updater is not None and self.visibility_condition(root):
             self.auto_updater.update_model()
 
     def update_gui(self):
         if self.auto_updater is not None:
             self.auto_updater.update_gui()
+
+
+class DynamicRoot(object):
+    def __init__(self):
+        self.dynamic_nodes = []
+
+    def update_dynamic_nodes(self):
+        for node in self.dynamic_nodes:
+            node.update_visibility(self)
+            node.update_availability(self)
+
+    def bind_dn(self):
+        for node in self.dynamic_nodes:
+            node.bind()
+
+    def update_model_dn(self):
+        for node in self.dynamic_nodes:
+            node.update_model(self)
+
+    def update_dn_gui(self):
+        for node in self.dynamic_nodes:
+            node.update_gui()
 
 
 def refreshes_dynamics(func):
@@ -63,13 +86,13 @@ def refreshes_dynamics(func):
 
         def __call__(self, *args, **kwargs):
             refresh_required = not kwargs.get(self.NO_REFRESH, None)
-            options_configurator, *_ = args
+            root, *_ = args
             kwargs.pop(self.NO_REFRESH, None)
 
             self.func(*args, **kwargs)
 
             if refresh_required:
-                options_configurator.update_dynamic_nodes()
+                root.update_dynamic_nodes()
 
         def __get__(self, instance, _):
             return MethodDecoratorWrapper(self, instance)
@@ -85,13 +108,16 @@ class BlockSignals(Context):
             else:
                 w.blockSignals(True)
 
+        return self
+
     def _unblock_signals(self, widgets):
         for w in widgets:
             if w not in self.ignore_exit:
                 w.blockSignals(False)
 
     def __init__(self, *widgets):
+        self.ignore_exit = set()
+        self._w = widgets
         super().__init__(
             lambda: self._block_signals(widgets),
             lambda: self._unblock_signals(widgets))
-        self.ignore_exit = set()
