@@ -282,11 +282,6 @@ class OptionsConfigurator(GenericWidget):
         Statistics.pasieka
     ]
 
-    def is_group_supported(self, group):
-        result = group in self.current_variant.visible_nodes
-        self.logger.info('Group %s is %s', str(group), 'supported' if result else 'not supported')
-        return result
-
     def __init__(self, last_directory):
         super().__init__(Ui_OptionsConfiguratorGen)
         self.logger = logging.getLogger(__name__)
@@ -362,9 +357,6 @@ class OptionsConfigurator(GenericWidget):
         for b in self.selector_bindings:
             b.pull_new_state(selectors[b.index] if b.index < len(selectors) else None)
 
-        # self.ui.shouldRunEvolutionCheckBox.setCheckState(
-        #     QtCore.Qt.Checked if self.configuration.should_run_evolution else QtCore.Qt.Unchecked)
-
         self.update_dn_gui()
 
     def update_dynamic_nodes(self):
@@ -395,10 +387,6 @@ class OptionsConfigurator(GenericWidget):
         self.bind_dn()
 
         self.ui.algorithmVariantComboBox.activated[str].connect(self.on_variant_changed)
-        # self.ui.selectedStatisticsComboBox.activated[str].connect(
-        #     self.on_selected_statistics_changed)
-        # self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(
-        #     self.on_run_evolution_state_changed)
 
     def bind_spinner(self, widget):
         widget.valueChanged.connect(self.on_gui_change)
@@ -422,17 +410,8 @@ class OptionsConfigurator(GenericWidget):
                             if x in self.current_variant.supported_statistics), clear=True)
 
         self.selected_statistics = self.current_variant.supported_statistics[0]
-        # self.on_selected_statistics_changed(self.selected_statistics, no_refresh=True)
+
         self.reset_gui()
-
-    # @refreshes_dynamics
-    # def on_selected_statistics_changed(self, selected_statistics_str):
-    #     self.logger.info('Selected statistics changed')
-    #     self.selected_statistics = selected_statistics_str
-
-    # @refreshes_dynamics
-    # def on_run_evolution_state_changed(self, state):
-    #     self.configuration.should_run_evolution = state == QtCore.Qt.Checked
 
     @refreshes_dynamics
     def update_selectors(self):
