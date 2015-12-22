@@ -1,14 +1,13 @@
 import logging
-from PyQt4 import QtCore
 from abc import abstractmethod
+
+from PyQt4 import QtCore
 
 from algorithm.gcs_runner import AlgorithmConfiguration
 from evolution.evolution_configuration import *
+from gui.dynamic_gui import NONE_LABEL, AutoUpdater, DynamicNode, refreshes_dynamics, BlockSignals
 from gui.generated.options_configurator__gen import Ui_OptionsConfiguratorGen
 from gui.generic_widget import GenericWidget
-from utils import MethodDecoratorWrapper, Context
-
-NONE_LABEL = '<None>'
 
 
 class Statistics(object):
@@ -16,59 +15,207 @@ class Statistics(object):
     classical = 'classical'
 
 
-class VisibilityGroup(object):
-    classical_statistics_conf = 0
+class RootAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
 
-
-class DynamicNode(object):
     @staticmethod
-    def always(_):
-        return True
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.maxAlgorithmRunsSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.maxExecutionTimeSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.maxEvolutionStepsSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.satisfyingFitnessDoubleSpinBox)
 
-    def __init__(self, visibility_condition, enabling_condition, *widgets):
-        self.logger = logging.getLogger(__name__)
-        self.widgets = widgets
-        self.visibility_condition = visibility_condition
-        self.enabling_condition = enabling_condition
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.maxAlgorithmRunsSpinBox.setValue(
+            options_configurator.configuration.max_algorithm_runs)
+        options_configurator.ui.maxExecutionTimeSpinBox.setValue(
+            options_configurator.configuration.max_execution_time)
+        options_configurator.ui.maxEvolutionStepsSpinBox.setValue(
+            options_configurator.configuration.max_algorithm_steps)
+        options_configurator.ui.satisfyingFitnessDoubleSpinBox.setValue(
+            options_configurator.configuration.satisfying_fitness * 100.)
 
-    def update_visibility(self, options_configurator):
-        for w in self.widgets:
-            if self.visibility_condition(options_configurator):
-                # self.logger.debug('Showing widget: %s', str(w))
-                w.show()
-            else:
-                # self.logger.debug('Hiding widget: %s', str(w))
-                w.hide()
-
-    def update_availability(self, options_configurator):
-        for w in self.widgets:
-            if self.enabling_condition(options_configurator):
-                w.setEnabled(True)
-            else:
-                w.setEnabled(False)
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.max_algorithm_runs = \
+            options_configurator.ui.maxAlgorithmRunsSpinBox.value()
+        options_configurator.configuration.max_execution_time = \
+            options_configurator.ui.maxExecutionTimeSpinBox.value()
+        options_configurator.configuration.max_algorithm_steps = \
+            options_configurator.ui.maxEvolutionStepsSpinBox.value()
+        options_configurator.configuration.satisfying_fitness = \
+            options_configurator.ui.satisfyingFitnessDoubleSpinBox.value() / 100.
 
 
-def refreshes_dynamics(func):
-    class RefreshesDynamicsDecorator(object):
-        NO_REFRESH = 'no_refresh'
+class EvolutionAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
 
-        def __init__(self, f):
-            self.func = f
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.inversionDoubleSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.mutationDoubleSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.crossoverDoubleSpinBox)
 
-        def __call__(self, *args, **kwargs):
-            refresh_required = not kwargs.get(self.NO_REFRESH, None)
-            options_configurator, *_ = args
-            kwargs.pop(self.NO_REFRESH, None)
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.evolution.operators.inversion.chance = \
+            options_configurator.ui.inversionDoubleSpinBox.value()
+        options_configurator.configuration.evolution.operators.mutation.chance = \
+            options_configurator.ui.mutationDoubleSpinBox.value()
+        options_configurator.configuration.evolution.operators.crossover.chance = \
+            options_configurator.ui.crossoverDoubleSpinBox.value()
 
-            self.func(*args, **kwargs)
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.inversionDoubleSpinBox.setValue(
+            options_configurator.configuration.evolution.operators.inversion.chance)
+        options_configurator.ui.mutationDoubleSpinBox.setValue(
+            options_configurator.configuration.evolution.operators.mutation.chance)
+        options_configurator.ui.crossoverDoubleSpinBox.setValue(
+            options_configurator.configuration.evolution.operators.crossover.chance)
 
-            if refresh_required:
-                options_configurator.update_dynamic_nodes()
 
-        def __get__(self, instance, _):
-            return MethodDecoratorWrapper(self, instance)
+class CoverageAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
 
-    return RefreshesDynamicsDecorator(func)
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(
+            options_configurator.ui.terminalProbabilityDoubleSpinBox)
+        options_configurator.bind_spinner(
+            options_configurator.ui.universalProbabilityDoubleSpinBox)
+        options_configurator.bind_spinner(
+            options_configurator.ui.aggressiveProbabilityDoubleSpinBox)
+        options_configurator.bind_spinner(
+            options_configurator.ui.startingProbabilityDoubleSpinBox)
+        options_configurator.bind_spinner(
+            options_configurator.ui.fullProbabilityDoubleSpinBox)
+
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.induction.coverage.operators.terminal.chance = \
+            options_configurator.ui.terminalProbabilityDoubleSpinBox.value()
+        options_configurator.configuration.induction.coverage.operators.universal.chance = \
+            options_configurator.ui.universalProbabilityDoubleSpinBox.value()
+        options_configurator.configuration.induction.coverage.operators.aggressive.chance = \
+            options_configurator.ui.aggressiveProbabilityDoubleSpinBox.value()
+        options_configurator.configuration.induction.coverage.operators.starting.chance = \
+            options_configurator.ui.startingProbabilityDoubleSpinBox.value()
+        options_configurator.configuration.induction.coverage.operators.full.chance = \
+            options_configurator.ui.fullProbabilityDoubleSpinBox.value()
+
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.terminalProbabilityDoubleSpinBox.setValue(
+            options_configurator.configuration.induction.coverage.operators.terminal.chance)
+        options_configurator.ui.universalProbabilityDoubleSpinBox.setValue(
+            options_configurator.configuration.induction.coverage.operators.universal.chance)
+        options_configurator.ui.aggressiveProbabilityDoubleSpinBox.setValue(
+            options_configurator.configuration.induction.coverage.operators.aggressive.chance)
+        options_configurator.ui.startingProbabilityDoubleSpinBox.setValue(
+            options_configurator.configuration.induction.coverage.operators.starting.chance)
+        options_configurator.ui.fullProbabilityDoubleSpinBox.setValue(
+            options_configurator.configuration.induction.coverage.operators.full.chance)
+
+
+class CrowdingAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
+
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.crowdingFactorSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.crowdingSizeSpinBox)
+
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.rule.adding.crowding.factor = \
+            options_configurator.ui.crowdingFactorSpinBox.value()
+        options_configurator.configuration.rule.adding.crowding.size = \
+            options_configurator.ui.crowdingSizeSpinBox.value()
+
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.crowdingFactorSpinBox.setValue(
+            options_configurator.configuration.rule.adding.crowding.factor)
+        options_configurator.ui.crowdingSizeSpinBox.setValue(
+            options_configurator.configuration.rule.adding.crowding.size)
+
+
+class ElitismAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
+
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.eliteSizeSpinBox)
+
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.rule.adding.elitism.size = \
+            options_configurator.ui.eliteSizeSpinBox.value()
+
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.eliteSizeSpinBox.setValue(
+            options_configurator.configuration.rule.adding.elitism.size)
+
+
+class RulesAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator)
+        )
+
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.maxNonTerminalsSizeSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.startingPopulationSizeSpinBox)
+        options_configurator.bind_spinner(options_configurator.ui.maxNonTerminalSymbolsSpinBox)
+
+    @staticmethod
+    def _update_model(options_configurator):
+        options_configurator.configuration.rule.adding.max_non_terminal_rules = \
+            options_configurator.ui.maxNonTerminalsSizeSpinBox.value()
+        options_configurator.configuration.rule.random_starting_population_size = \
+            options_configurator.ui.startingPopulationSizeSpinBox.value()
+        options_configurator.configuration.rule.max_non_terminal_symbols = \
+            options_configurator.ui.maxNonTerminalSymbolsSpinBox.value()
+
+    @staticmethod
+    def _update_gui(options_configurator):
+        options_configurator.ui.maxNonTerminalsSizeSpinBox.setValue(
+            options_configurator.configuration.rule.adding.max_non_terminal_rules)
+        options_configurator.ui.startingPopulationSizeSpinBox.setValue(
+            options_configurator.configuration.rule.random_starting_population_size)
+        options_configurator.ui.maxNonTerminalSymbolsSpinBox.setValue(
+            options_configurator.configuration.rule.max_non_terminal_symbols)
 
 
 class AlgorithmVariant(object):
@@ -78,16 +225,11 @@ class AlgorithmVariant(object):
 
     def __init__(self, name):
         self.name = name
-        self._visible_nodes = []
         self._supported_statistics = [NONE_LABEL]
 
     @abstractmethod
     def create_new_configuration(self):
         pass
-
-    @property
-    def visible_nodes(self):
-        return self._visible_nodes
 
     @property
     def supported_statistics(self):
@@ -108,33 +250,12 @@ class SGcsAlgorithmVariant(AlgorithmVariant):
 class GcsAlgorithmVariant(AlgorithmVariant):
     def __init__(self):
         super().__init__('GCS')
-        self._visible_nodes.append(VisibilityGroup.classical_statistics_conf)
         self._supported_statistics += [
             Statistics.classical
         ]
 
     def create_new_configuration(self):
         return AlgorithmConfiguration.default()
-
-
-class BlockSignals(Context):
-    def _block_signals(self, widgets):
-        for w in widgets:
-            if w.signalsBlocked():
-                self.ignore_exit.add(w)
-            else:
-                w.blockSignals(True)
-
-    def _unblock_signals(self, widgets):
-        for w in widgets:
-            if w not in self.ignore_exit:
-                w.blockSignals(False)
-
-    def __init__(self, *widgets):
-        super().__init__(
-            lambda: self._block_signals(widgets),
-            lambda: self._unblock_signals(widgets))
-        self.ignore_exit = set()
 
 
 class OptionsConfigurator(GenericWidget):
@@ -171,13 +292,35 @@ class OptionsConfigurator(GenericWidget):
 
         self.dynamic_nodes = [
             DynamicNode(
-                lambda main: main.selected_statistics == Statistics.classical,
-                DynamicNode.always,
-                self.ui.classicalStatisticsGroup),
+                self.ui.classicalStatisticsGroup,
+                visibility_condition=lambda main: main.selected_statistics == Statistics.classical
+            ),
             DynamicNode(
-                DynamicNode.always,
-                lambda main: main.configuration.should_run_evolution,
-                self.ui.evolutionGroupBox)
+                self.ui.evolutionGroupBox,
+                enabling_condition=lambda main: main.configuration.should_run_evolution
+            ),
+            DynamicNode(
+                self.ui.eliteSizeSpinBox,
+                enabling_condition=lambda main: main.configuration.rule.adding.elitism.is_used
+            ),
+            DynamicNode(
+                auto_updater=RootAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=EvolutionAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=CoverageAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=CrowdingAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=ElitismAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=RulesAutoUpdater(self)
+            )
         ]
 
         self.bind_logic()
@@ -197,9 +340,6 @@ class OptionsConfigurator(GenericWidget):
         # noinspection PyTypeChecker
         for b in self.selector_bindings:
             b.init_gui()
-        # fields = list(EvolutionSelectorBinding.EVOLUTION_SELECTOR_MAP.keys())
-        # for combo in self.selector_combo_boxes:
-        #     feed_with_data(combo, fields, EvolutionSelectorBinding.DEFAULT_SELECTOR)
 
         feed_with_data(self.ui.startingSymbolComboBox, self.LETTER_SYMBOLS,
                        self.DEFAULT_STARTING_SYMBOL)
@@ -207,7 +347,6 @@ class OptionsConfigurator(GenericWidget):
         feed_with_data(self.ui.ruleAddingHintComboBox, self.RULE_ADDING_HINTS)
 
         # noinspection PyTypeChecker
-
         self.on_variant_changed(self.DEFAULT_ALGORITHM_VARIANT_STR)
 
     @refreshes_dynamics
@@ -218,12 +357,12 @@ class OptionsConfigurator(GenericWidget):
         # noinspection PyTypeChecker
         for b in self.selector_bindings:
             b.pull_new_state(selectors[b.index] if b.index < len(selectors) else None)
-        # for spinner in self.selector_spin_boxes:
-        #     spinner.setValue(1)
-        #     spinner.setMinimum(1)
-        #     spinner.setMaximum(20)
+
         self.ui.shouldRunEvolutionCheckBox.setCheckState(
             QtCore.Qt.Checked if self.configuration.should_run_evolution else QtCore.Qt.Unchecked)
+
+        for node in self.dynamic_nodes:
+            node.update_gui()
 
     def update_dynamic_nodes(self):
         self.logger.info('Dynamic nodes updated')
@@ -251,11 +390,23 @@ class OptionsConfigurator(GenericWidget):
 
         for b in self.selector_bindings:
             b.bind_logic()
+            
+        for node in self.dynamic_nodes:
+            node.bind()
 
         self.ui.algorithmVariantComboBox.activated[str].connect(self.on_variant_changed)
         self.ui.selectedStatisticsComboBox.activated[str].connect(
             self.on_selected_statistics_changed)
-        self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(self.on_run_evolution_state_changed)
+        self.ui.shouldRunEvolutionCheckBox.stateChanged.connect(
+            self.on_run_evolution_state_changed)
+
+    def bind_spinner(self, widget):
+        widget.valueChanged.connect(self.on_gui_change)
+
+    def on_gui_change(self):
+        self.logger.debug('Updating model')
+        for node in self.dynamic_nodes:
+            node.update_model(self)
 
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
@@ -357,17 +508,8 @@ class EvolutionSelectorBinding(object):
         return self.internal_state == self.EVOLUTION_SELECTOR_MAP['tournament']
 
     def create_dynamic_tournament_node(self):
-        return DynamicNode(lambda _: self.is_in_tournament_mode(), DynamicNode.always,
-                           self.tournament_widget)
+        return DynamicNode(self.tournament_widget,
+                           visibility_condition=lambda _: self.is_in_tournament_mode())
 
     def on_tournament_size_changed(self):
         self.on_selector_changed(self.RIGHT_EVOLUTION_SELECTOR_MAP[self.internal_state])
-
-
-class SpinBoxBinding(object):
-    def __init__(self, getter, setter):
-        self.getter = getter
-        self.setter = setter
-
-    def on_value_changed(self, new_value):
-        self.setter(new_value)
