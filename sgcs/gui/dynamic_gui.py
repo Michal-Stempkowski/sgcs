@@ -7,8 +7,9 @@ NONE_LABEL = '<None>'
 
 
 class AutoUpdater(object):
-    def __init__(self, bind_func, update_model_func, update_gui_func):
+    def __init__(self, bind_func, update_model_func, update_gui_func, init_gui_func):
         self.bind = bind_func
+        self.init_gui = init_gui_func
         self.update_model = update_model_func
         self.update_gui = update_gui_func
 
@@ -46,6 +47,10 @@ class DynamicNode(object):
         if self.auto_updater is not None:
             self.auto_updater.bind()
 
+    def init_gui(self):
+        if self.auto_updater is not None:
+            self.auto_updater.init_gui()
+
     def update_model(self, root):
         if self.auto_updater is not None and self.visibility_condition(root):
             self.auto_updater.update_model()
@@ -67,6 +72,10 @@ class DynamicRoot(object):
     def bind_dn(self):
         for node in self.dynamic_nodes:
             node.bind()
+
+    def init_gui_dn(self):
+        for node in self.dynamic_nodes:
+            node.init_gui()
 
     def update_model_dn(self):
         for node in self.dynamic_nodes:
