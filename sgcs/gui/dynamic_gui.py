@@ -130,3 +130,15 @@ class BlockSignals(Context):
         super().__init__(
             lambda: self._block_signals(widgets),
             lambda: self._unblock_signals(widgets))
+
+
+def feed_with_data(widget, data, default_item=None, clear=False):
+    if clear:
+        widget.clear()
+    if default_item is None:
+        items = data
+    else:
+        items = [default_item]
+        items += filter(lambda x: x != default_item, data)
+    widget.addItems(items)
+    widget.setCurrentIndex(0)
