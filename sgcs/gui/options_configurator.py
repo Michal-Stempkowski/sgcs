@@ -1,14 +1,22 @@
+import json
 import logging
 from abc import abstractmethod
 
 from PyQt4 import QtCore
 
-from algorithm.gcs_runner import AlgorithmConfiguration
+from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration
+from core.symbol import Symbol
+from datalayer.jsonizer import ConfigurationJsonizer
 from evolution.evolution_configuration import *
 from gui.dynamic_gui import NONE_LABEL, AutoUpdater, DynamicNode, refreshes_dynamics, BlockSignals
 from gui.generated.options_configurator__gen import Ui_OptionsConfiguratorGen
 from gui.generic_widget import GenericWidget
-from rule_adding import AddingRuleStrategyHint
+from induction.cyk_configuration import CoverageConfiguration, CoverageOperatorsConfiguration, \
+    CykConfiguration, GrammarCorrection
+from induction.cyk_configuration import CoverageOperatorConfiguration
+from rule_adding import AddingRuleStrategyHint, AddingRulesConfiguration, CrowdingConfiguration, \
+    ElitismConfiguration
+from statistics.grammar_statistics import ClassicalStatisticsConfiguration
 
 
 class Statistics(object):
@@ -17,6 +25,13 @@ class Statistics(object):
 
 
 class RootAutoUpdater(AutoUpdater):
+    STATISTICS_CONFIGURATION_MAP = {
+        'pasieka': lambda: None,
+        'classical': ClassicalStatisticsConfiguration.default
+    }
+    RIGHT_STATISTICS_CONFIGURATION_MAP = type('StatisticsTranslator', (object,), dict(
+        __getitem__=lambda _, instance: 'pasieka' if instance is None else 'classical'))()
+
     def __init__(self, options_configurator):
         super().__init__(
             lambda: self._bind(options_configurator),
@@ -36,9 +51,9 @@ class RootAutoUpdater(AutoUpdater):
         options_configurator.bind_spinner(options_configurator.ui.maxExecutionTimeSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.maxEvolutionStepsSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.satisfyingFitnessDoubleSpinBox)
+        options_configurator.bind_combobox(options_configurator.ui.selectedStatisticsComboBox)
 
-    @staticmethod
-    def _update_gui(options_configurator):
+    def _update_gui(self, options_configurator):
         options_configurator.ui.shouldRunEvolutionCheckBox.setChecked(
             options_configurator.configuration.should_run_evolution)
         options_configurator.ui.maxAlgorithmRunsSpinBox.setValue(
@@ -50,8 +65,13 @@ class RootAutoUpdater(AutoUpdater):
         options_configurator.ui.satisfyingFitnessDoubleSpinBox.setValue(
             options_configurator.configuration.satisfying_fitness * 100.)
 
-    @staticmethod
-    def _update_model(options_configurator):
+        # statistics = options_configurator.configuration.statistics
+        # # noinspection PyUnresolvedReferences
+        # text = self.RIGHT_STATISTICS_CONFIGURATION_MAP[statistics]
+        # index = options_configurator.ui.selectedStatisticsComboBox.findText(text)
+        # options_configurator.ui.selectedStatisticsComboBox.setCurrentIndex(index)
+
+    def _update_model(self, options_configurator):
         options_configurator.configuration.should_run_evolution = \
             options_configurator.ui.shouldRunEvolutionCheckBox.isChecked()
         options_configurator.configuration.max_algorithm_runs = \
@@ -62,6 +82,10 @@ class RootAutoUpdater(AutoUpdater):
             options_configurator.ui.maxEvolutionStepsSpinBox.value()
         options_configurator.configuration.satisfying_fitness = \
             options_configurator.ui.satisfyingFitnessDoubleSpinBox.value() / 100.
+
+        # text = options_configurator.ui.selectedStatisticsComboBox.currentText()
+        # statistics = self.STATISTICS_CONFIGURATION_MAP[text]()
+        # options_configurator.configuration.statistics = statistics
 
 
 class EvolutionAutoUpdater(AutoUpdater):
@@ -247,15 +271,6 @@ class ElitismAutoUpdater(AutoUpdater):
 
 
 class RulesAutoUpdater(AutoUpdater):
-    LETTER_SYMBOLS = [chr(i) for i in range(ord('A'), ord('Z') + 1)]
-
-    LETTER_SYMBOLS_WITH_NONE = [NONE_LABEL] + LETTER_SYMBOLS
-    LETTER_SYMBOLS_WITH_NONE_MAP = {letter: index for index, letter in
-                                    enumerate(LETTER_SYMBOLS_WITH_NONE)}
-    RIGHT_LETTER_SYMBOLS_WITH_NONE_MAP = {
-        index: letter for letter, index in LETTER_SYMBOLS_WITH_NONE_MAP.items()}
-    DEFAULT_STARTING_SYMBOL = 'S'
-
     RULE_ADDING_HINTS_MAP = {name: conf for name, conf in [
         (NONE_LABEL, None),
         ('expand population',
@@ -279,19 +294,11 @@ class RulesAutoUpdater(AutoUpdater):
         )
 
     def _init_gui(self, options_configurator):
-        feed_with_data(options_configurator.ui.startingSymbolComboBox, self.LETTER_SYMBOLS,
-                       self.DEFAULT_STARTING_SYMBOL)
-
-        feed_with_data(options_configurator.ui.universalSymbolComboBox,
-                       self.LETTER_SYMBOLS_WITH_NONE)
-
         feed_with_data(options_configurator.ui.ruleAddingHintComboBox, self.RULE_ADDING_HINTS)
 
     @staticmethod
     def _bind(options_configurator):
         options_configurator.bind_combobox(options_configurator.ui.ruleAddingHintComboBox)
-
-        options_configurator.bind_combobox(options_configurator.ui.startingSymbolComboBox)
 
         options_configurator.bind_spinner(options_configurator.ui.maxNonTerminalsSizeSpinBox)
 
@@ -308,8 +315,6 @@ class RulesAutoUpdater(AutoUpdater):
             adding_hint
         options_configurator.configuration.induction.coverage.operators.full.adding_hint = \
             adding_hint
-
-# TODO: bind starting and universal symbol - modify configuration and its usage
 
         options_configurator.configuration.rule.adding.max_non_terminal_rules = \
             options_configurator.ui.maxNonTerminalsSizeSpinBox.value()
@@ -337,6 +342,81 @@ class RulesAutoUpdater(AutoUpdater):
             options_configurator.configuration.rule.max_non_terminal_symbols)
 
 
+class ClassicalStatisticsAutoUpdater(AutoUpdater):
+    def __init__(self, options_configurator):
+        super().__init__(
+            lambda: self._bind(options_configurator),
+            lambda: self._update_model(options_configurator),
+            lambda: self._update_gui(options_configurator),
+            lambda: self._init_gui(options_configurator)
+        )
+
+    def _init_gui(self, options_configurator):
+        pass
+
+    @staticmethod
+    def _bind(options_configurator):
+        options_configurator.bind_spinner(options_configurator.ui.baseFitnessDoubleSpinBox)
+
+        options_configurator.bind_spinner(options_configurator.ui.fitnessWeightDoubleSpinBox)
+
+        options_configurator.bind_spinner(options_configurator.ui.fertilityWeightDoubleSpinBox)
+
+        options_configurator.bind_spinner(options_configurator.ui.validSentencePriceDoubleSpinBox)
+
+        options_configurator.bind_spinner(options_configurator.ui.invalidSentencePriceDoubleSpinBox)
+
+        options_configurator.bind_spinner(
+            options_configurator.ui.positiveSentenceWeightDoubleSpinBox)
+
+        options_configurator.bind_spinner(
+            options_configurator.ui.negativeSentenceWeightDoubleSpinBox)
+
+    def _update_model(self, options_configurator):
+        options_configurator.configuration.statistics.base_fitness = \
+            options_configurator.ui.baseFitnessDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.classical_fitness_weight = \
+            options_configurator.ui.fitnessWeightDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.fertility_weight = \
+            options_configurator.ui.fertilityWeightDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.valid_sentence_price = \
+            options_configurator.ui.validSentencePriceDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.invalid_sentence_price = \
+            options_configurator.ui.invalidSentencePriceDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.positive_weight = \
+            options_configurator.ui.positiveSentenceWeightDoubleSpinBox.value()
+
+        options_configurator.configuration.statistics.negative_weight = \
+            options_configurator.ui.negativeSentenceWeightDoubleSpinBox.value()
+
+    def _update_gui(self, options_configurator):
+        options_configurator.ui.baseFitnessDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.base_fitness)
+
+        options_configurator.ui.fitnessWeightDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.classical_fitness_weight)
+
+        options_configurator.ui.fertilityWeightDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.fertility_weight)
+
+        options_configurator.ui.validSentencePriceDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.valid_sentence_price)
+
+        options_configurator.ui.invalidSentencePriceDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.invalid_sentence_price)
+
+        options_configurator.ui.positiveSentenceWeightDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.positive_weight)
+
+        options_configurator.ui.negativeSentenceWeightDoubleSpinBox.setValue(
+            options_configurator.configuration.statistics.negative_weight)
+
+
 class AlgorithmVariant(object):
     @staticmethod
     def mk_pairs(*variants):
@@ -344,7 +424,7 @@ class AlgorithmVariant(object):
 
     def __init__(self, name):
         self.name = name
-        self._supported_statistics = [NONE_LABEL]
+        self._supported_statistics = []
 
     @abstractmethod
     def create_new_configuration(self):
@@ -399,7 +479,8 @@ class OptionsConfigurator(GenericWidget):
         self.dynamic_nodes += [
             DynamicNode(
                 self.ui.classicalStatisticsGroup,
-                visibility_condition=lambda main: main.selected_statistics == Statistics.classical
+                visibility_condition=lambda main: main.selected_statistics == Statistics.classical,
+                auto_updater=ClassicalStatisticsAutoUpdater(self)
             ),
             DynamicNode(
                 self.ui.evolutionGroupBox,
@@ -432,7 +513,8 @@ class OptionsConfigurator(GenericWidget):
         self.bind_logic()
 
         with BlockSignals(*self.ui.__dict__.values()) as _:
-            feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()))
+            feed_with_data(self.ui.algorithmVariantComboBox, list(self.ALGORITHM_VARIANTS.keys()),
+                           default_item=self.DEFAULT_ALGORITHM_VARIANT_STR)
             self.current_variant = self.ALGORITHM_VARIANTS[
                 self.ui.algorithmVariantComboBox.currentText()]
 
@@ -505,17 +587,42 @@ class OptionsConfigurator(GenericWidget):
         self.update_model_dn()
         self.update_dynamic_nodes()
 
+        serializer = ConfigurationJsonizer([
+            AddingRulesConfiguration,
+            CrowdingConfiguration,
+            ElitismConfiguration,
+            AlgorithmConfiguration,
+            RuleConfiguration,
+            Symbol,
+            EvolutionConfiguration,
+            EvolutionOperatorConfiguration,
+            EvolutionOperatorsConfiguration,
+            EvolutionSelectorConfiguration,
+            CoverageConfiguration,
+            CoverageOperatorConfiguration,
+            CoverageOperatorsConfiguration,
+            CykConfiguration,
+            GrammarCorrection
+        ])
+        # obj = serializer.to_json(self.configuration)
+        # print(obj)
+        # dumped = json.dumps(obj)
+        # print(dumped)
+        # obj = serializer.from_json(json.loads(dumped))
+        # print(serializer.to_json(obj))
+
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
+        self.current_variant = self.ALGORITHM_VARIANTS[variant_str]
         self.configuration = self.current_variant.create_new_configuration()
         self.configuration.evolution.selectors.append(
             EvolutionRouletteSelectorConfiguration.create())
-        self.current_variant = self.ALGORITHM_VARIANTS[variant_str]
-        feed_with_data(self.ui.selectedStatisticsComboBox,
-                       list(x for x in self.STATISTICS_CONFIGURATIONS
-                            if x in self.current_variant.supported_statistics), clear=True)
 
         self.selected_statistics = self.current_variant.supported_statistics[0]
+        feed_with_data(self.ui.selectedStatisticsComboBox,
+                       list(x for x in self.STATISTICS_CONFIGURATIONS
+                            if x in self.current_variant.supported_statistics), clear=True,
+                       default_item=self.selected_statistics)
 
         self.reset_gui()
 

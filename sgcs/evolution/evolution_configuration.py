@@ -1,7 +1,7 @@
-from enum import Enum
+from datalayer.jsonizer import SimpleJsonNode
 
 
-class EvolutionConfiguration(object):
+class EvolutionConfiguration(SimpleJsonNode):
     @staticmethod
     def create(selectors, inversion_chance, mutation_chance, crossover_chance):
         configuration = EvolutionConfiguration()
@@ -20,7 +20,7 @@ class EvolutionConfiguration(object):
         self.custom_rule_adding_hint = None
 
 
-class EvolutionOperatorsConfiguration(object):
+class EvolutionOperatorsConfiguration(SimpleJsonNode):
     @staticmethod
     def create(inversion_chance, mutation_chance, crossover_chance):
         configuration = EvolutionOperatorsConfiguration()
@@ -35,7 +35,7 @@ class EvolutionOperatorsConfiguration(object):
         self.crossover = None
 
 
-class EvolutionOperatorConfiguration(object):
+class EvolutionOperatorConfiguration(SimpleJsonNode):
     @staticmethod
     def create(chance):
         configuration = EvolutionOperatorConfiguration()
@@ -52,7 +52,7 @@ class EvolutionSelectorType(object):
     roulette = 2
 
 
-class EvolutionSelectorConfiguration(object):
+class EvolutionSelectorConfiguration(SimpleJsonNode):
     def __init__(self):
         self.type = None
 

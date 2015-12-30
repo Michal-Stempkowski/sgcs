@@ -1,7 +1,7 @@
-from rule_adding import AddingRuleStrategyHint
+from datalayer.jsonizer import SimpleJsonNode
 
 
-class CykConfiguration(object):
+class CykConfiguration(SimpleJsonNode):
     def __init__(self):
         self._coverage = None
         self._grammar_correction = None
@@ -32,7 +32,7 @@ class CykConfiguration(object):
         self._grammar_correction = value
 
 
-class CoverageConfiguration(object):
+class CoverageConfiguration(SimpleJsonNode):
     def __init__(self):
         self._operators = None
 
@@ -51,7 +51,7 @@ class CoverageConfiguration(object):
         self._operators = value
 
 
-class CoverageOperatorsConfiguration(object):
+class CoverageOperatorsConfiguration(SimpleJsonNode):
     def __init__(self):
         self._terminal = None
         self._universal = None
@@ -116,7 +116,7 @@ class CoverageOperatorsConfiguration(object):
         self._full = value
 
 
-class CoverageOperatorConfiguration(object):
+class CoverageOperatorConfiguration(SimpleJsonNode):
     def __init__(self):
         self._chance = None
         self.adding_hint = None
@@ -137,7 +137,7 @@ class CoverageOperatorConfiguration(object):
         self._chance = value
 
 
-class GrammarCorrection(object):
+class GrammarCorrection(SimpleJsonNode):
     def __init__(self):
         self.should_run = False
 

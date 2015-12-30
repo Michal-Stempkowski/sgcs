@@ -1,8 +1,9 @@
+from datalayer.jsonizer import SimpleJsonNode
 from utils import RunTimes
 
 
-class Symbol(object):
-    def __init__(self, symbol_id):
+class Symbol(SimpleJsonNode):
+    def __init__(self, symbol_id=None):
         self.symbol_id = symbol_id
 
     def human_friendly_representation(self, abs_shift):

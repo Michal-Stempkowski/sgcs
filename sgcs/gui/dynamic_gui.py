@@ -55,8 +55,8 @@ class DynamicNode(object):
         if self.auto_updater is not None and self.visibility_condition(root):
             self.auto_updater.update_model()
 
-    def update_gui(self):
-        if self.auto_updater is not None:
+    def update_gui(self, root):
+        if self.auto_updater is not None and self.visibility_condition(root):
             self.auto_updater.update_gui()
 
 
@@ -83,7 +83,7 @@ class DynamicRoot(object):
 
     def update_dn_gui(self):
         for node in self.dynamic_nodes:
-            node.update_gui()
+            node.update_gui(self)
 
 
 def refreshes_dynamics(func):

@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
+from datalayer.jsonizer import SimpleJsonNode
+
 
 class AddingRuleStrategyHint(object):
     expand_population = 0
@@ -152,7 +154,7 @@ class AddingRuleSupervisor(object):
             strategy.generate_elite(self, statistics, rule_population)
 
 
-class AddingRulesConfiguration(object):
+class AddingRulesConfiguration(SimpleJsonNode):
     @staticmethod
     def create(crowding_factor, crowding_size, elitism_size, max_non_terminal_rules):
         configuration = AddingRulesConfiguration()
@@ -175,7 +177,7 @@ class AddingRulesConfiguration(object):
         self._crowding = value
 
 
-class CrowdingConfiguration(object):
+class CrowdingConfiguration(SimpleJsonNode):
     @staticmethod
     def create(crowding_factor, crowding_size):
         configuration = CrowdingConfiguration()
@@ -204,7 +206,7 @@ class CrowdingConfiguration(object):
         self._size = value
 
 
-class ElitismConfiguration(object):
+class ElitismConfiguration(SimpleJsonNode):
     @staticmethod
     def create(elitism_size):
         configuration = ElitismConfiguration()

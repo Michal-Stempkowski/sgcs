@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from core.rule import Rule
 from core.rule_population import RulePopulation, StochasticRulePopulation
 from core.symbol import Symbol
+from datalayer.jsonizer import SimpleJsonNode
 from evolution.evolution_configuration import EvolutionConfiguration
 from evolution.evolution_service import EvolutionService
 from grammar_estimator import EvolutionStepEstimator
@@ -14,7 +15,7 @@ from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
 from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration
 
 
-class AlgorithmConfiguration(object):
+class AlgorithmConfiguration(SimpleJsonNode):
     @staticmethod
     def common_configuration(statistics_configuration):
         ga_selectors_configuration = []
@@ -126,7 +127,7 @@ class CykServiceVariationManager(object):
             return AlgorithmConfiguration.default()
 
 
-class RuleConfiguration(object):
+class RuleConfiguration(SimpleJsonNode):
     @staticmethod
     def create(crowding_factor, crowding_size, elitism_size, starting_symbol, universal_symbol,
                max_non_terminal_symbols, random_starting_population_size, max_non_terminal_rules):
