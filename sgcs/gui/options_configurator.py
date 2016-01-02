@@ -15,6 +15,7 @@ from gui.options_configurator_parts.crowding_auto_updater import CrowdingAutoUpd
 from gui.options_configurator_parts.elitism_auto_updater import ElitismAutoUpdater
 from gui.options_configurator_parts.evolution_auto_updater import EvolutionAutoUpdater
 from gui.options_configurator_parts.induction_auto_updater import InductionAutoUpdater
+from gui.options_configurator_parts.main_box_auto_updater import MainBoxAutoUpdater
 from gui.options_configurator_parts.root_auto_updater import Statistics, RootAutoUpdater
 from gui.options_configurator_parts.rules_auto_updater import RulesAutoUpdater
 from induction.cyk_configuration import CoverageConfiguration, CoverageOperatorsConfiguration, \
@@ -114,6 +115,9 @@ class OptionsConfigurator(GenericWidget):
             ),
             DynamicNode(
                 auto_updater=RulesAutoUpdater(self)
+            ),
+            DynamicNode(
+                auto_updater=MainBoxAutoUpdater(self)
             )
         ]
 
@@ -226,12 +230,13 @@ class OptionsConfigurator(GenericWidget):
             EvolutionRouletteSelectorConfiguration.create())
 
         self.selected_statistics = self.current_variant.supported_statistics[0]
-        feed_with_data(self.ui.selectedStatisticsComboBox,
-                       list(x for x in self.STATISTICS_CONFIGURATIONS
-                            if x in self.current_variant.supported_statistics), clear=True,
-                       default_item=self.selected_statistics)
+        with BlockSignals(*self.ui.__dict__.values()) as _:
+            feed_with_data(self.ui.selectedStatisticsComboBox,
+                           list(x for x in self.STATISTICS_CONFIGURATIONS
+                                if x in self.current_variant.supported_statistics), clear=True,
+                           default_item=self.selected_statistics)
 
-        self.reset_gui()
+            self.reset_gui()
 
     @refreshes_dynamics
     def update_selectors(self):
