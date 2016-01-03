@@ -15,9 +15,14 @@ from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
 from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration
 
 
+class AlgorithmVariant(object):
+    gcs = 'GCS'
+    sgcs = 'sGCS'
+
+
 class AlgorithmConfiguration(SimpleJsonNode):
     @staticmethod
-    def common_configuration(statistics_configuration):
+    def common_configuration(statistics_configuration, algorithm_variant):
         ga_selectors_configuration = []
         evolution_configuration = EvolutionConfiguration.create(
             selectors=ga_selectors_configuration,
@@ -53,7 +58,8 @@ class AlgorithmConfiguration(SimpleJsonNode):
             max_execution_time=900,
             satisfying_fitness=1,
             statistics=statistics_configuration,
-            max_algorithm_runs=50
+            max_algorithm_runs=50,
+            algorithm_variant=algorithm_variant
         )
 
         return configuration
@@ -61,16 +67,16 @@ class AlgorithmConfiguration(SimpleJsonNode):
     @staticmethod
     def default():
         return AlgorithmConfiguration.common_configuration(
-            ClassicalStatisticsConfiguration.default())
+            ClassicalStatisticsConfiguration.default(), AlgorithmVariant.gcs)
 
     @staticmethod
     def sgcs_variant():
-        return AlgorithmConfiguration.common_configuration(None)
+        return AlgorithmConfiguration.common_configuration(None, AlgorithmVariant.sgcs)
 
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
                max_algorithm_steps, should_run_evolution, max_execution_time, satisfying_fitness,
-               statistics, max_algorithm_runs):
+               statistics, max_algorithm_runs, algorithm_variant):
         configuration = AlgorithmConfiguration()
         configuration.induction = induction_configuration
         configuration.evolution = evolution_configuration
@@ -81,6 +87,7 @@ class AlgorithmConfiguration(SimpleJsonNode):
         configuration.should_run_evolution = should_run_evolution
         configuration.statistics = statistics
         configuration.max_algorithm_runs = max_algorithm_runs
+        configuration.algorithm_variant = algorithm_variant
         return configuration
 
     def __init__(self):
@@ -93,6 +100,7 @@ class AlgorithmConfiguration(SimpleJsonNode):
         self.should_run_evolution = None
         self.statistics = None
         self.max_algorithm_runs = None
+        self.algorithm_variant = None
 
 
 class CykServiceVariationManager(object):

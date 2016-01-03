@@ -10,7 +10,7 @@ class SimpleJsonNode(object):
         for field, value in self.__dict__.items():
             if isinstance(value, SimpleJsonNode):
                 node_dict[field] = jsonizer.to_json(value)
-            elif isinstance(value, collections.Iterable):
+            elif isinstance(value, list) and not isinstance(value, str):
                 node_dict[field] = list(
                     jsonizer.to_json(x) if isinstance(x, SimpleJsonNode) else x for x in value)
 
@@ -25,10 +25,9 @@ class SimpleJsonNode(object):
         for field, value in state.items():
             if self.is_complex_json(jsonizer, value):
                 state[field] = jsonizer.from_json(value)
-            elif isinstance(value, collections.Iterable):
+            elif isinstance(value, collections.Iterable) and not isinstance(value, str):
                 # noinspection PyTypeChecker
-                state[field] = list(jsonizer.from_json(x) if self.is_complex_json(jsonizer, value)
-                                    else x for x in value)
+                state[field] = list(jsonizer.from_json(x) for x in value)
 
         self.__dict__ = state
         return self

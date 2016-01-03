@@ -198,30 +198,6 @@ class OptionsConfigurator(GenericWidget):
         self.update_model_dn()
         self.update_dynamic_nodes()
 
-        serializer = ConfigurationJsonizer([
-            AddingRulesConfiguration,
-            CrowdingConfiguration,
-            ElitismConfiguration,
-            AlgorithmConfiguration,
-            RuleConfiguration,
-            Symbol,
-            EvolutionConfiguration,
-            EvolutionOperatorConfiguration,
-            EvolutionOperatorsConfiguration,
-            EvolutionSelectorConfiguration,
-            CoverageConfiguration,
-            CoverageOperatorConfiguration,
-            CoverageOperatorsConfiguration,
-            CykConfiguration,
-            GrammarCorrection
-        ])
-        # obj = serializer.to_json(self.configuration)
-        # print(obj)
-        # dumped = json.dumps(obj)
-        # print(dumped)
-        # obj = serializer.from_json(json.loads(dumped))
-        # print(serializer.to_json(obj))
-
     def on_variant_changed(self, variant_str):
         self.logger.info('Variant changing from to %s', variant_str)
         self.current_variant = self.ALGORITHM_VARIANTS[variant_str]
@@ -229,8 +205,13 @@ class OptionsConfigurator(GenericWidget):
         self.configuration.evolution.selectors.append(
             EvolutionRouletteSelectorConfiguration.create())
 
+        self.variant_changed__reset_gui()
+
+    def variant_changed__reset_gui(self):
         self.selected_statistics = self.current_variant.supported_statistics[0]
         with BlockSignals(*self.ui.__dict__.values()) as _:
+            index = self.ui.algorithmVariantComboBox.findText(self.current_variant.name)
+            self.ui.algorithmVariantComboBox.setCurrentIndex(index)
             feed_with_data(self.ui.selectedStatisticsComboBox,
                            list(x for x in self.STATISTICS_CONFIGURATIONS
                                 if x in self.current_variant.supported_statistics), clear=True,

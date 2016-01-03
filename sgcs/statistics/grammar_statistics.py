@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod, abstractstaticmethod
 
+from datalayer.jsonizer import SimpleJsonNode
+
 
 class RuleInfo(object):
     def __init__(self):
@@ -272,7 +274,7 @@ class GrammarStatistics(DummyCykStatistics):
         self.rule_statistics.update_fitness(self)
 
 
-class ClassicalStatisticsConfiguration(object):
+class ClassicalStatisticsConfiguration(SimpleJsonNode):
     @staticmethod
     def default():
         return ClassicalStatisticsConfiguration.create(

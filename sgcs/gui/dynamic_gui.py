@@ -62,6 +62,7 @@ class DynamicNode(object):
 
 class DynamicRoot(object):
     def __init__(self):
+        self.ui = None
         self.dynamic_nodes = []
 
     def update_dynamic_nodes(self):
@@ -82,8 +83,9 @@ class DynamicRoot(object):
             node.update_model(self)
 
     def update_dn_gui(self):
-        for node in self.dynamic_nodes:
-            node.update_gui(self)
+        with BlockSignals(*self.ui.__dict__.values()) as _:
+            for node in self.dynamic_nodes:
+                node.update_gui(self)
 
 
 def refreshes_dynamics(func):
