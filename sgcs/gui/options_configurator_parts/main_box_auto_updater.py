@@ -47,7 +47,6 @@ class MainBoxAutoUpdater(AutoUpdater):
             EvolutionTournamentSelectorConfiguration,
             EvolutionRouletteSelectorConfiguration
         ])
-        self.last_directory = ''
 
     @staticmethod
     def _init_gui(options_configurator):
@@ -67,22 +66,22 @@ class MainBoxAutoUpdater(AutoUpdater):
 
     def on_save_clicked(self, options_configurator):
         selected_filename = QtGui.QFileDialog.getSaveFileName(
-            options_configurator.widget, 'Save configuration as...', self.last_directory,
-            "*.parconf")
+            options_configurator.widget, 'Save configuration as...',
+            options_configurator.last_directory, "*.parconf")
 
         if selected_filename:
-            self.last_directory = os.path.dirname(selected_filename)
+            options_configurator.last_directory = os.path.dirname(selected_filename)
             with open(selected_filename, 'w+') as f:
                 json.dump(self.serializer.to_json(options_configurator.configuration), f,
                           sort_keys=True, indent=4)
 
     def on_open_clicked(self, options_configurator):
         selected_filename = QtGui.QFileDialog.getOpenFileName(
-            options_configurator.widget, 'Load configuration...', self.last_directory,
-            "*.parconf")
+            options_configurator.widget, 'Load configuration...',
+            options_configurator.last_directory, "*.parconf")
 
         if selected_filename:
-            self.last_directory = os.path.dirname(selected_filename)
+            options_configurator.last_directory = os.path.dirname(selected_filename)
             with open(selected_filename) as f:
                 configuration = self.serializer.from_json(json.load(f))
             options_configurator.on_variant_changed(configuration.algorithm_variant)
