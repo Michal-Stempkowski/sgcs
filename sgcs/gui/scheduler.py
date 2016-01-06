@@ -10,31 +10,6 @@ from gui.generic_widget import GenericWidget
 from gui.input_data_lookup import InputDataLookup
 
 
-# class TaskViewAutoUpdater(AutoUpdater):
-#     def __init__(self, scheduler):
-#         super().__init__(
-#             lambda: self._bind(scheduler),
-#             lambda: self._update_model(scheduler),
-#             lambda: self._update_gui(scheduler),
-#             lambda: self._init_gui(scheduler)
-#         )
-#
-#     def _init_gui(self, scheduler):
-#         pass
-#
-#     @staticmethod
-#     def _bind(scheduler):
-#         pass
-#
-#     @staticmethod
-#     def _update_model(scheduler):
-#         pass
-#
-#     @staticmethod
-#     def _update_gui(scheduler):
-#         pass
-
-
 class TaskView(object):
     REMOVE_TASK_CLICKED_SIGNAL = 'REMOVE_TASK_CLICKED_SIGNAL'
     MOVE_UP_TASK_CLICKED_SIGNAL = 'MOVE_UP_TASK_CLICKED_SIGNAL'
