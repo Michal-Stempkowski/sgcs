@@ -87,6 +87,10 @@ class DynamicRoot(object):
             for node in self.dynamic_nodes:
                 node.update_gui(self)
 
+    def dynamic_gui_update(self):
+        self.update_dynamic_nodes()
+        self.update_dn_gui()
+
 
 def refreshes_dynamics(func):
     class RefreshesDynamicsDecorator(object):
