@@ -95,6 +95,7 @@ class InputDataLookup(GenericWidget):
 
     HEADERS_LOADED_EVENT = 'InputDataLookup.headers_loaded'
     SENTENCES_LOADED_EVENT = 'InputDataLookup.sentence_loaded'
+    DATA_CONFIG_EXT = '*.inconf'
 
     def __init__(self, last_directory):
         super().__init__(Ui_InputDataLookupGen)
@@ -221,14 +222,14 @@ class InputDataLookup(GenericWidget):
         serialized = json.dumps(config)
 
         selected_filename = QtGui.QFileDialog.getSaveFileName(
-            self.widget, 'Save config...', self.last_directory, '*.inconf')
+            self.widget, 'Save config...', self.last_directory, self.DATA_CONFIG_EXT)
         if selected_filename:
             with open(selected_filename, 'w+') as file:
                 file.write(serialized)
 
     def load_config_action(self):
         selected_filename = QtGui.QFileDialog.getOpenFileName(
-            self.widget, 'Load config...', self.last_directory, '*.inconf')
+            self.widget, 'Load config...', self.last_directory, self.DATA_CONFIG_EXT)
         if selected_filename:
             with open(selected_filename) as file:
                 deserialized = json.loads('\n'.join(file.readlines()))
