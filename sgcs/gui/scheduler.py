@@ -38,16 +38,26 @@ class TaskView(object):
         self.remove_button, self.move_up_button, self.move_down_button = \
             self.create_control_section()
 
-        self.dynamic_node = DynamicNode(
-            self.groupbox,
-            visibility_condition=self._visibility_condition,
-            auto_updater=AutoUpdater(
-                bind_func=self.nothing,
-                init_gui_func=self.nothing,
-                update_model_func=self.nothing,
-                update_gui_func=self.update_task_view
+        self.dynamic_nodes = [
+            DynamicNode(
+                self.groupbox,
+                visibility_condition=self._visibility_condition,
+                auto_updater=AutoUpdater(
+                    bind_func=self.nothing,
+                    init_gui_func=self.nothing,
+                    update_model_func=self.nothing,
+                    update_gui_func=self.update_task_view
+                )
+            ),
+            DynamicNode(
+                self.move_up_button,
+                enabling_condition=lambda _: self.index > 0
+            ),
+            DynamicNode(
+                self.move_down_button,
+                enabling_condition=lambda sch: self.index < len(sch.tasks) - 1
             )
-        )
+        ]
 
     @staticmethod
     def nothing():
@@ -237,12 +247,28 @@ class Scheduler(GenericWidget):
 
         self._create_tasks_views()
 
+        self.dynamic_nodes += [
+            DynamicNode(
+                self.ui.addTaskButton,
+                enabling_condition=lambda sch: len(sch.tasks) < self.MAX_NUMBER_OF_TASKS
+            ),
+            DynamicNode(
+                self.ui.clearTasksButton,
+                enabling_condition=lambda sch: len(sch.tasks) > 0
+            ),
+            DynamicNode(
+                self.ui.runTasksButton,
+                enabling_condition=lambda sch: sch.tasks and
+                all(self._is_valid_task(x) for x in sch.tasks)
+            )
+        ]
+
         self.update_dynamic_nodes()
 
     def _create_tasks_views(self):
         for i in range(self.MAX_NUMBER_OF_TASKS):
             task = TaskView(i, self)
-            self.dynamic_nodes.append(task.dynamic_node)
+            self.dynamic_nodes += task.dynamic_nodes
             self.ui.queueVerticalLayout.addWidget(task.groupbox)
 
             self.widget.connect(
@@ -316,7 +342,7 @@ class Scheduler(GenericWidget):
 
     def on_params_set_selected(self, task, selected_filename):
         self.logger.debug('Updating params config set path')
-        self.tasks[task.index].population_configuration = selected_filename
+        self.tasks[task.index].params_configuration = selected_filename
         self.dynamic_gui_update()
 
     def on_add_task_clicked(self):
@@ -330,3 +356,11 @@ class Scheduler(GenericWidget):
         self.logger.debug('Clear tasks clicked!')
         self.tasks.clear()
         self.dynamic_gui_update()
+
+    @staticmethod
+    def _is_valid_task(task):
+        return all(x is not None for x in [
+            task.learning_configuration,
+            task.testing_configuration,
+            task.params_configuration
+        ])
