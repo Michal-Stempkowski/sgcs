@@ -23,6 +23,7 @@ class SystemStatus(GenericWidget):
         for i in range(self.cpu_count):
             self.create_cpu_usage_monitor(i)
 
+        self._original_close_event = self.widget.closeEvent
         self.widget.closeEvent = self.close_event_with_stopping_worker
 
         self.widget.connect(self.cpu_usage_worker, QtCore.SIGNAL(SystemStatus.CPU_USAGE_SIGNAL),
@@ -37,7 +38,7 @@ class SystemStatus(GenericWidget):
 
     def close_event_with_stopping_worker(self, ev):
         self.cpu_usage_worker.is_running = False
-        QWidget.closeEvent(self.widget, ev)
+        self._original_close_event(ev)
 
     def on_cpu_usage_signal(self, usage_data):
         self.ui.memoryProgressBar.setValue(usage_data[1])
@@ -70,5 +71,3 @@ class CpuUsageWorker(QtCore.QThread):
         while self.is_running:
             usage_data = psutil.cpu_percent(interval=1, percpu=1), psutil.virtual_memory().percent
             self.emit(QtCore.SIGNAL(SystemStatus.CPU_USAGE_SIGNAL), usage_data)
-
-        print('finally!')
