@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>mainApp</class>
+ <widget class="QWidget" name="mainApp">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QPushButton" name="inputDataLookupButton">
+     <property name="text">
+      <string>Prepare input data</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="optionsConfiguratorButton">
+     <property name="text">
+      <string>Prepare configuration</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="schedulerButton">
+     <property name="text">
+      <string>Run simulations</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="systemStatusButton">
+     <property name="text">
+      <string>System status</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
