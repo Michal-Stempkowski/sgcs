@@ -15,8 +15,7 @@ class TaskView(object):
     MOVE_UP_TASK_CLICKED_SIGNAL = 'MOVE_UP_TASK_CLICKED_SIGNAL'
     MOVE_DOWN_TASK_CLICKED_SIGNAL = 'MOVE_DOWN_TASK_CLICKED_SIGNAL'
 
-    LEARNING_SET_CONFIG_SELECTED_SIGNAL = 'LEARNING_SET_CONFIG_SELECTED_SIGNAL'
-    TESTING_SET_CONFIG_SELECTED_SIGNAL = 'TESTING_SET_CONFIG_SELECTED_SIGNAL'
+    DATA_CONFIG_SELECTED_SIGNAL = 'DATA_CONFIG_SELECTED_SIGNAL'
     PARAMS_SET_CONFIG_SELECTED_SIGNAL = 'PARAMS_SET_CONFIG_SELECTED_SIGNAL'
 
     NOT_SPECIFIED_LABEL = '<not selected>'
@@ -30,8 +29,7 @@ class TaskView(object):
         self.groupbox_layout = QtGui.QVBoxLayout()
         self.groupbox.setLayout(self.groupbox_layout)
 
-        self.learning_set_line = self.create_learning_set()
-        self.testing_set_line = self.create_testing_set()
+        self.data_line = self.create_data_set()
         self.config_set_line = self.create_config()
         self.population_line = self.create_population()
 
@@ -65,24 +63,16 @@ class TaskView(object):
 
     def update_task_view(self):
         if self.index < len(self.scheduler.tasks):
-            self.update_learning_set_config_path()
-            self.update_testing_set_config_path()
+            self.update_data_config_path()
             self.update_params_config_path()
             self.update_population_config_path()
 
-    def update_learning_set_config_path(self):
-        path_provided = self.scheduler.tasks[self.index].learning_configuration is not None
-        text = self.scheduler.tasks[self.index].learning_configuration if path_provided \
+    def update_data_config_path(self):
+        path_provided = self.scheduler.tasks[self.index].data_configuration is not None
+        text = self.scheduler.tasks[self.index].data_configuration if path_provided \
             else self.NOT_SPECIFIED_LABEL
 
-        self.learning_set_line.setText(text)
-
-    def update_testing_set_config_path(self):
-        path_provided = self.scheduler.tasks[self.index].testing_configuration is not None
-        text = self.scheduler.tasks[self.index].testing_configuration if path_provided \
-            else self.NOT_SPECIFIED_LABEL
-
-        self.testing_set_line.setText(text)
+        self.data_line.setText(text)
 
     def update_params_config_path(self):
         path_provided = self.scheduler.tasks[self.index].params_configuration is not None
@@ -110,42 +100,23 @@ class TaskView(object):
     def on_move_down_clicked(self):
         self.groupbox.emit(QtCore.SIGNAL(self.MOVE_DOWN_TASK_CLICKED_SIGNAL), self)
 
-    def create_learning_set(self):
-        learning_set_line, learning_set_select_button, _ = \
-            self.create_task_item(self.groupbox_layout, 'Learning set')
+    def create_data_set(self):
+        data_line, data_select_button, _ = \
+            self.create_task_item(self.groupbox_layout, 'Data config')
 
         # noinspection PyUnresolvedReferences
-        learning_set_select_button.clicked.connect(self.on_select_learning_set_clicked)
+        data_select_button.clicked.connect(self.on_select_data_clicked)
 
-        return learning_set_line
+        return data_line
 
-    def on_select_learning_set_clicked(self):
+    def on_select_data_clicked(self):
         selected_filename = QtGui.QFileDialog.getOpenFileName(
-            self.scheduler.widget, 'Open learning config...', self.scheduler.last_directory,
+            self.scheduler.widget, 'Open data config...', self.scheduler.last_directory,
             InputDataLookup.DATA_CONFIG_EXT)
 
         if selected_filename:
             self.groupbox.emit(
-                QtCore.SIGNAL(self.LEARNING_SET_CONFIG_SELECTED_SIGNAL), self, selected_filename)
-            self.scheduler.last_directory = os.path.dirname(selected_filename)
-
-    def create_testing_set(self):
-        testing_set_line, testing_set_select_button, _ = \
-            self.create_task_item(self.groupbox_layout, 'Testing set')
-
-        # noinspection PyUnresolvedReferences
-        testing_set_select_button.clicked.connect(self.on_select_testing_set_clicked)
-
-        return testing_set_line
-
-    def on_select_testing_set_clicked(self):
-        selected_filename = QtGui.QFileDialog.getOpenFileName(
-            self.scheduler.widget, 'Open testing config...', self.scheduler.last_directory,
-            InputDataLookup.DATA_CONFIG_EXT)
-
-        if selected_filename:
-            self.groupbox.emit(
-                QtCore.SIGNAL(self.TESTING_SET_CONFIG_SELECTED_SIGNAL), self, selected_filename)
+                QtCore.SIGNAL(self.DATA_CONFIG_SELECTED_SIGNAL), self, selected_filename)
             self.scheduler.last_directory = os.path.dirname(selected_filename)
 
     def create_config(self):
@@ -291,14 +262,8 @@ class Scheduler(GenericWidget):
 
             self.widget.connect(
                 task.groupbox,
-                QtCore.SIGNAL(TaskView.LEARNING_SET_CONFIG_SELECTED_SIGNAL),
-                self.on_learning_set_selected
-            )
-
-            self.widget.connect(
-                task.groupbox,
-                QtCore.SIGNAL(TaskView.TESTING_SET_CONFIG_SELECTED_SIGNAL),
-                self.on_testing_set_selected
+                QtCore.SIGNAL(TaskView.DATA_CONFIG_SELECTED_SIGNAL),
+                self.on_data_selected
             )
 
             self.widget.connect(
@@ -330,14 +295,9 @@ class Scheduler(GenericWidget):
                 self.tasks[current_index], self.tasks[new_index]
             self.dynamic_gui_update()
 
-    def on_learning_set_selected(self, task, selected_filename):
-        self.logger.debug('Updating learning set path')
-        self.tasks[task.index].learning_configuration = selected_filename
-        self.dynamic_gui_update()
-
-    def on_testing_set_selected(self, task, selected_filename):
-        self.logger.debug('Updating testing set path')
-        self.tasks[task.index].testing_configuration = selected_filename
+    def on_data_selected(self, task, selected_filename):
+        self.logger.debug('Updating input data path')
+        self.tasks[task.index].data_configuration = selected_filename
         self.dynamic_gui_update()
 
     def on_params_set_selected(self, task, selected_filename):
@@ -360,7 +320,6 @@ class Scheduler(GenericWidget):
     @staticmethod
     def _is_valid_task(task):
         return all(x is not None for x in [
-            task.learning_configuration,
-            task.testing_configuration,
+            task.data_configuration,
             task.params_configuration
         ])
