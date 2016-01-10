@@ -1,24 +1,43 @@
-import asyncio
 import logging
+import queue
+from multiprocessing import Queue
 
 import multiprocessing
-
-import functools
 from PyQt4 import QtCore, QtGui
 
 from executors.simulation_executor import SimulationExecutor
 from gui.dynamic_gui import DynamicNode, AutoUpdater, DynamicRoot
 from gui.generated.runner__gen import Ui_runner
 from gui.generic_widget import GenericWidget
+from gui.proxy.simulator_proxy import RunResult, PyQtAwareAsyncGcsSimulator
 
 
-class TaskProgressModel(object):
+class RunPostMortemModel(object):
+    def __init__(self):
+        self.max_steps = None
+        self.is_done = False
+        self.task_no = 0
+
+
+class RunVolatileModel(object):
     def __init__(self):
         self.start_time = None
         self.progress = None
-        self.max_steps = None
-        self.is_done = False
         self.end_time = None
+        self.task_no = 0
+
+# class TaskPostMortemModel(object):
+#     def __init__(self):
+#         self.max_steps = None
+#         self.is_done = False
+#
+#
+# class TaskProgressModel(object):
+#     def __init__(self):
+#         self.
+#         self.start_time = None
+#         self.progress = None
+#         self.end_time = None
 
 
 class RunProgressAutoUpdater(AutoUpdater):
@@ -31,42 +50,41 @@ class RunProgressAutoUpdater(AutoUpdater):
         )
 
     def _init_gui(self, run_progress_view):
+        run_progress_view.progress_bar.setFormat(
+            run_progress_view.runner.ui.allTasksProgressBar.format())
         self._update_gui(run_progress_view)
 
     def _bind(self, run_progress_view):
         pass
 
-    def _update_gui(self, run_progress_view):
+    @staticmethod
+    def _update_gui(run_progress_view):
         progress_data = run_progress_view.runner.run_progress_data
+        volatile_progress_data = run_progress_view.runner.run_volatile_data
         if run_progress_view.index < len(progress_data):
+            volatile_task_no = volatile_progress_data[run_progress_view.index].task_no
+            volatile_start = volatile_progress_data[run_progress_view.index].start_time
+            volatile_progress = volatile_progress_data[run_progress_view.index].progress
+            volatile_end = volatile_progress_data[run_progress_view.index].end_time
             data = progress_data[run_progress_view.index]
 
-            progress = data.progress if data.progress is not None else 0
-            max_steps = data.max_steps if data.max_steps is not None else 0
+            volatile_start = volatile_start if volatile_start is not None else \
+                RunnerGuiModel.FIELD_UNDEFINED
 
-            self._update_start_time(run_progress_view, data)
-            self._upgrade_progress(run_progress_view, progress, max_steps)
-            self._upgrade_end_time(run_progress_view, data)
-            self._upgrade_steps(run_progress_view, progress, max_steps)
+            volatile_progress = volatile_progress if volatile_progress is not None else 0
 
-    @staticmethod
-    def _upgrade_steps(run_progress_view, progress, max_steps):
-        run_progress_view.steps_line.setText('{0}/{1}'.format(progress, max_steps))
+            volatile_end = volatile_end if volatile_end is not None else \
+                RunnerGuiModel.FIELD_UNDEFINED
 
-    @staticmethod
-    def _upgrade_end_time(run_progress_view, data):
-        run_progress_view.end_time_line.setText(
-            data.end_time if data.end_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
+            if volatile_task_no >= data.task_no:
+                run_progress_view.progress_bar.setValue(volatile_progress)
+                run_progress_view.progress_bar.setMaximum(data.max_steps)
 
-    @staticmethod
-    def _upgrade_progress(run_progress_view, progress, max_steps):
-        run_progress_view.progress_bar.setValue(progress)
-        run_progress_view.progress_bar.setMaximum(max_steps)
+                run_progress_view.start_time_line.setText(volatile_start)
+                run_progress_view.end_time_line.setText(volatile_end)
 
-    @staticmethod
-    def _update_start_time(run_progress_view, data):
-        run_progress_view.start_time_line.setText(
-            data.start_time if data.start_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
+                run_progress_view.steps_line.setText('{0}/{1}'.format(
+                    volatile_progress, data.max_steps))
 
     def _update_model(self, run_progress_view):
         pass
@@ -176,10 +194,13 @@ class RunnerSimulationDataAutoUpdater(AutoUpdater):
             runner.ui.runProgressVerticalLayout.addWidget(run_view.groupbox)
         self._update_gui(runner)
 
-    def _bind(self, runner):
+    @staticmethod
+    def _bind(runner):
         runner.simulation_worker.start()
+        runner.partial_information_worker.start()
 
-    def _update_gui(self, runner):
+    @staticmethod
+    def _update_gui(runner):
         data = runner.simulation_worker.current_data
         if data.tasks_progress != RunnerGuiModel.FIELD_UNDEFINED:
             runner.ui.allTasksProgressBar.setValue(data.tasks_progress)
@@ -205,6 +226,8 @@ class RunnerGuiModel(object):
 
 
 class SimulationWorker(QtCore.QThread):
+    TASK_CONFIRMED_FINISHED_SIGNAL = 'TASK_CONFIRMED_FINISHED_SIGNAL'
+
     def __init__(self, runner):
         super().__init__(runner.widget)
         self.runner = runner
@@ -228,17 +251,56 @@ class SimulationWorker(QtCore.QThread):
         self.current_data = new_data
 
         run_func, configuration = self.simulation_executor.prepare_simulation(
-            new_data.current_input, new_data.current_config)
+            self.runner, new_data.current_input, new_data.current_config)
 
-        run_progress_data = [TaskProgressModel() for _ in range(configuration.max_algorithm_runs)]
+        run_post_mortem_data = []
         for _ in range(configuration.max_algorithm_runs):
-            task_progress_model = TaskProgressModel()
+            task_progress_model = RunPostMortemModel()
             task_progress_model.max_steps = configuration.max_algorithm_steps
-            run_progress_data.append(task_progress_model)
+            task_progress_model.task_no = task_no
+            run_post_mortem_data.append(task_progress_model)
 
-        self.runner.run_progress_data = run_progress_data
+        self.runner.run_progress_data = run_post_mortem_data
 
         return run_func, configuration
+
+
+class PartialInformationWorker(QtCore.QThread):
+    TIMEOUT = 10
+
+    def __init__(self, runner):
+        super().__init__(runner.widget)
+        self.runner = runner
+        self.is_running = True
+
+    def run(self):
+        while self.is_running:
+            try:
+                message = self.runner.input_queue.get(timeout=self.TIMEOUT)
+            except queue.Empty:
+                pass
+            else:
+                message_type, value = message
+
+                if message_type == PyQtAwareAsyncGcsSimulator.START_TIME_SIGNAL:
+                    run_id, start_time = value
+                    if run_id is not None:
+                        self.runner.run_volatile_data[run_id].start_time = start_time
+                elif message_type == PyQtAwareAsyncGcsSimulator.END_TIME_SIGNAL:
+                    run_id, end_time = value
+                    if run_id is not None:
+                        self.runner.run_volatile_data[run_id].end_time = end_time
+                elif message_type == RunResult.SIGNAL:
+                    previous_state = self.runner.run_progress_data
+                    if value.run_id < len(previous_state):
+                        old = previous_state[value.run_id]
+                        post_mortem_model = RunPostMortemModel()
+                        post_mortem_model.max_steps = old.max_steps
+                        post_mortem_model.is_done = True
+                        post_mortem_model.task_no = old.task_no  # FIX IT ! TODO
+
+                        previous_state[value.run_id] = post_mortem_model
+
 
 
 class Runner(GenericWidget):
@@ -250,10 +312,14 @@ class Runner(GenericWidget):
         self.logger = logging.getLogger(__name__)
         self.scheduler = scheduler
 
+        self._multiprocessing_manager = multiprocessing.Manager()
+        self.input_queue = self._multiprocessing_manager.Queue()
         self.simulation_worker = SimulationWorker(self)
+        self.partial_information_worker = PartialInformationWorker(self)
 
         self.run_progress_views = [RunProgressView(i, self) for i in range(self.MAX_RUNS)]
         self.run_progress_data = []
+        self.run_volatile_data = [RunVolatileModel() for _ in range(self.MAX_RUNS)]
         self.children += self.run_progress_views
 
         dynamic_tree = DynamicNode(
@@ -283,6 +349,8 @@ class Runner(GenericWidget):
 
     def close_event_with_cleanup(self, ev):
         self.simulation_worker.is_running = False
+        self.partial_information_worker.is_running = False
         self.simulation_worker.terminate()
+        self.partial_information_worker.terminate()
         self.scheduler.widget.setEnabled(True)
         self._original_close_event(ev)

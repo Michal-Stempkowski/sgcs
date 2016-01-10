@@ -3,7 +3,6 @@ from random import Random
 
 from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration, AlgorithmVariant, \
     CykServiceVariationManager
-from algorithm.gcs_simulator import AsyncGcsSimulator
 from core.symbol import Symbol
 from datalayer.jsonizer import ConfigurationJsonizer
 from datalayer.symbol_translator import SymbolTranslator
@@ -11,6 +10,7 @@ from evolution.evolution_configuration import EvolutionConfiguration, EvolutionO
     EvolutionOperatorsConfiguration, EvolutionSelectorConfiguration, \
     EvolutionRandomSelectorConfiguration, EvolutionTournamentSelectorConfiguration, \
     EvolutionRouletteSelectorConfiguration
+from gui.proxy.simulator_proxy import PyQtAwareAsyncGcsSimulator
 from induction.cyk_configuration import CoverageConfiguration, CoverageOperatorConfiguration, \
     CoverageOperatorsConfiguration, CykConfiguration, GrammarCorrection
 from rule_adding import AddingRulesConfiguration, CrowdingConfiguration, ElitismConfiguration
@@ -43,7 +43,7 @@ class SimulationExecutor(object):
         ])
         self.randomizer = Randomizer(Random())
 
-    def prepare_simulation(self, data_path, config_path, population_path=None):
+    def prepare_simulation(self, runner, data_path, config_path, population_path=None):
         with open(config_path) as f:
             configuration = self.configuration_serializer.from_json(json.load(f))
 
@@ -59,10 +59,12 @@ class SimulationExecutor(object):
         algorithm_variant = CykServiceVariationManager(is_stochastic)
 
         return lambda conf: self._perform_simulation(
-            algorithm_variant, learning_set, testing_set, conf), configuration
+            algorithm_variant, learning_set, testing_set, conf, runner), configuration
 
-    def _perform_simulation(self, algorithm_variant, learning_set, testing_set, configuration):
-        algorithm_simulator = AsyncGcsSimulator(self.randomizer, algorithm_variant)
+    def _perform_simulation(self, algorithm_variant, learning_set, testing_set, configuration,
+                            runner):
+        algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
+                                                         runner.input_queue)
 
         result, ngen = algorithm_simulator.perform_simulation(
             learning_set, testing_set, configuration)

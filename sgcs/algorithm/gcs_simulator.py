@@ -52,7 +52,7 @@ class GcsSimulator(object):
 
         return run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences
 
-    def _perform_run(self, configuration, initial_rules, sentences):
+    def _perform_run(self, configuration, initial_rules, sentences, run_no):
         grammar_estimator = GrammarEstimator()
         grammar_statistics = self.algorithm_variant.create_grammar_statistics(
             self.randomizer, configuration.statistics)
@@ -97,12 +97,15 @@ class GcsSimulator(object):
         rules = list(rule_population.get_all_non_terminal_rules())
         rules += rule_population.get_terminal_rules()
 
-        rule_population, _, n_gen, *_ = self._perform_run(conf, rules,
-                                                          list(testing_set.get_sentences()))
+        rule_population, _, n_gen, *_ = self._generalization_run(
+            conf, rules, list(testing_set.get_sentences()))
 
         logging.info(testing_set.rule_population_to_string(rule_population))
 
         return run_estimator, n_gen
+
+    def _generalization_run(self, conf, rules, sentences):
+        return self._perform_run(conf, rules, sentences, None)
 
     def perform_simulation(self, learning_set, testing_set, configuration):
         run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
@@ -111,7 +114,7 @@ class GcsSimulator(object):
         for i in range(configuration.max_algorithm_runs):
             logging.info('Run: %s', str(i))
             rp, stop_reasoning, fitness_reached, evolution_step, grammar_estimator = \
-                self._perform_run(configuration, [], sentences)
+                self._perform_run(configuration, [], sentences, i)
 
             rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
                 stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
@@ -140,7 +143,7 @@ class AsyncGcsSimulator(GcsSimulator):
         with multiprocessing.Pool(worker_pool_size) as pool:
             runs_to_be_performed = range(configuration.max_algorithm_runs)
             tasks = [(self._perform_run, (
-                copy.deepcopy(configuration), copy.deepcopy([]), copy.deepcopy(sentences)),
+                copy.deepcopy(configuration), copy.deepcopy([]), copy.deepcopy(sentences), run_no),
                       run_no, random.randint(0, 10**10))
                      for run_no in runs_to_be_performed]
 
@@ -166,3 +169,12 @@ class AsyncGcsSimulator(GcsSimulator):
 
         return self._perform_generalization_test(
             configuration, rule_population, auxiliary_rule_population, testing_set, run_estimator)
+
+    def _generalization_run(self, conf, rules, sentences):
+        with multiprocessing.Pool(1) as pool:
+            async_result = pool.imap_unordered(
+                self.calculate_star, [(self._perform_run, (conf, rules, sentences, None), None,
+                                       random.randint(0, 10**10))])
+
+        for result in async_result:
+            return result
