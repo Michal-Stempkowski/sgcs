@@ -5,6 +5,7 @@ from PyQt4 import QtGui, QtCore
 
 import utils
 from datalayer.symbol_translator import SymbolTranslator
+from executors.simulation_executor import SimulationExecutor
 from gui.async_progress_dialog import AsyncProgressDialog
 from gui.generated.input_data_lookup__gen import Ui_InputDataLookupGen
 from gui.generic_widget import GenericWidget
@@ -231,9 +232,6 @@ class InputDataLookup(GenericWidget):
         selected_filename = QtGui.QFileDialog.getOpenFileName(
             self.widget, 'Load config...', self.last_directory, self.DATA_CONFIG_EXT)
         if selected_filename:
-            with open(selected_filename) as file:
-                deserialized = json.loads('\n'.join(file.readlines()))
-
-                self.selected_learning_filename = deserialized['learning']
-                self.selected_testing_filename = deserialized['testing']
+            self.selected_learning_filename, self.selected_testing_filename = \
+                SimulationExecutor.load_input_config(selected_filename)
 

@@ -8,6 +8,7 @@ from gui.dynamic_gui import DynamicNode, AutoUpdater
 from gui.generated.scheduler__gen import Ui_scheduler
 from gui.generic_widget import GenericWidget
 from gui.input_data_lookup import InputDataLookup
+from gui.runner import Runner
 
 
 class TaskView(object):
@@ -208,6 +209,7 @@ class Scheduler(GenericWidget):
         self.logger = logging.getLogger(__name__)
         self.ui.addTaskButton.clicked.connect(self.on_add_task_clicked)
         self.ui.clearTasksButton.clicked.connect(self.on_clear_tasks_clicked)
+        self.ui.runTasksButton.clicked.connect(self.on_run_clicked)
 
         self.last_directory = ''
 
@@ -218,6 +220,12 @@ class Scheduler(GenericWidget):
 
         self._create_tasks_views()
 
+        self.run_task_dn = DynamicNode(
+            self.ui.runTasksButton,
+            enabling_condition=lambda sch: sch.tasks and
+            all(self._is_valid_task(x) for x in sch.tasks)
+        )
+
         self.dynamic_nodes += [
             DynamicNode(
                 self.ui.addTaskButton,
@@ -227,11 +235,7 @@ class Scheduler(GenericWidget):
                 self.ui.clearTasksButton,
                 enabling_condition=lambda sch: len(sch.tasks) > 0
             ),
-            DynamicNode(
-                self.ui.runTasksButton,
-                enabling_condition=lambda sch: sch.tasks and
-                all(self._is_valid_task(x) for x in sch.tasks)
-            )
+            self.run_task_dn
         ]
 
         self.update_dynamic_nodes()
@@ -316,6 +320,14 @@ class Scheduler(GenericWidget):
         self.logger.debug('Clear tasks clicked!')
         self.tasks.clear()
         self.dynamic_gui_update()
+
+    def on_run_clicked(self):
+        if self.run_task_dn.enabling_condition(self):
+            runner = Runner(self)
+            self.logger.debug('Task runner started')
+            runner.show()
+            self.widget.setEnabled(False)
+            self.logger.debug('Task runner ended')
 
     @staticmethod
     def _is_valid_task(task):

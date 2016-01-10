@@ -64,28 +64,50 @@ class DynamicRoot(object):
     def __init__(self):
         self.ui = None
         self.dynamic_nodes = []
+        self.children = []
 
     def update_dynamic_nodes(self):
         for node in self.dynamic_nodes:
             node.update_visibility(self)
             node.update_availability(self)
 
+        for child in self.children:
+            child.update_dynamic_nodes()
+
     def bind_dn(self):
         for node in self.dynamic_nodes:
             node.bind()
+
+        for child in self.children:
+            child.bind_dn()
 
     def init_gui_dn(self):
         for node in self.dynamic_nodes:
             node.init_gui()
 
+        for child in self.children:
+            child.init_gui_dn()
+
     def update_model_dn(self):
         for node in self.dynamic_nodes:
             node.update_model(self)
 
+        for child in self.children:
+            child.update_model_dn()
+
     def update_dn_gui(self):
-        with BlockSignals(*self.ui.__dict__.values()) as _:
-            for node in self.dynamic_nodes:
-                node.update_gui(self)
+        if 'ui' in self.__dict__ and self.ui is not None:
+            with BlockSignals(*self.ui.__dict__.values()) as _:
+                self._perform_dn_gui_update()
+        else:
+            self._perform_dn_gui_update()
+
+    def _perform_dn_gui_update(self):
+        for node in self.dynamic_nodes:
+            node.update_gui(self)
+
+        for child in self.children:
+            child.update_dn_gui()
 
     def dynamic_gui_update(self):
         self.update_dynamic_nodes()
