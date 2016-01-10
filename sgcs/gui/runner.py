@@ -41,19 +41,32 @@ class RunProgressAutoUpdater(AutoUpdater):
         if run_progress_view.index < len(progress_data):
             data = progress_data[run_progress_view.index]
 
-            run_progress_view.start_time_line.setText(
-                data.start_time if data.start_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
-
             progress = data.progress if data.progress is not None else 0
             max_steps = data.max_steps if data.max_steps is not None else 0
 
-            run_progress_view.progress_bar.setValue(progress)
-            run_progress_view.progress_bar.setMaximum(max_steps)
+            self._update_start_time(run_progress_view, data)
+            self._upgrade_progress(run_progress_view, progress, max_steps)
+            self._upgrade_end_time(run_progress_view, data)
+            self._upgrade_steps(run_progress_view, progress, max_steps)
 
-            run_progress_view.end_time_line.setText(
-                data.end_time if data.end_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
+    @staticmethod
+    def _upgrade_steps(run_progress_view, progress, max_steps):
+        run_progress_view.steps_line.setText('{0}/{1}'.format(progress, max_steps))
 
-            run_progress_view.steps_line.setText('{0}/{1}'.format(progress, max_steps))
+    @staticmethod
+    def _upgrade_end_time(run_progress_view, data):
+        run_progress_view.end_time_line.setText(
+            data.end_time if data.end_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
+
+    @staticmethod
+    def _upgrade_progress(run_progress_view, progress, max_steps):
+        run_progress_view.progress_bar.setValue(progress)
+        run_progress_view.progress_bar.setMaximum(max_steps)
+
+    @staticmethod
+    def _update_start_time(run_progress_view, data):
+        run_progress_view.start_time_line.setText(
+            data.start_time if data.start_time is not None else RunnerGuiModel.FIELD_UNDEFINED)
 
     def _update_model(self, run_progress_view):
         pass
@@ -201,7 +214,8 @@ class SimulationWorker(QtCore.QThread):
 
     def run(self):
         for i, task in enumerate(self.runner.scheduler.tasks):
-            self._setup_task(i, task)
+            run_func, configuration = self._setup_task(i, task)
+            run_func(configuration)
         while self.is_running:
             pass
 
@@ -223,6 +237,8 @@ class SimulationWorker(QtCore.QThread):
             run_progress_data.append(task_progress_model)
 
         self.runner.run_progress_data = run_progress_data
+
+        return run_func, configuration
 
 
 class Runner(GenericWidget):
