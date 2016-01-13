@@ -89,8 +89,10 @@ class LongTestGcsSimulator(unittest.TestCase):
                                name + '.txt'), 'w+') as file:
             learning_set = SymbolTranslator.create(learning_path)
             learning_set.negative_allowed = not self.algorithm_variant.is_stochastic
-            testing_set = SymbolTranslator.create(learning_path)
+
+            testing_set = SymbolTranslator.create(testing_path)
             testing_set.negative_allowed = True
+
             result, ngen = self.sut.perform_simulation(learning_set, testing_set,
                                                        self.configuration)
 

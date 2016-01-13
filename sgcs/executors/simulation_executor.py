@@ -3,6 +3,7 @@ from random import Random
 
 from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration, AlgorithmVariant, \
     CykServiceVariationManager
+from algorithm.gcs_simulator import AsyncGcsSimulator
 from core.symbol import Symbol
 from datalayer.jsonizer import ConfigurationJsonizer
 from datalayer.symbol_translator import SymbolTranslator
@@ -43,28 +44,27 @@ class SimulationExecutor(object):
         ])
         self.randomizer = Randomizer(Random())
 
-    def prepare_simulation(self, runner, data_path, config_path, population_path=None):
+    def prepare_simulation(self, runner, task_no, data_path, config_path, population_path=None):
         with open(config_path) as f:
             configuration = self.configuration_serializer.from_json(json.load(f))
 
         is_stochastic = configuration.algorithm_variant == AlgorithmVariant.sgcs
-
+        algorithm_variant = CykServiceVariationManager(is_stochastic)
         learning_set_path, testing_set_path = self.load_input_config(data_path)
+
         learning_set = SymbolTranslator.create(learning_set_path)
-        learning_set.negative_allowed = not is_stochastic
+        learning_set.negative_allowed = not algorithm_variant.is_stochastic
 
         testing_set = SymbolTranslator.create(testing_set_path)
         testing_set.negative_allowed = True
 
-        algorithm_variant = CykServiceVariationManager(is_stochastic)
-
         return lambda conf: self._perform_simulation(
-            algorithm_variant, learning_set, testing_set, conf, runner), configuration
+            algorithm_variant, learning_set, testing_set, conf, runner, task_no), configuration
 
     def _perform_simulation(self, algorithm_variant, learning_set, testing_set, configuration,
-                            runner):
+                            runner, task_no):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
-                                                         runner.input_queue)
+                                                         task_no, runner.input_queue)
 
         result, ngen = algorithm_simulator.perform_simulation(
             learning_set, testing_set, configuration)

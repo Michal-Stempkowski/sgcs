@@ -238,7 +238,7 @@ class FitnessStopCriteria(StopCriteria):
 
 
 class GcsRunner(object):
-    def __init__(self, randomizer, cyk_service_variant=None):
+    def __init__(self, randomizer, run_no, cyk_service_variant=None):
         self.cyk_service_variant = cyk_service_variant if cyk_service_variant is not None \
             else CykServiceVariationManager(False)
         self.randomizer = randomizer
@@ -248,6 +248,7 @@ class GcsRunner(object):
         self.induction = self.cyk_service_variant.create_cyk_service(randomizer, self.rule_adding)
         self.evolution = EvolutionService(randomizer)
         self.stop_criteria = [NoStopCriteriaSpecified()]
+        self.run_no = run_no
 
     def create_stop_criteria(self):
         self.stop_criteria = [
@@ -308,7 +309,7 @@ class GcsRunner(object):
                                                      self.rule_adding, self.configuration.evolution)
 
             evolution_step += 1
-            print(evolution_step)
+            self._post_step_actions(evolution_step)
 
         stop_reasoning = next(cr for cr in self.stop_criteria if cr.has_been_fulfilled())
         fitness_reached = self.grammar_estimator['fitness'].get_global_max()
@@ -318,3 +319,6 @@ class GcsRunner(object):
         #     print(x)
 
         return rule_population, stop_reasoning, fitness_reached, evolution_step
+
+    def _post_step_actions(self, step):
+        print(step)

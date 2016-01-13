@@ -1,15 +1,18 @@
 import logging
+import os
 import queue
 from multiprocessing import Queue
 
 import multiprocessing
+
+import psutil
 from PyQt4 import QtCore, QtGui
 
 from executors.simulation_executor import SimulationExecutor
 from gui.dynamic_gui import DynamicNode, AutoUpdater, DynamicRoot
 from gui.generated.runner__gen import Ui_runner
 from gui.generic_widget import GenericWidget
-from gui.proxy.simulator_proxy import RunResult, PyQtAwareAsyncGcsSimulator
+from gui.proxy.simulator_proxy import RunResult, PyQtAwareAsyncGcsSimulator, PyQtAwareGcsRunner
 
 
 class RunPostMortemModel(object):
@@ -26,19 +29,6 @@ class RunVolatileModel(object):
         self.end_time = None
         self.task_no = 0
 
-# class TaskPostMortemModel(object):
-#     def __init__(self):
-#         self.max_steps = None
-#         self.is_done = False
-#
-#
-# class TaskProgressModel(object):
-#     def __init__(self):
-#         self.
-#         self.start_time = None
-#         self.progress = None
-#         self.end_time = None
-
 
 class RunProgressAutoUpdater(AutoUpdater):
     def __init__(self, run_progress_view):
@@ -52,6 +42,7 @@ class RunProgressAutoUpdater(AutoUpdater):
     def _init_gui(self, run_progress_view):
         run_progress_view.progress_bar.setFormat(
             run_progress_view.runner.ui.allTasksProgressBar.format())
+        run_progress_view.progress_bar.setMinimum(0)
         self._update_gui(run_progress_view)
 
     def _bind(self, run_progress_view):
@@ -76,7 +67,7 @@ class RunProgressAutoUpdater(AutoUpdater):
             volatile_end = volatile_end if volatile_end is not None else \
                 RunnerGuiModel.FIELD_UNDEFINED
 
-            if volatile_task_no >= data.task_no:
+            if data.task_no is not None:
                 run_progress_view.progress_bar.setValue(volatile_progress)
                 run_progress_view.progress_bar.setMaximum(data.max_steps)
 
@@ -236,9 +227,13 @@ class SimulationWorker(QtCore.QThread):
         self.current_data = RunnerGuiModel()
 
     def run(self):
+        p = psutil.Process(os.getpid())
+        p.nice(psutil.HIGH_PRIORITY_CLASS)
         for i, task in enumerate(self.runner.scheduler.tasks):
             run_func, configuration = self._setup_task(i, task)
-            run_func(configuration)
+            result = self._run_task(run_func, configuration)
+            self._collect_task(result)
+
         while self.is_running:
             pass
 
@@ -251,7 +246,7 @@ class SimulationWorker(QtCore.QThread):
         self.current_data = new_data
 
         run_func, configuration = self.simulation_executor.prepare_simulation(
-            self.runner, new_data.current_input, new_data.current_config)
+            self.runner, task_no, new_data.current_input, new_data.current_config)
 
         run_post_mortem_data = []
         for _ in range(configuration.max_algorithm_runs):
@@ -263,6 +258,13 @@ class SimulationWorker(QtCore.QThread):
         self.runner.run_progress_data = run_post_mortem_data
 
         return run_func, configuration
+
+    def _run_task(self, run_func, configuration):
+        self.current_data.current_phase = SimulationPhases.LEARNING
+        return run_func(configuration)
+
+    def _collect_task(self, result):
+        self.current_data.current_phase = SimulationPhases.COLLECTING
 
 
 class PartialInformationWorker(QtCore.QThread):
@@ -283,13 +285,17 @@ class PartialInformationWorker(QtCore.QThread):
                 message_type, value = message
 
                 if message_type == PyQtAwareAsyncGcsSimulator.START_TIME_SIGNAL:
-                    run_id, start_time = value
+                    task_no, run_id, start_time = value
                     if run_id is not None:
                         self.runner.run_volatile_data[run_id].start_time = start_time
+                        self.runner.run_volatile_data[run_id].task_no = task_no
+
                 elif message_type == PyQtAwareAsyncGcsSimulator.END_TIME_SIGNAL:
-                    run_id, end_time = value
+                    task_no, run_id, end_time = value
                     if run_id is not None:
                         self.runner.run_volatile_data[run_id].end_time = end_time
+                        self.runner.run_volatile_data[run_id].task_no = task_no
+
                 elif message_type == RunResult.SIGNAL:
                     previous_state = self.runner.run_progress_data
                     if value.run_id < len(previous_state):
@@ -297,15 +303,25 @@ class PartialInformationWorker(QtCore.QThread):
                         post_mortem_model = RunPostMortemModel()
                         post_mortem_model.max_steps = old.max_steps
                         post_mortem_model.is_done = True
-                        post_mortem_model.task_no = old.task_no  # FIX IT ! TODO
+                        post_mortem_model.task_no = value.task_no
 
                         previous_state[value.run_id] = post_mortem_model
 
+                elif message_type == PyQtAwareGcsRunner.STEP_SIGNAL:
+                    task_no, run_id, step = value
+                    if run_id is not None:
+                        self.runner.run_volatile_data[run_id].progress = step
+                        self.runner.run_volatile_data[run_id].task_no = task_no
+
+                elif message_type == PyQtAwareAsyncGcsSimulator.TESTING_HAS_STARTED_SIGNAL:
+                    task_no, = value
+                    self.runner.simulation_worker.current_data.current_phase = \
+                        SimulationPhases.TESTING
 
 
 class Runner(GenericWidget):
     MAX_RUNS = 100
-    REFRESH_GUI_TIME = 100
+    REFRESH_GUI_TIME = 1000
 
     def __init__(self, scheduler):
         super().__init__(Ui_runner)
