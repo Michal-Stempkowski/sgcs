@@ -1,3 +1,4 @@
+import copy
 import math
 from abc import ABCMeta, abstractmethod
 
@@ -58,18 +59,41 @@ class EvolutionStepEstimator(object):
                 self._true_negative += 1
 
 
+class InvalidGrammarCriteriaAddingOperation(Exception):
+    pass
+
+
 class GrammarCriteria(metaclass=ABCMeta):
     @staticmethod
     def nan_safe_min(a, b):
-        return min(a, b) if not math.isnan(a) else b
+        if math.isnan(a):
+            return b
+        elif math.isnan(b):
+            return a
+        else:
+            return min(a, b)
 
     @staticmethod
     def nan_safe_max(a, b):
-        return max(a, b) if not math.isnan(a) else b
+        if math.isnan(a):
+            return b
+        elif math.isnan(b):
+            return a
+        else:
+            return max(a, b)
 
     @staticmethod
     def nan_safe_ladd(a, b):
         return a + b if not math.isnan(a) else b
+
+    @staticmethod
+    def nan_safe_add(a, b):
+        if math.isnan(a):
+            return b
+        elif math.isnan(b):
+            return a
+        else:
+            return a + b
 
     @staticmethod
     def nan_safe_rsub(a, b):
@@ -138,6 +162,18 @@ class GrammarCriteria(metaclass=ABCMeta):
     def get_global_max(self):
         return self._global_max
 
+    # noinspection PyProtectedMember
+    def __add__(self, other):
+        result = copy.deepcopy(self)
+
+        for step in sorted(other._occurrences.keys()):
+            data = result._occurrences.get(step, (0, 0, float('nan'), float('nan')))
+            if other._occurrences[step][1] > 1:
+                raise InvalidGrammarCriteriaAddingOperation()
+            result._occurrences[step] = result._add_and_pack(data, (other.get(step), 1))
+
+        return result
+
 
 class FitnessGrammarCriteria(GrammarCriteria):
     def _calculate(self, estimation):
@@ -203,3 +239,11 @@ class GrammarEstimator(object):
 
     def append_step_estimation(self, step, estimation):
         any(criteria.update(step, estimation) for criteria in self.criterias.values())
+
+    def __add__(self, other):
+        result = copy.deepcopy(self)
+
+        for name in other.criterias.keys():
+            result.criterias[name] = result.criterias[name] + other.criterias[name]
+
+        return result

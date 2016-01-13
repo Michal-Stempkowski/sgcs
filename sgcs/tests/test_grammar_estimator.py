@@ -1,7 +1,10 @@
+import copy
 import unittest
 from unittest.mock import create_autospec
 
 import math
+
+import itertools
 from hamcrest import *
 
 from grammar_estimator import EvolutionStepEstimator, GrammarEstimator
@@ -85,7 +88,7 @@ class TestGrammarEstimator(unittest.TestCase):
                           global_min_positive, global_min_negative, global_min_sensivity,
                           global_min_specifity, global_min_accuracy, global_max_fitness,
                           global_max_positive, global_max_negative, global_max_sensivity,
-                          global_max_specifity, global_max_accuracy):
+                          global_max_specifity, global_max_accuracy, estimator=None):
         fit = 'fitness'
         pos = 'positive'
         neg = 'negative'
@@ -93,51 +96,53 @@ class TestGrammarEstimator(unittest.TestCase):
         spe = 'specifity'
         acc = 'accuracy'
 
-        assert_nearly_equal_or_both_nan(self.sut[fit].get(step), fitness)
-        assert_nearly_equal_or_both_nan(self.sut[pos].get(step), positive)
-        assert_nearly_equal_or_both_nan(self.sut[neg].get(step), negative)
-        assert_nearly_equal_or_both_nan(self.sut[sen].get(step), sensitivity)
-        assert_nearly_equal_or_both_nan(self.sut[spe].get(step), specifity)
-        assert_nearly_equal_or_both_nan(self.sut[acc].get(step), accuracy)
+        estimator = estimator if estimator is not None else self.sut
+
+        assert_nearly_equal_or_both_nan(estimator[fit].get(step), fitness)
+        assert_nearly_equal_or_both_nan(estimator[pos].get(step), positive)
+        assert_nearly_equal_or_both_nan(estimator[neg].get(step), negative)
+        assert_nearly_equal_or_both_nan(estimator[sen].get(step), sensitivity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get(step), specifity)
+        assert_nearly_equal_or_both_nan(estimator[acc].get(step), accuracy)
         
-        assert_nearly_equal_or_both_nan(self.sut[fit].get_min(step), min_fitness)
-        assert_nearly_equal_or_both_nan(self.sut[fit].get_max(step), max_fitness)
+        assert_nearly_equal_or_both_nan(estimator[fit].get_min(step), min_fitness)
+        assert_nearly_equal_or_both_nan(estimator[fit].get_max(step), max_fitness)
 
-        assert_nearly_equal_or_both_nan(self.sut[pos].get_min(step), min_positive)
-        assert_nearly_equal_or_both_nan(self.sut[pos].get_max(step), max_positive)
+        assert_nearly_equal_or_both_nan(estimator[pos].get_min(step), min_positive)
+        assert_nearly_equal_or_both_nan(estimator[pos].get_max(step), max_positive)
 
-        assert_nearly_equal_or_both_nan(self.sut[neg].get_min(step), min_negative)
-        assert_nearly_equal_or_both_nan(self.sut[neg].get_max(step), max_negative)
+        assert_nearly_equal_or_both_nan(estimator[neg].get_min(step), min_negative)
+        assert_nearly_equal_or_both_nan(estimator[neg].get_max(step), max_negative)
 
-        assert_nearly_equal_or_both_nan(self.sut[sen].get_min(step), min_sensitivity)
-        assert_nearly_equal_or_both_nan(self.sut[sen].get_max(step), max_sensitivity)
+        assert_nearly_equal_or_both_nan(estimator[sen].get_min(step), min_sensitivity)
+        assert_nearly_equal_or_both_nan(estimator[sen].get_max(step), max_sensitivity)
 
-        assert_nearly_equal_or_both_nan(self.sut[spe].get_min(step), min_specifity)
-        assert_nearly_equal_or_both_nan(self.sut[spe].get_max(step), max_specifity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get_min(step), min_specifity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get_max(step), max_specifity)
 
-        assert_nearly_equal_or_both_nan(self.sut[acc].get_min(step), min_accuracy)
-        assert_nearly_equal_or_both_nan(self.sut[acc].get_max(step), max_accuracy)
+        assert_nearly_equal_or_both_nan(estimator[acc].get_min(step), min_accuracy)
+        assert_nearly_equal_or_both_nan(estimator[acc].get_max(step), max_accuracy)
         
-        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_average(), average_fitness)
-        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_average(), average_positive)
-        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_average(), average_negative)
-        assert_nearly_equal_or_both_nan(self.sut[sen].get_global_average(), average_sensitivity)
-        assert_nearly_equal_or_both_nan(self.sut[spe].get_global_average(), average_specifity)
-        assert_nearly_equal_or_both_nan(self.sut[acc].get_global_average(), average_accuracy)
+        assert_nearly_equal_or_both_nan(estimator[fit].get_global_average(), average_fitness)
+        assert_nearly_equal_or_both_nan(estimator[pos].get_global_average(), average_positive)
+        assert_nearly_equal_or_both_nan(estimator[neg].get_global_average(), average_negative)
+        assert_nearly_equal_or_both_nan(estimator[sen].get_global_average(), average_sensitivity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get_global_average(), average_specifity)
+        assert_nearly_equal_or_both_nan(estimator[acc].get_global_average(), average_accuracy)
         
-        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_min(), global_min_fitness)
-        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_min(), global_min_positive)
-        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_min(), global_min_negative)
-        assert_nearly_equal_or_both_nan(self.sut[sen].get_global_min(), global_min_sensivity)
-        assert_nearly_equal_or_both_nan(self.sut[spe].get_global_min(), global_min_specifity)
-        assert_nearly_equal_or_both_nan(self.sut[acc].get_global_min(), global_min_accuracy)
+        assert_nearly_equal_or_both_nan(estimator[fit].get_global_min(), global_min_fitness)
+        assert_nearly_equal_or_both_nan(estimator[pos].get_global_min(), global_min_positive)
+        assert_nearly_equal_or_both_nan(estimator[neg].get_global_min(), global_min_negative)
+        assert_nearly_equal_or_both_nan(estimator[sen].get_global_min(), global_min_sensivity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get_global_min(), global_min_specifity)
+        assert_nearly_equal_or_both_nan(estimator[acc].get_global_min(), global_min_accuracy)
 
-        assert_nearly_equal_or_both_nan(self.sut[fit].get_global_max(), global_max_fitness)
-        assert_nearly_equal_or_both_nan(self.sut[pos].get_global_max(), global_max_positive)
-        assert_nearly_equal_or_both_nan(self.sut[neg].get_global_max(), global_max_negative)
-        assert_nearly_equal_or_both_nan(self.sut[sen].get_global_max(), global_max_sensivity)
-        assert_nearly_equal_or_both_nan(self.sut[spe].get_global_max(), global_max_specifity)
-        assert_nearly_equal_or_both_nan(self.sut[acc].get_global_max(), global_max_accuracy)
+        assert_nearly_equal_or_both_nan(estimator[fit].get_global_max(), global_max_fitness)
+        assert_nearly_equal_or_both_nan(estimator[pos].get_global_max(), global_max_positive)
+        assert_nearly_equal_or_both_nan(estimator[neg].get_global_max(), global_max_negative)
+        assert_nearly_equal_or_both_nan(estimator[sen].get_global_max(), global_max_sensivity)
+        assert_nearly_equal_or_both_nan(estimator[spe].get_global_max(), global_max_specifity)
+        assert_nearly_equal_or_both_nan(estimator[acc].get_global_max(), global_max_accuracy)
 
     def test_grammar_estimation(self):
         self.assert_estimation(step=0, fitness=float('nan'), positive=float('nan'),
@@ -277,3 +282,135 @@ class TestGrammarEstimator(unittest.TestCase):
                                global_max_sensivity=0.7,
                                global_max_specifity=0.7,
                                global_max_accuracy=0.75)
+
+    def common_grammar_estimation_adding(self, left, right, first, second, third):
+        first.append_step_estimation(0, self.mk_evolution_step(tp=7, tn=2, fp=1, fn=0))
+        self.assert_estimation(step=0, fitness=0.9, positive=1, negative=0.33, sensitivity=0.29,
+                               specifity=0.67, accuracy=0.9,
+                               min_fitness=0.9, max_fitness=0.9,
+                               min_positive=1, max_positive=1,
+                               min_negative=0.33, max_negative=0.33,
+                               min_sensitivity=0.29, max_sensitivity=0.29,
+                               min_specifity=0.67, max_specifity=0.67,
+                               min_accuracy=0.9, max_accuracy=0.9,
+                               average_fitness=0.9,
+                               average_positive=1,
+                               average_negative=0.33,
+                               average_sensitivity=0.29,
+                               average_specifity=0.67,
+                               average_accuracy=0.9,
+                               global_min_fitness=0.9,
+                               global_min_positive=1,
+                               global_min_negative=0.33,
+                               global_min_sensivity=0.29,
+                               global_min_specifity=0.67,
+                               global_min_accuracy=0.9,
+                               global_max_fitness=0.9,
+                               global_max_positive=1,
+                               global_max_negative=0.33,
+                               global_max_sensivity=0.29,
+                               global_max_specifity=0.67,
+                               global_max_accuracy=0.9,
+                               estimator=left + right)
+
+        second.append_step_estimation(0, self.mk_evolution_step(tp=3, tn=2, fp=0, fn=1))
+        self.assert_estimation(step=0, fitness=0.87, positive=0.88, negative=0.17, sensitivity=0.39,
+                               specifity=0.83, accuracy=0.87,
+                               min_fitness=0.87, max_fitness=0.9,
+                               min_positive=0.88, max_positive=1,
+                               min_negative=0.17, max_negative=0.33,
+                               min_sensitivity=0.29, max_sensitivity=0.39,
+                               min_specifity=0.67, max_specifity=0.83,
+                               min_accuracy=0.87, max_accuracy=0.9,
+                               average_fitness=0.87,
+                               average_positive=0.88,
+                               average_negative=0.17,
+                               average_sensitivity=0.39,
+                               average_specifity=0.83,
+                               average_accuracy=0.87,
+                               global_min_fitness=0.87,
+                               global_min_positive=0.88,
+                               global_min_negative=0.17,
+                               global_min_sensivity=0.29,
+                               global_min_specifity=0.67,
+                               global_min_accuracy=0.87,
+                               global_max_fitness=0.9,
+                               global_max_positive=1,
+                               global_max_negative=0.33,
+                               global_max_sensivity=0.39,
+                               global_max_specifity=0.83,
+                               global_max_accuracy=0.9,
+                               estimator=left + right)
+
+        third.append_step_estimation(1, self.mk_evolution_step(tp=2, tn=7, fp=1, fn=5))
+        self.assert_estimation(step=0, fitness=0.87, positive=0.88, negative=0.17, sensitivity=0.39,
+                               specifity=0.83, accuracy=0.87,
+                               min_fitness=0.87, max_fitness=0.9,
+                               min_positive=0.88, max_positive=1,
+                               min_negative=0.17, max_negative=0.33,
+                               min_sensitivity=0.29, max_sensitivity=0.39,
+                               min_specifity=0.67, max_specifity=0.83,
+                               min_accuracy=0.87, max_accuracy=0.9,
+                               average_fitness=0.73,
+                               average_positive=0.58,
+                               average_negative=0.15,
+                               average_sensitivity=0.7,
+                               average_specifity=0.85,
+                               average_accuracy=0.73,
+                               global_min_fitness=0.6,
+                               global_min_positive=0.29,
+                               global_min_negative=0.13,
+                               global_min_sensivity=0.29,
+                               global_min_specifity=0.67,
+                               global_min_accuracy=0.6,
+                               global_max_fitness=0.9,
+                               global_max_positive=1,
+                               global_max_negative=0.33,
+                               global_max_sensivity=1,
+                               global_max_specifity=0.88,
+                               global_max_accuracy=0.9,
+                               estimator=left + right)
+        self.assert_estimation(step=1, fitness=0.6, positive=0.29, negative=0.13, sensitivity=1,
+                               specifity=0.88, accuracy=0.6,
+                               min_fitness=0.6, max_fitness=0.6,
+                               min_positive=0.29, max_positive=0.29,
+                               min_negative=0.13, max_negative=0.13,
+                               min_sensitivity=1, max_sensitivity=1,
+                               min_specifity=0.88, max_specifity=0.88,
+                               min_accuracy=0.6, max_accuracy=0.6,
+                               average_fitness=0.73,
+                               average_positive=0.58,
+                               average_negative=0.15,
+                               average_sensitivity=0.7,
+                               average_specifity=0.85,
+                               average_accuracy=0.73,
+                               global_min_fitness=0.6,
+                               global_min_positive=0.29,
+                               global_min_negative=0.13,
+                               global_min_sensivity=0.29,
+                               global_min_specifity=0.67,
+                               global_min_accuracy=0.6,
+                               global_max_fitness=0.9,
+                               global_max_positive=1,
+                               global_max_negative=0.33,
+                               global_max_sensivity=1,
+                               global_max_specifity=0.88,
+                               global_max_accuracy=0.9,
+                               estimator=left + right)
+
+    @staticmethod
+    def _select(left, right, decision):
+        return left if not decision else right
+
+    def test_grammar_estimation_adding(self):
+        test_data = [
+            (0, 0, 0)  # 3/0
+            , (0, 0, 1)  # false
+            , (0, 1, 0)  # 2/1
+            , (0, 1, 1)  # 1/2
+        ]
+        for decisions in test_data:
+            left = GrammarEstimator()
+            right = GrammarEstimator()
+            args = [left, right] + [self._select(left, right, x) for x in decisions]
+            self.common_grammar_estimation_adding(*args)

@@ -66,7 +66,7 @@ class SimulationExecutor(object):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
                                                          task_no, runner.input_queue)
 
-        result, ngen = algorithm_simulator.perform_simulation(
+        result, ngen, grammar_estimator = algorithm_simulator.perform_simulation(
             learning_set, testing_set, configuration)
 
         print(result)

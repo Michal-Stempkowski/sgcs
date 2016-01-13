@@ -113,6 +113,7 @@ class GcsSimulator(object):
         return self._perform_run(conf, rules, sentences, None)
 
     def perform_simulation(self, learning_set, testing_set, configuration):
+        final_grammar_estimator = GrammarEstimator()
         run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
             self._prepare_for_run(learning_set)
 
@@ -124,9 +125,11 @@ class GcsSimulator(object):
             rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
                 stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
                 auxiliary_rule_population, aux_fitness, evolution_step, i)
+            final_grammar_estimator = final_grammar_estimator + grammar_estimator
 
         return self._perform_generalization_test(
-            configuration, rule_population, auxiliary_rule_population, testing_set, run_estimator)
+            configuration, rule_population, auxiliary_rule_population, testing_set,
+            run_estimator) + (final_grammar_estimator,)
 
 
 class AsyncGcsSimulator(GcsSimulator):
@@ -140,6 +143,7 @@ class AsyncGcsSimulator(GcsSimulator):
         return self.calculate(func, args_), run_no
 
     def perform_simulation(self, learning_set, testing_set, configuration):
+        final_grammar_estimator = GrammarEstimator()
         run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
             self._prepare_for_run(learning_set)
 
@@ -163,6 +167,8 @@ class AsyncGcsSimulator(GcsSimulator):
                     stop_reasoning, learning_set, run_estimator, rp, rule_population,
                     fitness_reached, auxiliary_rule_population, aux_fitness, evolution_step, run_no)
 
+                final_grammar_estimator = final_grammar_estimator + grammar_estimator
+
             tasks = [(self._perform_generalization_test,
                       (configuration, rule_population, auxiliary_rule_population, testing_set,
                        run_estimator),
@@ -171,4 +177,4 @@ class AsyncGcsSimulator(GcsSimulator):
             async_results = pool.imap_unordered(self.calculate_star, tasks)
 
             for result in async_results:
-                return result[0]
+                return result[0] + (final_grammar_estimator,)

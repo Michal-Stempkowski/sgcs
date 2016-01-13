@@ -93,8 +93,8 @@ class LongTestGcsSimulator(unittest.TestCase):
             testing_set = SymbolTranslator.create(testing_path)
             testing_set.negative_allowed = True
 
-            result, ngen = self.sut.perform_simulation(learning_set, testing_set,
-                                                       self.configuration)
+            result, ngen, grammar_estimator = self.sut.perform_simulation(learning_set, testing_set,
+                                                                          self.configuration)
 
             print(result)
             print('NGen:', ngen)

@@ -31,7 +31,7 @@
            <x>0</x>
            <y>0</y>
            <width>462</width>
-           <height>260</height>
+           <height>198</height>
           </rect>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -40,6 +40,29 @@
           </item>
          </layout>
         </widget>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Output directory:</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLineEdit" name="outputDirectorylineEdit">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="outputDirectoryButton">
+        <property name="text">
+         <string>Select output dir</string>
+        </property>
        </widget>
       </item>
      </layout>

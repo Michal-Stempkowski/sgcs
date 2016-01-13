@@ -203,6 +203,7 @@ class TaskView(object):
 
 class Scheduler(GenericWidget):
     MAX_NUMBER_OF_TASKS = 50
+    NO_OUTPUT_DIRECTORY_SELECTED = '<no output dir>'
 
     def __init__(self):
         super().__init__(Ui_scheduler)
@@ -211,7 +212,11 @@ class Scheduler(GenericWidget):
         self.ui.clearTasksButton.clicked.connect(self.on_clear_tasks_clicked)
         self.ui.runTasksButton.clicked.connect(self.on_run_clicked)
 
+        self.ui.outputDirectorylineEdit.setText(self.NO_OUTPUT_DIRECTORY_SELECTED)
+        self.ui.outputDirectoryButton.clicked.connect(self.on_select_output_dir_clicked)
+
         self.last_directory = ''
+        self.output_dir = None
 
         self.tasks = []
 
@@ -222,8 +227,10 @@ class Scheduler(GenericWidget):
 
         self.run_task_dn = DynamicNode(
             self.ui.runTasksButton,
-            enabling_condition=lambda sch: sch.tasks and
-            all(self._is_valid_task(x) for x in sch.tasks)
+            enabling_condition=
+            lambda sch: sch.tasks and
+            all(self._is_valid_task(x) for x in sch.tasks) and
+            sch.ui.outputDirectorylineEdit.text() != sch.NO_OUTPUT_DIRECTORY_SELECTED
         )
 
         self.dynamic_nodes += [
@@ -335,3 +342,13 @@ class Scheduler(GenericWidget):
             task.data_configuration,
             task.params_configuration
         ])
+
+    def on_select_output_dir_clicked(self):
+        selected_dirname = QtGui.QFileDialog.getExistingDirectory(
+            self.widget, 'Select output directory...', self.last_directory)
+
+        if selected_dirname:
+            self.output_dir = selected_dirname
+            self.last_directory = os.path.dirname(selected_dirname)
+            self.ui.outputDirectorylineEdit.setText(self.output_dir)
+            self.dynamic_gui_update()
