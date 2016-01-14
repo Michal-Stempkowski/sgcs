@@ -1,3 +1,6 @@
+from core.symbol import Symbol
+
+
 class Rule(object):
     def __init__(self, parent, left_child, right_child=None):
         self._parent = parent
@@ -52,6 +55,22 @@ class Rule(object):
     def __str__(self):
         props = [str(self.parent), str(self.left_child), str(self.right_child)]
         return self.__class__.__name__ + '({' + '};{'.join(props) + "})"
+
+    @staticmethod
+    def _symbol_id_or_none(inpt):
+        return inpt.symbol_id if inpt is not None else None
+
+    @staticmethod
+    def _symbol_or_none(inpt):
+        return Symbol(inpt) if inpt is not None else None
+
+    def json_coder(self):
+        return [self._symbol_id_or_none(x) for x in
+                [self._parent, self.left_child, self.right_child]]
+
+    @staticmethod
+    def json_decoder(json):
+        return Rule(*[Rule._symbol_or_none(x) for x in json])
 
 
 class TerminalRule(Rule):

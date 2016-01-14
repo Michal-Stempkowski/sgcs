@@ -1,3 +1,4 @@
+from core.rule import Rule
 from core.symbol import Symbol
 
 
@@ -114,6 +115,17 @@ class RulePopulation(object):
         return rule in (self._terminal_rules if rule.is_terminal_rule()
                         else self._all_non_terminal_rules)
 
+    def json_coder(self):
+        terminal_rules = self.get_terminal_rules()
+        non_terminal_rules = self.get_all_non_terminal_rules()
+
+        return [self.__class__.__name__] + [x.json_coder() for x in
+                                            list(terminal_rules) + list(non_terminal_rules)]
+
+    def json_decoder(self, json, randomizer):
+        for jsonized_rule in json[1:]:
+            self.add_rule(Rule.json_decoder(jsonized_rule), randomizer)
+
 
 class StochasticRulePopulation(RulePopulation):
     def __init__(self, starting_symbol, universal_symbol=None, previous_instance=None,
@@ -162,3 +174,17 @@ class StochasticRulePopulation(RulePopulation):
             self.rule_probabilities[rule] = self.get_normalized_rule_probability(rule)
         for parent in self.left_side_probabilities:
             self.left_side_probabilities[parent] = 1
+
+    def json_coder(self):
+        terminal_rules = self.get_terminal_rules()
+        non_terminal_rules = self.get_all_non_terminal_rules()
+
+        return [self.__class__.__name__] + \
+               [[self.rule_probabilities.get(x, 0)] + x.json_coder()
+                for x in list(terminal_rules) + list(non_terminal_rules)]
+
+    def json_decoder(self, json, randomizer):
+        for jsonized_rule in json[1:]:
+            rule = Rule.json_decoder(jsonized_rule[1:])
+            super().add_rule(rule, randomizer)
+            self._add_new_rule_probability(rule, jsonized_rule[0])

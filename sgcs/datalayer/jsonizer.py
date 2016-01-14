@@ -56,7 +56,36 @@ class ConfigurationJsonizer(object):
         return instance
 
 
-class UnexpectedSimpleNodeClassError(Exception):
+class RulePopulationJsonizer(object):
+    @staticmethod
+    def make_binding_map(bindings_list):
+        return {cls.__name__: cls for cls in bindings_list}
+
+    def __init__(self, bindings):
+        self.bindings = bindings
+
+    def to_json(self, population):
+        return population.json_coder()
+
+    def from_json(self, json, randomizer, *args, **kwargs):
+        json_type = json[0]
+
+        binding = self.bindings.get(json_type)
+
+        if binding is None:
+            raise UnexpectedClassError(json_type)
+        else:
+            population = binding(*args, **kwargs)
+            population.json_decoder(json, randomizer)
+
+            return population
+
+
+class UnexpectedClassError(Exception):
     def __init__(self, class_name):
         super().__init__(class_name)
         self.class_name = class_name
+
+
+class UnexpectedSimpleNodeClassError(UnexpectedClassError):
+    pass
