@@ -80,11 +80,13 @@ class SimulationExecutor(object):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
                                                          task_no, runner.input_queue)
 
-        result, ngen, grammar_estimator = algorithm_simulator.perform_simulation(
+        result, ngen, grammar_estimator, population = algorithm_simulator.perform_simulation(
             learning_set, testing_set, configuration)
 
         print(result)
         print('NGen:', ngen)
+
+        return result, ngen, grammar_estimator, population
 
     def save_population(self, rule_population, path, name):
         serialized_population = self.population_serializer.to_json(rule_population)

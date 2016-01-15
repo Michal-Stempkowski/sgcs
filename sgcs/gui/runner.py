@@ -225,14 +225,13 @@ class SimulationWorker(QtCore.QThread):
         self.is_running = False
         self.simulation_executor = SimulationExecutor()
         self.current_data = RunnerGuiModel()
+        self.root_dir = self.runner.scheduler.ui.outputDirectorylineEdit.text()
 
     def run(self):
-        p = psutil.Process(os.getpid())
-        p.nice(psutil.HIGH_PRIORITY_CLASS)
         for i, task in enumerate(self.runner.scheduler.tasks):
             run_func, configuration = self._setup_task(i, task)
             result = self._run_task(run_func, configuration)
-            self._collect_task(result)
+            self._collect_task(result, i)
 
         while self.is_running:
             pass
@@ -263,8 +262,15 @@ class SimulationWorker(QtCore.QThread):
         self.current_data.current_phase = SimulationPhases.LEARNING
         return run_func(configuration)
 
-    def _collect_task(self, result):
+    def _collect_task(self, result, task_id):
         self.current_data.current_phase = SimulationPhases.COLLECTING
+        run_estimator, ngen, grammar_estimator, population = result
+
+        path = os.path.join(self.root_dir, 'task_{0}'.format(task_id))
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+        self.simulation_executor.save_population(population, path, 'final_population')
 
 
 class PartialInformationWorker(QtCore.QThread):

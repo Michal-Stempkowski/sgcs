@@ -129,7 +129,7 @@ class GcsSimulator(object):
 
         return self._perform_generalization_test(
             configuration, rule_population, auxiliary_rule_population, testing_set,
-            run_estimator) + (final_grammar_estimator,)
+            run_estimator) + (final_grammar_estimator, rule_population)
 
 
 class AsyncGcsSimulator(GcsSimulator):
@@ -177,4 +177,4 @@ class AsyncGcsSimulator(GcsSimulator):
             async_results = pool.imap_unordered(self.calculate_star, tasks)
 
             for result in async_results:
-                return result[0] + (final_grammar_estimator,)
+                return result[0] + (final_grammar_estimator, rule_population)
