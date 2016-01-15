@@ -2,6 +2,12 @@ import json
 import os
 from random import Random
 
+import math
+
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
+from matplotlib.font_manager import FontProperties
+
 from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration, AlgorithmVariant, \
     CykServiceVariationManager
 from algorithm.gcs_simulator import AsyncGcsSimulator
@@ -20,6 +26,65 @@ from induction.cyk_configuration import CoverageConfiguration, CoverageOperatorC
 from rule_adding import AddingRulesConfiguration, CrowdingConfiguration, ElitismConfiguration
 from statistics.grammar_statistics import ClassicalStatisticsConfiguration
 from utils import Randomizer
+
+
+class GrammarCriteriaPainter(object):
+    DIAGRAM_EXT = '.png'
+    DIAGRAM_EXT2 = '.pdf'
+
+    def __init__(self, criteria, out_name=None):
+        self.criteria = criteria
+        self.out_name = out_name if out_name else self.criteria
+
+    def paint(self, grammar_estimator, path, configuration):
+        data = grammar_estimator[self.criteria]
+        steps = range(configuration.max_algorithm_steps)
+
+        x = []
+        y = []
+
+        x_min = []
+        y_min = []
+
+        x_max = []
+        y_max = []
+
+        for step in steps:
+            value = data.get(step)
+            min_value = data.get_min(step)
+            max_value = data.get_max(step)
+            if not math.isnan(value):
+                y.append(value)
+                x.append(step)
+            if not math.isnan(min_value):
+                y_min.append(min_value)
+                x_min.append(step)
+            if not math.isnan(max_value):
+                y_max.append(max_value)
+                x_max.append(step)
+
+        fig = Figure()
+        ax = fig.add_axes([.1, .1, .8, .8], title='{0}/steps'.format(self.criteria))
+        self._plot_line(ax, x_min, y_min, 'dashed', self.criteria + '_min', no_points=True)
+        self._plot_line(ax, x_max, y_max, 'dashed', self.criteria + '_max', no_points=True)
+        self._plot_line(ax, x, y, 'solid', self.criteria)
+
+        font_p = FontProperties()
+        font_p.set_size('small')
+        ax.legend(prop=font_p, loc='best')
+
+        if not x:
+            ax.text(0, 0, 'No data to generate valid diagram', style='italic',
+                    bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10})
+
+        canvas = FigureCanvasAgg(fig)
+        canvas.print_figure(os.path.join(path, self.out_name + self.DIAGRAM_EXT))
+
+    @staticmethod
+    def _plot_line(ax, x_axis, y_axis, linestyle, name, no_points=False):
+        ax.plot(x_axis, y_axis, color='blue', linestyle=linestyle, label=name, marker='')
+        if not no_points:
+            ax.scatter(x_axis, y_axis, marker='+')
 
 
 class SimulationExecutor(object):
@@ -57,6 +122,15 @@ class SimulationExecutor(object):
                 ]
             )
         )
+
+        self.diagram_painter = [
+            GrammarCriteriaPainter('fitness'),
+            GrammarCriteriaPainter('positive'),
+            GrammarCriteriaPainter('negative'),
+            GrammarCriteriaPainter('sensivity'),
+            GrammarCriteriaPainter('specifity'),
+            GrammarCriteriaPainter('accuracy')
+        ]
 
         self.randomizer = Randomizer(Random())
 
@@ -121,3 +195,7 @@ class SimulationExecutor(object):
         with self._artifact_file(path, name, self.RUN_SUMMARY_EXT, 'w+') as summary_f:
             summary_f.write('{0}\n'.format(run_estimator))
             summary_f.write('Ngen: {0}\n'.format(ngen))
+
+    def generate_grammar_estimation_diagrams(self, grammar_estimator, path, configuration):
+        for painter in self.diagram_painter:
+            painter.paint(grammar_estimator, path, configuration)

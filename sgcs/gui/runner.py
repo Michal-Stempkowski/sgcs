@@ -171,6 +171,7 @@ class SimulationPhases(object):
     COLLECTING = 'Collecting run artifacts...'
     DONE = 'All tasks finished!'
     ERROR = 'An error has occurred!'
+    PERMISSION_ERROR = 'No permission to write artifacts!'
 
 
 class RunnerSimulationDataAutoUpdater(AutoUpdater):
@@ -220,6 +221,7 @@ class RunnerGuiModel(object):
 
 class SimulationWorker(QtCore.QThread):
     TASK_CONFIRMED_FINISHED_SIGNAL = 'TASK_CONFIRMED_FINISHED_SIGNAL'
+    ALL_TASKS_FINISHED_SIGNAL = 'ALL_TASKS_FINISHED_SIGNAL'
 
     def __init__(self, runner):
         super().__init__(runner.widget)
@@ -233,9 +235,20 @@ class SimulationWorker(QtCore.QThread):
         for i, task in enumerate(self.runner.scheduler.tasks):
             run_func, configuration = self._setup_task(i, task)
             result = self._run_task(run_func, configuration)
-            self._collect_task(result, i)
+
+            collected = False
+            while not collected:
+                try:
+                    self._collect_task(result, i, configuration)
+                except PermissionError:
+                    collected = False
+                    self.current_data.current_phase = SimulationPhases.PERMISSION_ERROR
+                else:
+                    collected = True
+                    self.current_data.current_phase = SimulationPhases.COLLECTING
 
         self.current_data.current_phase = SimulationPhases.DONE
+        self.emit(QtCore.SIGNAL(self.ALL_TASKS_FINISHED_SIGNAL))
 
     def _setup_task(self, task_no, task):
         new_data = RunnerGuiModel()
@@ -263,18 +276,24 @@ class SimulationWorker(QtCore.QThread):
         self.current_data.current_phase = SimulationPhases.LEARNING
         return run_func(configuration)
 
-    def _collect_task(self, result, task_id):
+    def _collect_task(self, result, task_id, configuration):
         self.current_data.current_phase = SimulationPhases.COLLECTING
         run_estimator, ngen, grammar_estimator, population = result
 
         path = self._prepare_artifact_dir(task_id)
 
         self.simulation_executor.save_population(
-            population, path, 'final_population')
+            population, path, 'final_population'
+        )
         self.simulation_executor.save_grammar_estimator(
-            grammar_estimator, path, 'grammar_estimator')
+            grammar_estimator, path, 'grammar_estimator'
+        )
         self.simulation_executor.save_execution_summary(
-            run_estimator, ngen, path, 'run_summary')
+            run_estimator, ngen, path, 'run_summary'
+        )
+        self.simulation_executor.generate_grammar_estimation_diagrams(
+            grammar_estimator, path, configuration
+        )
 
     def _prepare_artifact_dir(self, task_id):
         path = os.path.join(self.root_dir, 'task_{0}'.format(task_id))
@@ -377,6 +396,10 @@ class Runner(GenericWidget):
         # noinspection PyUnresolvedReferences
         self.update_timer.timeout.connect(self.on_gui_invalidated)
         self.update_timer.start(self.REFRESH_GUI_TIME)
+        self.simulation_worker.connect(
+            self.simulation_worker,
+            QtCore.SIGNAL(self.simulation_worker.ALL_TASKS_FINISHED_SIGNAL),
+            self.on_all_tasks_finished)
 
     def on_gui_invalidated(self):
         self.dynamic_gui_update()
@@ -388,3 +411,6 @@ class Runner(GenericWidget):
         self.partial_information_worker.terminate()
         self.scheduler.widget.setEnabled(True)
         self._original_close_event(ev)
+
+    def on_all_tasks_finished(self):
+        QtGui.QMessageBox().about(self.widget, 'Info', SimulationPhases.DONE)
