@@ -282,6 +282,12 @@ class SimulationWorker(QtCore.QThread):
 
         path = self._prepare_artifact_dir(task_id)
 
+        input_data_name = os.path.basename(self.current_data.current_input)
+        config_data_name = os.path.basename(self.current_data.current_config)
+
+        shutil.copy(self.current_data.current_input, os.path.join(path, input_data_name))
+        shutil.copy(self.current_data.current_config, os.path.join(path, config_data_name))
+
         self.simulation_executor.save_population(
             population, path, 'final_population'
         )
