@@ -8,7 +8,7 @@ from algorithm.gcs_simulator import AsyncGcsSimulator
 from core.rule import Rule
 from core.rule_population import RulePopulation, StochasticRulePopulation
 from core.symbol import Symbol
-from datalayer.jsonizer import ConfigurationJsonizer, RulePopulationJsonizer
+from datalayer.jsonizer import BasicJsonizer, RulePopulationJsonizer
 from datalayer.symbol_translator import SymbolTranslator
 from evolution.evolution_configuration import EvolutionConfiguration, EvolutionOperatorConfiguration, \
     EvolutionOperatorsConfiguration, EvolutionSelectorConfiguration, \
@@ -24,9 +24,11 @@ from utils import Randomizer
 
 class SimulationExecutor(object):
     POPULATION_EXT = ".pop"
+    GRAMMAR_ESTIMATOR_EXT = ".grest"
+    RUN_SUMMARY_EXT = ".txt"
 
     def __init__(self):
-        self.configuration_serializer = ConfigurationJsonizer([
+        self.configuration_serializer = BasicJsonizer([
             AddingRulesConfiguration,
             CrowdingConfiguration,
             ElitismConfiguration,
@@ -88,16 +90,25 @@ class SimulationExecutor(object):
 
         return result, ngen, grammar_estimator, population
 
+    @staticmethod
+    def _artifact_file(path, name, extension, mode='r'):
+        return open(os.path.join(path, name + extension), mode)
+
     def save_population(self, rule_population, path, name):
         serialized_population = self.population_serializer.to_json(rule_population)
-        with open(os.path.join(path, name + self.POPULATION_EXT), 'w+') as pop_file:
+        with self._artifact_file(path, name, self.POPULATION_EXT, 'w+') as pop_file:
             json.dump(serialized_population, pop_file, sort_keys=True, indent=4)
 
     def load_population(self, path, name, *pop_args, **pop_kwargs):
-        with open(os.path.join(path, name + self.POPULATION_EXT)) as pop_file:
+        with self._artifact_file(path, name, self.POPULATION_EXT) as pop_file:
             serialized_population = json.load(pop_file)
             return self.population_serializer.from_json(serialized_population,
                                                         self.randomizer, *pop_args, **pop_kwargs)
+
+    def save_grammar_estimator(self, grammar_estimator, path, name):
+        serialized_grammar_estimator = grammar_estimator.json_coder()
+        with self._artifact_file(path, name, self.POPULATION_EXT, 'w+') as est_file:
+            json.dump(serialized_grammar_estimator, est_file, sort_keys=True, indent=4)
 
     @staticmethod
     def load_input_config(config_path):
@@ -105,3 +116,8 @@ class SimulationExecutor(object):
             deserialized = json.loads('\n'.join(file.readlines()))
 
             return deserialized['learning'], deserialized['testing']
+
+    def save_execution_summary(self, run_estimator, ngen, path, name):
+        with self._artifact_file(path, name, self.RUN_SUMMARY_EXT, 'w+') as summary_f:
+            summary_f.write('{0}\n'.format(run_estimator))
+            summary_f.write('Ngen: {0}\n'.format(ngen))

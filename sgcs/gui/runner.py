@@ -1,6 +1,7 @@
 import logging
 import os
 import queue
+import shutil
 from multiprocessing import Queue
 
 import multiprocessing
@@ -13,6 +14,7 @@ from gui.dynamic_gui import DynamicNode, AutoUpdater, DynamicRoot
 from gui.generated.runner__gen import Ui_runner
 from gui.generic_widget import GenericWidget
 from gui.proxy.simulator_proxy import RunResult, PyQtAwareAsyncGcsSimulator, PyQtAwareGcsRunner
+from utils import rmdir_forced
 
 
 class RunPostMortemModel(object):
@@ -233,8 +235,7 @@ class SimulationWorker(QtCore.QThread):
             result = self._run_task(run_func, configuration)
             self._collect_task(result, i)
 
-        while self.is_running:
-            pass
+        self.current_data.current_phase = SimulationPhases.DONE
 
     def _setup_task(self, task_no, task):
         new_data = RunnerGuiModel()
@@ -266,11 +267,22 @@ class SimulationWorker(QtCore.QThread):
         self.current_data.current_phase = SimulationPhases.COLLECTING
         run_estimator, ngen, grammar_estimator, population = result
 
-        path = os.path.join(self.root_dir, 'task_{0}'.format(task_id))
-        if not os.path.exists(path):
-            os.mkdir(path)
+        path = self._prepare_artifact_dir(task_id)
 
-        self.simulation_executor.save_population(population, path, 'final_population')
+        self.simulation_executor.save_population(
+            population, path, 'final_population')
+        self.simulation_executor.save_grammar_estimator(
+            grammar_estimator, path, 'grammar_estimator')
+        self.simulation_executor.save_execution_summary(
+            run_estimator, ngen, path, 'run_summary')
+
+    def _prepare_artifact_dir(self, task_id):
+        path = os.path.join(self.root_dir, 'task_{0}'.format(task_id))
+        if os.path.exists(path):
+            rmdir_forced(path)
+
+        os.mkdir(path)
+        return path
 
 
 class PartialInformationWorker(QtCore.QThread):

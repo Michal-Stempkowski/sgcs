@@ -33,7 +33,7 @@ class SimpleJsonNode(object):
         return self
 
 
-class ConfigurationJsonizer(object):
+class BasicJsonizer(object):
     node_id = '_node_id'
 
     def __init__(self, expected_classes):
@@ -79,6 +79,31 @@ class RulePopulationJsonizer(object):
             population.json_decoder(json, randomizer)
 
             return population
+
+
+class ComplexJsonizer(object):
+    @staticmethod
+    def make_binding_map(bindings_list):
+        return {cls.__name__: cls for cls in bindings_list}
+
+    def __init__(self, bindings):
+        self.bindings = bindings
+
+    def to_json(self, obj):
+        return obj.json_coder()
+
+    def from_json(self, json, *args, **kwargs):
+        json_type = json[0]
+
+        binding = self.bindings.get(json_type)
+
+        if binding is None:
+            raise UnexpectedClassError(json_type)
+        else:
+            obj = binding(*args, **kwargs)
+            obj.json_decoder(json)
+
+            return obj
 
 
 class UnexpectedClassError(Exception):

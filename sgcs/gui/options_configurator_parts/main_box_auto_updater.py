@@ -6,7 +6,7 @@ from PyQt4 import QtGui
 from algorithm.gcs_runner import AlgorithmConfiguration
 from algorithm.gcs_runner import RuleConfiguration
 from core.symbol import Symbol
-from datalayer.jsonizer import ConfigurationJsonizer
+from datalayer.jsonizer import BasicJsonizer
 from evolution.evolution_configuration import EvolutionConfiguration, EvolutionOperatorConfiguration, \
     EvolutionOperatorsConfiguration, EvolutionSelectorConfiguration, \
     EvolutionRandomSelectorConfiguration, EvolutionTournamentSelectorConfiguration, \
@@ -26,7 +26,7 @@ class MainBoxAutoUpdater(AutoUpdater):
             lambda: self._update_gui(options_configurator),
             lambda: self._init_gui(options_configurator)
         )
-        self.serializer = ConfigurationJsonizer([
+        self.serializer = BasicJsonizer([
             AddingRulesConfiguration,
             CrowdingConfiguration,
             ElitismConfiguration,

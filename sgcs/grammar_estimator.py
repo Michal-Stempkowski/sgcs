@@ -174,6 +174,17 @@ class GrammarCriteria(metaclass=ABCMeta):
 
         return result
 
+    def json_coder(self):
+        return [[k, a, b, c, d] for k, (a, b, c, d) in self._occurrences.items()] + [[
+            self._global_min,
+            self._global_max,
+            self._global_average
+        ]]
+
+    def json_decoder(self, json):
+        *occurrences, [self._global_min, self._global_max, self._global_average] = json
+        self._occurrences = {k: (a, b, c, d) for [k, a, b, c, d] in occurrences}
+
 
 class FitnessGrammarCriteria(GrammarCriteria):
     def _calculate(self, estimation):
@@ -247,3 +258,12 @@ class GrammarEstimator(object):
             result.criterias[name] = result.criterias[name] + other.criterias[name]
 
         return result
+
+    def json_coder(self):
+        return [self.__class__.__name__] + [
+            [k, v.json_coder()] for k, v in self.criterias.items()
+        ]
+
+    def json_decoder(self, json):
+        for [k, v] in json[1:]:
+            self.criterias[k].json_decoder(v)

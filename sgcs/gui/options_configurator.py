@@ -3,7 +3,7 @@ from abc import abstractmethod
 
 from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration
 from core.symbol import Symbol
-from datalayer.jsonizer import ConfigurationJsonizer
+from datalayer.jsonizer import BasicJsonizer
 from evolution.evolution_configuration import *
 from gui.dynamic_gui import NONE_LABEL, DynamicNode, refreshes_dynamics, BlockSignals, \
     feed_with_data

@@ -230,58 +230,7 @@ class TestGrammarEstimator(unittest.TestCase):
                                global_max_accuracy=0.75)
 
         self.sut.append_step_estimation(1, self.mk_evolution_step(tp=0, tn=1, fp=2, fn=0))
-        self.assert_estimation(step=1, fitness=0.33, positive=float('nan'), negative=0.67,
-                               sensitivity=float('nan'), specifity=0.33, accuracy=0.33,
-                               min_fitness=0.33, max_fitness=0.33,
-                               min_positive=float('nan'), max_positive=float('nan'),
-                               min_negative=0.67, max_negative=0.67,
-                               min_sensitivity=float('nan'), max_sensitivity=float('nan'),
-                               min_specifity=0.33, max_specifity=0.33,
-                               min_accuracy=0.33, max_accuracy=0.33,
-                               average_fitness=0.54,
-                               average_positive=0.8,
-                               average_negative=0.48,
-                               average_sensitivity=0.7,
-                               average_specifity=0.52,
-                               average_accuracy=0.54,
-                               global_min_fitness=0.33,
-                               global_min_positive=0.6,
-                               global_min_negative=0.3,
-                               global_min_sensivity=0.4,
-                               global_min_specifity=0.33,
-                               global_min_accuracy=0.33,
-                               global_max_fitness=0.75,
-                               global_max_positive=0.8,
-                               global_max_negative=0.67,
-                               global_max_sensivity=0.7,
-                               global_max_specifity=0.7,
-                               global_max_accuracy=0.75)
-        self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3, sensitivity=0.7,
-                               specifity=0.7, accuracy=0.75,
-                               min_fitness=0.5, max_fitness=0.75,
-                               min_positive=0.6, max_positive=0.8,
-                               min_negative=0.3, max_negative=0.6,
-                               min_sensitivity=0.4, max_sensitivity=0.7,
-                               min_specifity=0.4, max_specifity=0.7,
-                               min_accuracy=0.5, max_accuracy=0.75,
-                               average_fitness=0.54,
-                               average_positive=0.8,
-                               average_negative=0.48,
-                               average_sensitivity=0.7,
-                               average_specifity=0.52,
-                               average_accuracy=0.54,
-                               global_min_fitness=0.33,
-                               global_min_positive=0.6,
-                               global_min_negative=0.3,
-                               global_min_sensivity=0.4,
-                               global_min_specifity=0.33,
-                               global_min_accuracy=0.33,
-                               global_max_fitness=0.75,
-                               global_max_positive=0.8,
-                               global_max_negative=0.67,
-                               global_max_sensivity=0.7,
-                               global_max_specifity=0.7,
-                               global_max_accuracy=0.75)
+        self.common_final_assert()
 
     def common_grammar_estimation_adding(self, left, right, first, second, third):
         first.append_step_estimation(0, self.mk_evolution_step(tp=7, tn=2, fp=1, fn=0))
@@ -414,3 +363,68 @@ class TestGrammarEstimator(unittest.TestCase):
             right = GrammarEstimator()
             args = [left, right] + [self._select(left, right, x) for x in decisions]
             self.common_grammar_estimation_adding(*args)
+
+    def common_final_assert(self):
+        self.assert_estimation(step=1, fitness=0.33, positive=float('nan'), negative=0.67,
+                               sensitivity=float('nan'), specifity=0.33, accuracy=0.33,
+                               min_fitness=0.33, max_fitness=0.33,
+                               min_positive=float('nan'), max_positive=float('nan'),
+                               min_negative=0.67, max_negative=0.67,
+                               min_sensitivity=float('nan'), max_sensitivity=float('nan'),
+                               min_specifity=0.33, max_specifity=0.33,
+                               min_accuracy=0.33, max_accuracy=0.33,
+                               average_fitness=0.54,
+                               average_positive=0.8,
+                               average_negative=0.48,
+                               average_sensitivity=0.7,
+                               average_specifity=0.52,
+                               average_accuracy=0.54,
+                               global_min_fitness=0.33,
+                               global_min_positive=0.6,
+                               global_min_negative=0.3,
+                               global_min_sensivity=0.4,
+                               global_min_specifity=0.33,
+                               global_min_accuracy=0.33,
+                               global_max_fitness=0.75,
+                               global_max_positive=0.8,
+                               global_max_negative=0.67,
+                               global_max_sensivity=0.7,
+                               global_max_specifity=0.7,
+                               global_max_accuracy=0.75)
+        self.assert_estimation(step=0, fitness=0.75, positive=0.8, negative=0.3, sensitivity=0.7,
+                               specifity=0.7, accuracy=0.75,
+                               min_fitness=0.5, max_fitness=0.75,
+                               min_positive=0.6, max_positive=0.8,
+                               min_negative=0.3, max_negative=0.6,
+                               min_sensitivity=0.4, max_sensitivity=0.7,
+                               min_specifity=0.4, max_specifity=0.7,
+                               min_accuracy=0.5, max_accuracy=0.75,
+                               average_fitness=0.54,
+                               average_positive=0.8,
+                               average_negative=0.48,
+                               average_sensitivity=0.7,
+                               average_specifity=0.52,
+                               average_accuracy=0.54,
+                               global_min_fitness=0.33,
+                               global_min_positive=0.6,
+                               global_min_negative=0.3,
+                               global_min_sensivity=0.4,
+                               global_min_specifity=0.33,
+                               global_min_accuracy=0.33,
+                               global_max_fitness=0.75,
+                               global_max_positive=0.8,
+                               global_max_negative=0.67,
+                               global_max_sensivity=0.7,
+                               global_max_specifity=0.7,
+                               global_max_accuracy=0.75)
+
+    def test_grammar_json(self):
+        self.sut.append_step_estimation(0, self.mk_evolution_step(tp=3, tn=2, fp=3, fn=2))
+        self.sut.append_step_estimation(0, self.mk_evolution_step(tp=5, tn=5, fp=0, fn=0))
+        self.sut.append_step_estimation(1, self.mk_evolution_step(tp=0, tn=1, fp=2, fn=0))
+        self.common_final_assert()
+
+        jsonized = self.sut.json_coder()
+        self.sut = GrammarEstimator()
+        self.sut.json_decoder(jsonized)
+        self.common_final_assert()
