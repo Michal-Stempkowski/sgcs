@@ -103,11 +103,11 @@ class GcsSimulator(object):
         sentences = list(testing_set.get_sentences())
 
         r = self._generalization_run(conf, rules, sentences)
-        rule_population, _, n_gen, *_1 = r
+        rule_population, _, n_gen, *_1, grammar_statistics = r
 
         logging.info(testing_set.rule_population_to_string(rule_population))
 
-        return run_estimator, n_gen
+        return run_estimator, n_gen, grammar_statistics
 
     def _generalization_run(self, conf, rules, sentences):
         return self._perform_run(conf, rules, sentences, None)

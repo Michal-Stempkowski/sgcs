@@ -278,7 +278,7 @@ class SimulationWorker(QtCore.QThread):
 
     def _collect_task(self, result, task_id, configuration):
         self.current_data.current_phase = SimulationPhases.COLLECTING
-        run_estimator, ngen, grammar_estimator, population = result
+        run_estimator, ngen, grammar_estimator, generalisation_data, population = result
 
         path = self._prepare_artifact_dir(task_id)
 
@@ -295,7 +295,7 @@ class SimulationWorker(QtCore.QThread):
             grammar_estimator, path, 'grammar_estimator'
         )
         self.simulation_executor.save_execution_summary(
-            run_estimator, ngen, path, 'run_summary'
+            run_estimator, ngen, generalisation_data, path, 'run_summary'
         )
         self.simulation_executor.generate_grammar_estimation_diagrams(
             grammar_estimator, path, configuration

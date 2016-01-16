@@ -160,13 +160,13 @@ class SimulationExecutor(object):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
                                                          task_no, runner.input_queue)
 
-        result, ngen, grammar_estimator, population = algorithm_simulator.perform_simulation(
-            learning_set, testing_set, configuration)
+        result, ngen, grammar_estimator, gener_grammar_estimator, population = \
+            algorithm_simulator.perform_simulation(learning_set, testing_set, configuration)
 
         print(result)
         print('NGen:', ngen)
 
-        return result, ngen, grammar_estimator, population
+        return result, ngen, grammar_estimator, gener_grammar_estimator, population
 
     @staticmethod
     def _artifact_file(path, name, extension, mode='r'):
@@ -195,10 +195,13 @@ class SimulationExecutor(object):
 
             return deserialized['learning'], deserialized['testing']
 
-    def save_execution_summary(self, run_estimator, ngen, path, name):
+    def save_execution_summary(self, run_estimator, ngen, generalisation_data, path, name):
         with self._artifact_file(path, name, self.RUN_SUMMARY_EXT, 'w+') as summary_f:
             summary_f.write('{0}\n'.format(run_estimator))
             summary_f.write('Ngen: {0}\n'.format(ngen))
+
+            for criteria, value in generalisation_data.criterias.items():
+                summary_f.write('{0}: {1}\n'.format(criteria, value.get(0)))
 
     def generate_grammar_estimation_diagrams(self, grammar_estimator, path, configuration):
         for painter in self.diagram_painter:
