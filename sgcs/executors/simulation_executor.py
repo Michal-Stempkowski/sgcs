@@ -152,8 +152,15 @@ class SimulationExecutor(object):
         testing_set = SymbolTranslator.create(testing_set_path)
         testing_set.negative_allowed = True
 
-        return lambda conf: self._perform_simulation(
-            algorithm_variant, learning_set, testing_set, conf, runner, task_no), configuration
+        return (lambda conf: self._perform_simulation(
+            algorithm_variant, learning_set, testing_set, conf, runner, task_no),
+            configuration,
+            self._mk_population_printer(learning_set)
+        )
+
+    @staticmethod
+    def _mk_population_printer(translator):
+        return lambda x: translator.rule_population_to_string(x)
 
     def _perform_simulation(self, algorithm_variant, learning_set, testing_set, configuration,
                             runner, task_no):
@@ -172,10 +179,12 @@ class SimulationExecutor(object):
     def _artifact_file(path, name, extension, mode='r'):
         return open(os.path.join(path, name + extension), mode)
 
-    def save_population(self, rule_population, path, name):
+    def save_population(self, rule_population, population_printer, path, name):
         serialized_population = self.population_serializer.to_json(rule_population)
         with self._artifact_file(path, name, self.POPULATION_EXT, 'w+') as pop_file:
             json.dump(serialized_population, pop_file, sort_keys=True, indent=4)
+        with self._artifact_file(path, name + '_view', self.RUN_SUMMARY_EXT, 'w+') as pop_view_file:
+            pop_view_file.write('{0}\n'.format(population_printer(rule_population)))
 
     def load_population(self, path, name, *pop_args, **pop_kwargs):
         with self._artifact_file(path, name, self.POPULATION_EXT) as pop_file:

@@ -233,13 +233,13 @@ class SimulationWorker(QtCore.QThread):
 
     def run(self):
         for i, task in enumerate(self.runner.scheduler.tasks):
-            run_func, configuration = self._setup_task(i, task)
+            run_func, configuration, population_printer = self._setup_task(i, task)
             result = self._run_task(run_func, configuration)
 
             collected = False
             while not collected:
                 try:
-                    self._collect_task(result, i, configuration)
+                    self._collect_task(result, i, configuration, population_printer)
                 except PermissionError:
                     collected = False
                     self.current_data.current_phase = SimulationPhases.PERMISSION_ERROR
@@ -258,7 +258,7 @@ class SimulationWorker(QtCore.QThread):
         new_data.current_phase = SimulationPhases.SETUP
         self.current_data = new_data
 
-        run_func, configuration = self.simulation_executor.prepare_simulation(
+        run_func, configuration, pop_printer = self.simulation_executor.prepare_simulation(
             self.runner, task_no, new_data.current_input, new_data.current_config)
 
         run_post_mortem_data = []
@@ -270,13 +270,13 @@ class SimulationWorker(QtCore.QThread):
 
         self.runner.run_progress_data = run_post_mortem_data
 
-        return run_func, configuration
+        return run_func, configuration, pop_printer
 
     def _run_task(self, run_func, configuration):
         self.current_data.current_phase = SimulationPhases.LEARNING
         return run_func(configuration)
 
-    def _collect_task(self, result, task_id, configuration):
+    def _collect_task(self, result, task_id, configuration, population_printer):
         self.current_data.current_phase = SimulationPhases.COLLECTING
         run_estimator, ngen, grammar_estimator, generalisation_data, population = result
 
@@ -289,7 +289,7 @@ class SimulationWorker(QtCore.QThread):
         shutil.copy(self.current_data.current_config, os.path.join(path, config_data_name))
 
         self.simulation_executor.save_population(
-            population, path, 'final_population'
+            population, population_printer, path, 'final_population'
         )
         self.simulation_executor.save_grammar_estimator(
             grammar_estimator, path, 'grammar_estimator'
