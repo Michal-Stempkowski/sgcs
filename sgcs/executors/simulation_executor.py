@@ -64,9 +64,13 @@ class GrammarCriteriaPainter(object):
                 x_max.append(step)
 
         fig = Figure()
+        canvas = FigureCanvasAgg(fig)
+
         ax = fig.add_axes([.1, .1, .8, .8], title='{0}/steps'.format(self.criteria))
-        self._plot_line(ax, x_min, y_min, 'dashed', self.criteria + '_min', no_points=True)
-        self._plot_line(ax, x_max, y_max, 'dashed', self.criteria + '_max', no_points=True)
+        self._plot_line(ax, x_min, y_min, 'dashed', self.criteria + '_min',
+                        no_points=True, color='cyan')
+        self._plot_line(ax, x_max, y_max, 'dashed', self.criteria + '_max',
+                        no_points=True, color='cyan')
         self._plot_line(ax, x, y, 'solid', self.criteria)
 
         font_p = FontProperties()
@@ -77,12 +81,12 @@ class GrammarCriteriaPainter(object):
             ax.text(0, 0, 'No data to generate valid diagram', style='italic',
                     bbox={'facecolor': 'red', 'alpha': 0.5, 'pad': 10})
 
-        canvas = FigureCanvasAgg(fig)
-        canvas.print_figure(os.path.join(path, self.out_name + self.DIAGRAM_EXT))
+        fig.set_size_inches(22, 12)
+        fig.savefig(os.path.join(path, self.out_name + self.DIAGRAM_EXT), dpi=60)
 
     @staticmethod
-    def _plot_line(ax, x_axis, y_axis, linestyle, name, no_points=False):
-        ax.plot(x_axis, y_axis, color='blue', linestyle=linestyle, label=name, marker='')
+    def _plot_line(ax, x_axis, y_axis, linestyle, name, no_points=False, color='blue'):
+        ax.plot(x_axis, y_axis, color=color, linestyle=linestyle, label=name, marker='')
         if not no_points:
             ax.scatter(x_axis, y_axis, marker='+')
 

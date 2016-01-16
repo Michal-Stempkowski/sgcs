@@ -197,7 +197,7 @@ class RunnerSimulationDataAutoUpdater(AutoUpdater):
     def _update_gui(runner):
         data = runner.simulation_worker.current_data
         if data.tasks_progress != RunnerGuiModel.FIELD_UNDEFINED:
-            runner.ui.allTasksProgressBar.setValue(data.tasks_progress)
+            runner.ui.allTasksProgressBar.setValue(data.tasks_progress + 1)
             runner.ui.allTasksProgressBar.setMaximum(len(runner.scheduler.tasks))
 
         runner.ui.currentDataFileLineEdit.setText(data.current_input)

@@ -12,7 +12,11 @@ from gui.system_status import SystemStatus
 
 
 def main():
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(
+        level=logging.INFO,
+        filename=r"C:\Users\Michał\PycharmProjects\mgr\sgcs\log.log",
+        format='%(asctime)s %(message)s'
+    )
     app = QtGui.QApplication(sys.argv)
     input_data_lookup = MainApp()
     input_data_lookup.show()
