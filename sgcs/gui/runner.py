@@ -278,7 +278,7 @@ class SimulationWorker(QtCore.QThread):
 
     def _collect_task(self, result, task_id, configuration, population_printer):
         self.current_data.current_phase = SimulationPhases.COLLECTING
-        run_estimator, ngen, grammar_estimator, generalisation_data, population = result
+        run_estimator, ngen, grammar_estimator, population, generalisation_data = result
 
         path = self._prepare_artifact_dir(task_id)
 

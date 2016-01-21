@@ -321,4 +321,4 @@ class GcsRunner(object):
         return rule_population, stop_reasoning, fitness_reached, evolution_step
 
     def _post_step_actions(self, step):
-        print(step)
+        pass

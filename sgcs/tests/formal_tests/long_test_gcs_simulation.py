@@ -93,7 +93,7 @@ class LongTestGcsSimulator(unittest.TestCase):
             testing_set = SymbolTranslator.create(testing_path)
             testing_set.negative_allowed = True
 
-            result, ngen, grammar_estimator, *_, population = self.sut.perform_simulation(
+            result, ngen, grammar_estimator, population, *_ = self.sut.perform_simulation(
                 learning_set, testing_set, self.configuration)
 
             print(result)

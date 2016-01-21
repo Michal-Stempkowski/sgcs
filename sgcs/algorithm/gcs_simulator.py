@@ -82,7 +82,6 @@ class GcsSimulator(object):
 
         msg = 'Success: {0}'.format(evolution_step) if stop_reasoning.has_succeeded() \
             else 'Failure'
-        print(run_no, ':', msg)
         logging.info('%s : %s', str(run_no), str(msg))
 
         return rule_population, auxiliary_rule_population, aux_fitness
@@ -91,7 +90,6 @@ class GcsSimulator(object):
                                      testing_set, run_estimator):
         conf = self._prepare_configuration_for_generalization_test(configuration)
 
-        print('nGen starting')
         logging.info('nGen starting')
 
         rule_population = rule_population if rule_population is not None \
@@ -107,7 +105,7 @@ class GcsSimulator(object):
 
         logging.info(testing_set.rule_population_to_string(rule_population))
 
-        return run_estimator, n_gen, grammar_statistics
+        return run_estimator, n_gen, grammar_statistics, rule_population
 
     def _generalization_run(self, conf, rules, sentences):
         return self._perform_run(conf, rules, sentences, None)
@@ -129,7 +127,7 @@ class GcsSimulator(object):
 
         return self._perform_generalization_test(
             configuration, rule_population, auxiliary_rule_population, testing_set,
-            run_estimator) + (final_grammar_estimator, rule_population)
+            run_estimator) + (final_grammar_estimator,)
 
 
 class AsyncGcsSimulator(GcsSimulator):
@@ -177,4 +175,4 @@ class AsyncGcsSimulator(GcsSimulator):
             async_results = pool.imap_unordered(self.calculate_star, tasks)
 
             for result in async_results:
-                return result[0] + (final_grammar_estimator, rule_population)
+                return result[0] + (final_grammar_estimator,)

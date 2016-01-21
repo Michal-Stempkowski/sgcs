@@ -194,15 +194,15 @@ class FitnessGrammarCriteria(GrammarCriteria):
         return True
 
 
-class PositiveGrammarCriteria(GrammarCriteria):
+class MissRateGrammarCriteria(GrammarCriteria):
     def _calculate(self, estimation):
-        return estimation.true_positive / estimation.positives_that_has_occurred
+        return estimation.false_negative / estimation.positives_that_has_occurred
 
     def _data_guard(self, estimation):
         return estimation.positives_that_has_occurred != 0
 
 
-class NegativeGrammarCriteria(GrammarCriteria):
+class FalloutGrammarCriteria(GrammarCriteria):
     def _calculate(self, estimation):
         return estimation.false_positive / estimation.negatives_that_has_occurred
 
@@ -212,7 +212,7 @@ class NegativeGrammarCriteria(GrammarCriteria):
 
 class SensitivityGrammarCriteria(GrammarCriteria):
     def _calculate(self, estimation):
-        return estimation.true_negative / estimation.positives_that_has_occurred
+        return estimation.true_positive / estimation.positives_that_has_occurred
 
     def _data_guard(self, estimation):
         return estimation.positives_that_has_occurred != 0
@@ -234,15 +234,60 @@ class AccuracyGrammarCriteria(GrammarCriteria):
         return estimation.total != 0
 
 
+class PrecisionGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.true_positive / (estimation.true_positive + estimation.false_positive)
+
+    def _data_guard(self, estimation):
+        return estimation.true_positive + estimation.false_positive != 0
+
+
+class FalseOmissionGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.false_negative / (estimation.true_negative + estimation.false_negative)
+
+    def _data_guard(self, estimation):
+        return estimation.true_negative + estimation.false_negative != 0
+
+
+class FalseDiscoveryGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.false_positive / (estimation.true_positive + estimation.false_positive)
+
+    def _data_guard(self, estimation):
+        return estimation.true_positive + estimation.false_positive != 0
+
+
+class NegativePredictiveGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.true_negative / (estimation.true_negative + estimation.false_negative)
+
+    def _data_guard(self, estimation):
+        return estimation.true_negative + estimation.false_negative != 0
+
+
+class PrevalenceGrammarCriteria(GrammarCriteria):
+    def _calculate(self, estimation):
+        return estimation.positives_that_has_occurred / estimation.total
+
+    def _data_guard(self, estimation):
+        return estimation.total != 0
+
+
 class GrammarEstimator(object):
     def __init__(self):
         self.criterias = dict(
             fitness=FitnessGrammarCriteria(),
-            positive=PositiveGrammarCriteria(),
-            negative=NegativeGrammarCriteria(),
-            sensivity=SensitivityGrammarCriteria(),
-            specifity=SpecifityGrammarCriteria(),
-            accuracy=AccuracyGrammarCriteria()
+            missrate=MissRateGrammarCriteria(),
+            fallout=FalloutGrammarCriteria(),
+            sensitivity=SensitivityGrammarCriteria(),
+            specificity=SpecifityGrammarCriteria(),
+            accuracy=AccuracyGrammarCriteria(),
+            precision=PrecisionGrammarCriteria(),
+            falseomission=FalseOmissionGrammarCriteria(),
+            falsediscovery=FalseDiscoveryGrammarCriteria(),
+            negpredictive=NegativePredictiveGrammarCriteria(),
+            prevalence=PrevalenceGrammarCriteria()
         )
 
     def __getitem__(self, item):

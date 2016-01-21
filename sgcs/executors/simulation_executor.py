@@ -128,12 +128,15 @@ class SimulationExecutor(object):
         )
 
         self.diagram_painter = [
-            GrammarCriteriaPainter('fitness'),
-            GrammarCriteriaPainter('positive'),
-            GrammarCriteriaPainter('negative'),
-            GrammarCriteriaPainter('sensivity'),
-            GrammarCriteriaPainter('specifity'),
-            GrammarCriteriaPainter('accuracy')
+            GrammarCriteriaPainter('missrate'),
+            GrammarCriteriaPainter('fallout'),
+            GrammarCriteriaPainter('sensitivity'),
+            GrammarCriteriaPainter('specificity'),
+            GrammarCriteriaPainter('accuracy'),
+            GrammarCriteriaPainter('precision'),
+            GrammarCriteriaPainter('falseomission'),
+            GrammarCriteriaPainter('falsediscovery'),
+            GrammarCriteriaPainter('negpredictive')
         ]
 
         self.randomizer = Randomizer(Random())
@@ -167,13 +170,10 @@ class SimulationExecutor(object):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
                                                          task_no, runner.input_queue)
 
-        result, ngen, grammar_estimator, gener_grammar_estimator, population = \
+        result, ngen, gener_grammar_estimator, population, grammar_estimator = \
             algorithm_simulator.perform_simulation(learning_set, testing_set, configuration)
 
-        print(result)
-        print('NGen:', ngen)
-
-        return result, ngen, grammar_estimator, gener_grammar_estimator, population
+        return result, ngen, grammar_estimator, population, gener_grammar_estimator
 
     @staticmethod
     def _artifact_file(path, name, extension, mode='r'):

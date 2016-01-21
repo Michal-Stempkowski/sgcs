@@ -31,7 +31,7 @@ class TestSimulationExecutor(unittest.TestCase):
         population.add_rule(non_terminal_rule, self.sut.randomizer)
 
         # When:
-        self.sut.save_population(population, path, name)
+        self.sut.save_population(population, lambda _: '', path, name)
         loaded_pop = self.sut.load_population(path, name, starting_symbol=self.starting_symbol)
 
         # Then:
