@@ -12,7 +12,8 @@ from grammar_estimator import EvolutionStepEstimator
 from induction.cyk_configuration import CykConfiguration
 from induction.cyk_service import CykService, StochasticCykService
 from rule_adding import AddingRulesConfiguration, AddingRuleSupervisor
-from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration
+from statistics.grammar_statistics import GrammarStatistics, ClassicalStatisticsConfiguration, \
+    PasiekaStatisticsConfiguration
 
 
 class AlgorithmVariant(object):
@@ -71,7 +72,8 @@ class AlgorithmConfiguration(SimpleJsonNode):
 
     @staticmethod
     def sgcs_variant():
-        return AlgorithmConfiguration.common_configuration(None, AlgorithmVariant.sgcs)
+        return AlgorithmConfiguration.common_configuration(
+            PasiekaStatisticsConfiguration.default(), AlgorithmVariant.sgcs)
 
     @staticmethod
     def create(induction_configuration, evolution_configuration, rule_configuration,
@@ -123,7 +125,7 @@ class CykServiceVariationManager(object):
                                   max_non_terminal_symbols)
 
     def create_grammar_statistics(self, randomizer, statistics_configuration):
-        if self.is_stochastic:
+        if not statistics_configuration.negative_sentence_learning:
             return GrammarStatistics.sgcs_variant(randomizer, statistics_configuration)
         else:
             return GrammarStatistics.default(randomizer, statistics_configuration)

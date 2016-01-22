@@ -309,3 +309,17 @@ class ClassicalStatisticsConfiguration(SimpleJsonNode):
         self.negative_weight = None
         self.valid_sentence_price = None
         self.invalid_sentence_price = None
+        self.negative_sentence_learning = True
+
+
+class PasiekaStatisticsConfiguration(SimpleJsonNode):
+    @staticmethod
+    def default():
+        return PasiekaStatisticsConfiguration.create()
+
+    @staticmethod
+    def create():
+        return PasiekaStatisticsConfiguration()
+
+    def __init__(self):
+        self.negative_sentence_learning = False

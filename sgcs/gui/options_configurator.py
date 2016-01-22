@@ -47,7 +47,8 @@ class SGcsAlgorithmVariant(AlgorithmVariant):
     def __init__(self):
         super().__init__('sGCS')
         self._supported_statistics += [
-            Statistics.pasieka
+            Statistics.pasieka,
+            Statistics.classical
         ]
 
     def create_new_configuration(self):
@@ -193,6 +194,9 @@ class OptionsConfigurator(GenericWidget):
     def bind_combobox(self, widget):
         widget.currentIndexChanged.connect(self.on_gui_change)
 
+    def bind_fitness_chooser(self, widget):
+        widget.currentIndexChanged.connect(self.on_fitness_changed)
+
     def on_gui_change(self):
         self.logger.debug('Updating model')
         self.update_model_dn()
@@ -206,6 +210,13 @@ class OptionsConfigurator(GenericWidget):
             EvolutionRouletteSelectorConfiguration.create())
 
         self.variant_changed__reset_gui()
+
+    def on_fitness_changed(self, fitness_str):
+        statistics = self.ui.selectedStatisticsComboBox.currentText()
+        self.configuration.statistics = RootAutoUpdater.STATISTICS_CONFIGURATION_MAP[statistics]()
+        self.selected_statistics = statistics
+        self.update_model_dn()
+        self.update_dynamic_nodes()
 
     def variant_changed__reset_gui(self):
         self.selected_statistics = self.current_variant.supported_statistics[0]

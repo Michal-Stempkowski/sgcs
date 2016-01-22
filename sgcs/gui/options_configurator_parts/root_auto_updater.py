@@ -1,5 +1,6 @@
 from gui.dynamic_gui import AutoUpdater
-from statistics.grammar_statistics import ClassicalStatisticsConfiguration
+from statistics.grammar_statistics import ClassicalStatisticsConfiguration, \
+    PasiekaStatisticsConfiguration
 
 
 class Statistics(object):
@@ -9,7 +10,7 @@ class Statistics(object):
 
 class RootAutoUpdater(AutoUpdater):
     STATISTICS_CONFIGURATION_MAP = {
-        'pasieka': lambda: None,
+        'pasieka': lambda: PasiekaStatisticsConfiguration.default(),
         'classical': ClassicalStatisticsConfiguration.default
     }
     RIGHT_STATISTICS_CONFIGURATION_MAP = type('StatisticsTranslator', (object,), dict(
@@ -34,7 +35,9 @@ class RootAutoUpdater(AutoUpdater):
         options_configurator.bind_spinner(options_configurator.ui.maxExecutionTimeSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.maxEvolutionStepsSpinBox)
         options_configurator.bind_spinner(options_configurator.ui.satisfyingFitnessDoubleSpinBox)
-        options_configurator.bind_combobox(options_configurator.ui.selectedStatisticsComboBox)
+
+        options_configurator.bind_fitness_chooser(
+            options_configurator.ui.selectedStatisticsComboBox)
 
     @staticmethod
     def _update_gui(options_configurator):

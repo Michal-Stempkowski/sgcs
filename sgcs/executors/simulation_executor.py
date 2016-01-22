@@ -24,7 +24,8 @@ from gui.proxy.simulator_proxy import PyQtAwareAsyncGcsSimulator
 from induction.cyk_configuration import CoverageConfiguration, CoverageOperatorConfiguration, \
     CoverageOperatorsConfiguration, CykConfiguration, GrammarCorrection
 from rule_adding import AddingRulesConfiguration, CrowdingConfiguration, ElitismConfiguration
-from statistics.grammar_statistics import ClassicalStatisticsConfiguration
+from statistics.grammar_statistics import ClassicalStatisticsConfiguration, \
+    PasiekaStatisticsConfiguration
 from utils import Randomizer
 
 
@@ -114,6 +115,7 @@ class SimulationExecutor(object):
             CykConfiguration,
             GrammarCorrection,
             ClassicalStatisticsConfiguration,
+            PasiekaStatisticsConfiguration,
             EvolutionRandomSelectorConfiguration,
             EvolutionTournamentSelectorConfiguration,
             EvolutionRouletteSelectorConfiguration
@@ -150,7 +152,7 @@ class SimulationExecutor(object):
         learning_set_path, testing_set_path = self.load_input_config(data_path)
 
         learning_set = SymbolTranslator.create(learning_set_path)
-        learning_set.negative_allowed = not algorithm_variant.is_stochastic
+        learning_set.negative_allowed = configuration.statistics.negative_sentence_learning
 
         testing_set = SymbolTranslator.create(testing_set_path)
         testing_set.negative_allowed = True
