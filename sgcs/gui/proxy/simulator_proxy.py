@@ -1,5 +1,4 @@
 import datetime
-from PyQt4 import QtCore
 
 from algorithm.gcs_runner import GcsRunner
 from algorithm.gcs_simulator import AsyncGcsSimulator
