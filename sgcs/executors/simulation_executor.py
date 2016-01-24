@@ -10,8 +10,6 @@ from matplotlib.font_manager import FontProperties
 
 from algorithm.gcs_runner import AlgorithmConfiguration, RuleConfiguration, AlgorithmVariant, \
     CykServiceVariationManager
-from algorithm.gcs_simulator import AsyncGcsSimulator
-from core.rule import Rule
 from core.rule_population import RulePopulation, StochasticRulePopulation
 from core.symbol import Symbol
 from datalayer.jsonizer import BasicJsonizer, RulePopulationJsonizer

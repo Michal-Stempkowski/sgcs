@@ -2,6 +2,8 @@
 
 !include grammar_estimator.wsdi
 
+class Exception < standard library >
+
 package grammar_estimator #FFFFFF {
 
     class EvolutionStepEstimator
@@ -16,10 +18,14 @@ package grammar_estimator #FFFFFF {
     EvolutionStepEstimator : fitness
     EvolutionStepEstimator : append_result(self, cyk_result)
 
+    class InvalidGrammarCriteriaAddingOperation
+    InvalidGrammarCriteriaAddingOperation --|> Exception
+
     class GrammarCriteria
     GrammarCriteria : nan_safe_min(a, b)
     GrammarCriteria : nan_safe_max(a, b)
     GrammarCriteria : nan_safe_ladd(a, b)
+    GrammarCriteria : nan_safe_add(a, b)
     GrammarCriteria : nan_safe_rsub(a, b)
     GrammarCriteria : update(self, step, estimation)
     GrammarCriteria : _data_guard(self, estimation)
@@ -30,16 +36,19 @@ package grammar_estimator #FFFFFF {
     GrammarCriteria : get_global_average(self)
     GrammarCriteria : get_global_min(self)
     GrammarCriteria : get_global_max(self)
+    GrammarCriteria : __add__(self, other)
+    GrammarCriteria : json_coder(self)
+    GrammarCriteria : json_decoder(self, json)
     GrammarCriteria --> EvolutionStepEstimator: uses
 
     class FitnessGrammarCriteria
     FitnessGrammarCriteria --|> GrammarCriteria
 
-    class PositiveGrammarCriteria
-    PositiveGrammarCriteria --|> GrammarCriteria
+    class MissRateGrammarCriteria
+    MissRateGrammarCriteria --|> GrammarCriteria
 
-    class NegativeGrammarCriteria
-    NegativeGrammarCriteria --|> GrammarCriteria
+    class FalloutGrammarCriteria
+    FalloutGrammarCriteria --|> GrammarCriteria
 
     class SensivityGrammarCriteria
     SensivityGrammarCriteria --|> GrammarCriteria
@@ -50,7 +59,26 @@ package grammar_estimator #FFFFFF {
     class AccuracyGrammarCriteria
     AccuracyGrammarCriteria --|> GrammarCriteria
 
-    class GrammarEstimator
+    class PrecisionGrammarCriteria
+    PrecisionGrammarCriteria -|> GrammarCriteria
+
+    class FalseOmissionGrammarCriteria
+    FalseOmissionGrammarCriteria -|> GrammarCriteria
+
+    class FalseDiscoveryGrammarCriteria
+    FalseDiscoveryGrammarCriteria -|> GrammarCriteria
+
+    class NegativePredictiveGrammarCriteria
+    NegativePredictiveGrammarCriteria -|> GrammarCriteria
+
+    class PrevalenceGrammarCriteria
+    PrevalenceGrammarCriteria -|> GrammarCriteria
+
+    class GrammarEstimator {
+        __add__(self, other)
+        json_coder(self)
+        json_decoder(self, json)
+    }
     GrammarEstimator : criterias
     GrammarEstimator : __getitem__(self, item)
     GrammarEstimator : append_step_estimation(self, step, estimation)

@@ -1,0 +1,11 @@
+@startuml
+
+package generic_widget #DDDDDD {
+
+class GenericWidget
+
+
+
+}
+
+@enduml

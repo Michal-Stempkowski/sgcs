@@ -41,8 +41,11 @@ package core {
 
     class RulePopulationAccessViolationError
 
-    class RulePopulation
-    RulePopulation : __init__(self, starting_symbol, universal_symbol=None, previous_instance=None, max_non_terminal_symbols=32)
+    class RulePopulation  {
+        __init__(self, starting_symbol, universal_symbol=None, previous_instance=None, max_non_terminal_symbols=32)
+        json_coder(self)
+        json_decoder(json)
+    }
     RulePopulation : starting_symbol
     RulePopulation : universal_symbol
     RulePopulation : max_non_terminal_symbols
@@ -68,8 +71,11 @@ package core {
     StochasticRulePopulation : perform_probability_estimation(self, fitness_getter)
     StochasticRulePopulation --|> RulePopulation
 
-    class Rule
-    Rule : __init__(self, parent, left_child, right_child)
+    class Rule  {
+        __init__(self, parent, left_child, right_child)
+        json_coder(self)
+        json_decoder(json)
+    }
     Rule : parent
     Rule : left_child
     Rule : right_child

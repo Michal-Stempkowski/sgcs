@@ -37,7 +37,8 @@ class ThoroughTraceback(object):
 
         while traceback_queue:
             next_production_to_visit = traceback_queue.pop()
-            logging.debug('%s: %s', str(next_production_to_visit.detector.coordinates), str(next_production_to_visit.rule))
+            logging.debug('%s: %s', str(next_production_to_visit.detector.coordinates),
+                          str(next_production_to_visit.rule))
             self._visit(next_production_to_visit, cyk_service.statistics,
                         environment.sentence, cyk_result, rules_population)
 
@@ -58,12 +59,14 @@ class StochasticBestTreeTraceback(Traceback):
         while traceback_queue:
             current_node = traceback_queue.pop()
             if not current_node.rule.is_terminal_rule():
-                left_child = environment.get_most_probable_production_for(current_node.rule.left_child,
+                left_child = environment.get_most_probable_production_for(
+                    current_node.rule.left_child,
                     environment._left_coord(*current_node.detector.coordinates))
                 if left_child is not None:
                     traceback_queue.append(left_child)
 
-                right_child = environment.get_most_probable_production_for(current_node.rule.right_child,
+                right_child = environment.get_most_probable_production_for(
+                    current_node.rule.right_child,
                     environment._right_coord(*current_node.detector.coordinates))
                 if right_child is not None:
                     traceback_queue.append(right_child)

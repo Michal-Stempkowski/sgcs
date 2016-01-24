@@ -1,0 +1,45 @@
+@startuml
+
+!include utils.wsdi
+
+package utils #FFFFFF {
+    class Randomizer {
+    	generator
+    	__init__(self, generator)
+    	perform_with_chance(self, chance)
+    	choice(self, sequence)
+    	randint(self, min_val, max_val)
+    	sample(self, sequence, size)
+    	shuffle(self, sequence)
+    	uniform(self, min_val, max_val)
+    }
+
+    class RunTimes {
+    	times
+    	__init__(self, times)
+    	__call__(self, *args, **kwargs)
+    }
+
+    class MethodDecoratorWrapper {
+    	desc
+    	subj
+    	__init__(self, desc, subj)
+    	__call__(self, *args, **kwargs)
+    }
+
+    class Guard {
+    	enter_func
+    	exit_func
+    	__init__(self, enter_func, exit_func)
+    	__enter__(self)
+    	__exit__(self, exc_type, exc_val, exc_tb)
+    }
+
+    class Context {
+    	exit_wrapper(exit_func)
+    	__init__(self, enter_func, exit_func)
+    }
+    Context --|> Guard
+}
+
+@enduml

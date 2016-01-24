@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABCMeta
-from enum import Enum
 
 from core.rule import TerminalRule, Rule
 from rule_adding import AddingRuleStrategyHint

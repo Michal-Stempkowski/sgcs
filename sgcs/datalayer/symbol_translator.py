@@ -79,7 +79,7 @@ class SymbolTranslator(object):
                                                             rule_population.starting_symbol,
                                                             rule_population.universal_symbol)
             str_buffer.append("{0} => '{1}'".format(translated[0],
-                                                  self.symbol_to_word(rule.left_child)))
+                                                    self.symbol_to_word(rule.left_child)))
 
         for rule in rule_population.get_all_non_terminal_rules():
             translated = rule.human_friendly_representation(rule_population.symbol_shift(),
@@ -90,4 +90,3 @@ class SymbolTranslator(object):
         str_buffer.append(' '.join([name, 'ends']).center(*header_format))
 
         return '\n'.join(str_buffer)
-

@@ -1,0 +1,9 @@
+@startuml
+
+package factory #DDDDDD {
+
+    class Factory
+
+}
+
+@enduml

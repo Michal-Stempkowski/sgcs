@@ -1,0 +1,10 @@
+@startuml
+
+package proxy #DDDDDD {
+    
+    class PyQtAwareAsyncGcsSimulator
+    class PyQtAwareGcsRunner
+
+}
+
+@enduml

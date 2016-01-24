@@ -1,0 +1,122 @@
+@startuml
+
+!include gcs_runner.wsdi
+
+!include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
+
+!include rule_adding.wsdi
+hide AddingRuleStrategyHint
+
+!include core.wsdi
+hide TerminalRule
+hide RulePopulationAccessViolationError
+
+!include grammar_statistics.wsdi
+hide RuleInfo
+hide RuleStatistics
+hide PasiekaRuleInfo
+hide PasiekaLeftSideInfo
+hide PasiekaRuleStatistics
+hide Fitness
+hide PasiekaFitness
+hide ClassicRuleInfo
+hide ClassicRuleUsageInfo
+hide ClassicRuleStatistics
+hide StatisticsVisitor
+hide ClassicFitness
+hide DummyCykStatistics
+
+!include grammar_estimator.wsdi
+hide EvolutionStepEstimator
+
+!include evolution.wsdi
+
+class Exception < standard library >
+
+package gcs_runner #FFFFFF {
+
+	class CykServiceVariationManager {
+		is_stochastic
+		__init__(self, is_stochastic)
+		create_cyk_service(self, randomizer, adding_rule_supervisor)
+		create_rule_population(self, starting_symbol, universal_symbol=None, previous_instance=None, max_non_terminal_symbols=32)
+		create_grammar_statistics(self, randomizer, statistics_configuration)
+		create_default_configuration(self)
+	}
+	CykServiceVariationManager ..> Randomizer: uses
+	CykServiceVariationManager ..> AddingRuleSupervisor: uses
+	CykServiceVariationManager .> Symbol: uses
+	CykServiceVariationManager -> RulePopulation: creates
+	CykServiceVariationManager -> GrammarStatistics: creates
+
+	class StopCriteria {
+		__call__(self, *args, **kwargs)
+		has_been_fulfilled(self)
+		update_state(self)
+		stop_reasoning_message(self)
+		has_succeeded()
+	}
+
+	class NoStopCriteriaSpecifiedError
+	NoStopCriteriaSpecifiedError -|> Exception
+
+	class NoStopCriteriaSpecified
+	NoStopCriteriaSpecified -|> StopCriteria
+	NoStopCriteriaSpecified -> NoStopCriteriaSpecifiedError: raises
+
+	class StepStopCriteria {
+		configuration
+		current_step
+		__init__(self, configuration)
+	}
+	StepStopCriteria --|> StopCriteria
+
+	class TimeStopCriteria {
+		configuration
+		start_time
+		__init__(self, configuration)
+	}
+	TimeStopCriteria --|> StopCriteria
+
+	class FitnessStopCriteria {
+		grammar_estimator
+		configuration
+		__init__(self, grammar_estimator, configuration)
+	}
+	FitnessStopCriteria --|> StopCriteria
+	FitnessStopCriteria ..> GrammarEstimator
+
+	class GcsRunner {
+		cyk_service_variant
+		randomizer
+		configuration
+		rule_adding
+		grammar_estimator
+		induction
+		evolution
+		stop_criteria
+
+		__init__(self, randomizer, run_no, cyk_service_variant=None)
+		create_stop_criteria(self)
+		generate_random_rules(self, provided_rules)
+		add_initial_rules(self, initial_rules, rule_population, grammar_statistics)
+		perform_gcs(self, initial_rules, configuration, grammar_estimator, grammar_statistics, sentences)
+		_post_step_actions(self, step)
+	}
+	GcsRunner --* CykServiceVariationManager
+	GcsRunner ..> Randomizer: uses
+	GcsRunner --* AddingRuleSupervisor
+	GcsRunner ..> GrammarEstimator: uses
+	GcsRunner --* EvolutionService
+	GcsRunner --o StopCriteria
+	GcsRunner --> Rule: creates
+	GcsRunner ..> Sentence: uses
+}
+
+@enduml

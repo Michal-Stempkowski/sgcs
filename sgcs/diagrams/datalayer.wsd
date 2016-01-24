@@ -4,8 +4,9 @@
 hide Sentence
 hide TerminalRule
 hide Rule
-hide RulePopulation
 hide RulePopulationAccessViolationError
+
+class Exception
 
 package datalayer {
     class SymbolTranslator
@@ -15,6 +16,7 @@ package datalayer {
     SymbolTranslator : word_to_symbol(self, word)
     SymbolTranslator : rule_population_to_string(self, rule_population)
     SymbolTranslator ..> EagerTokenizer: uses
+    SymbolTranslator ..> EagerFileFetcher: uses
     SymbolTranslator --> Symbol: translates
 
     class EagerFileFetcher
@@ -29,6 +31,38 @@ package datalayer {
     EagerTokenizer : __init__(self, data_fetcher)
     EagerTokenizer : get_chunk_generator(self)
     EagerTokenizer ..> EagerFileFetcher: uses
+
+    class SimpleJsonNode {
+        to_json(self, jsonizer)
+        is_complex_json(jsonizer, value)
+        from_json(self, state, jsonizer)
+    }
+
+    class BasicJsonizer {
+        node_id
+        __init__(self, expected_classes)
+        to_json(self, configuration_object)
+        from_json(self, json)
+    }
+    BasicJsonizer ..> SimpleJsonNode: uses
+
+    class RulePopulationJsonizer(object) {
+        make_binding_map(bindings_list)
+        __init__(self, bindings)
+        to_json(self, population)
+        from_json(self, json, randomizer, *args, **kwargs)
+    }
+    RulePopulationJsonizer ..> RulePopulation: translates
+
+    class ComplexJsonizer {
+        make_binding_map(bindings_list)
+        __init__(self, bindings)
+        to_json(self, obj)
+        from_json(self, json, *args, **kwargs)
+    }
+
+    class UnexpectedClassError
+    UnexpectedClassError --|> Exception
 }
 
 @enduml

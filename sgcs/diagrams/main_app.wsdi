@@ -1,0 +1,10 @@
+@startuml
+
+package main_app #DDDDDD {
+
+class MainApp
+
+}
+
+
+@enduml

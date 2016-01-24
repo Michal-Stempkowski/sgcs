@@ -1,6 +1,12 @@
 @startuml
 
 !include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
 
 !include core.wsdi
 hide Sentence
@@ -43,9 +49,9 @@ package rule_adding {
     AddingRuleWithCrowdingStrategy --|> AddingRuleStrategy
 
     class AddingRuleWithElitismStrategy
-    AddingRuleStrategy : elite
-    AddingRuleStrategy : generate_elite(self, adding_supervisor, statistics, rule_population)
-    AddingRuleWithElitismStrategy --|> AddingRuleStrategy
+    AddingRuleWithElitismStrategy : elite
+    AddingRuleWithElitismStrategy : generate_elite(self, adding_supervisor, statistics, rule_population)
+    AddingRuleWithElitismStrategy --|> AddingRuleWithCrowdingStrategy
 
     class AddingRuleSupervisor
     AddingRuleSupervisor : default(randomizer)
@@ -54,7 +60,6 @@ package rule_adding {
     AddingRuleSupervisor : add_rule(self, rule, rule_population, statistics, strategy_hint=AddingRuleStrategyHint.expand_population)
     AddingRuleSupervisor : update_elite_if_supported(self, rule_population, statistics)
     AddingRuleSupervisor --* Randomizer
-    AddingRuleSupervisor --* AddingRulesConfiguration
     AddingRuleSupervisor "1" --o "0..*"  AddingRuleStrategy
     AddingRuleSupervisor ..> Rule: uses
     AddingRuleSupervisor ..> RulePopulation: uses

@@ -41,6 +41,20 @@ Environment --* Sentence
 Environment ..> ProductionPool: creates(factory)
 Environment ..> Production: uses
 Environment --> CykTableIndexError: raises
+Environment --> viterbi_probability_approach: uses
+Environment --> baum_welch_probability_approach: uses
+
+class viterbi_probability_approach << (F,#AA00AA) Function >> {
+	current
+	parent
+	children
+}
+
+class baum_welch_probability_approach << (F,#AA00AA) Function >> {
+	current
+	parent
+	children
+}
 
 }
 

@@ -1,0 +1,53 @@
+@startuml
+
+!include gcs_simulator.wsdi
+
+!include gcs_runner.wsdi
+hide CykServiceVariationManager
+
+!include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
+
+!include datalayer.wsdi
+hide EagerFileFetcher
+hide EagerTokenizer
+hide BasicJsonizer
+
+!include run_estimator.wsdi
+
+!include core.wsdi
+hide Sentence
+hide Symbol
+hide Rule
+hide RulePopulationAccessViolationError
+hide TerminalRule
+
+package gcs_simulator #FFFFFF {
+
+class GcsSimulator {
+	randomizer
+	algorithm_variant
+
+	__init__(self, randomizer, algorithm_variant)
+	perform_simulation(self, learning_set, testing_set, configuration)
+}
+GcsSimulator ..* Randomizer
+GcsSimulator .> SymbolTranslator: uses
+GcsSimulator -> RunEstimator: creates
+GcsSimulator ..> RulePopulation: uses
+GcsSimulator --> GcsRunner: creates
+
+class AsyncGcsSimulator {
+	calculate(func, args)
+	calculate_star(self, args)
+}
+AsyncGcsSimulator -|> GcsSimulator
+
+}
+
+@enduml

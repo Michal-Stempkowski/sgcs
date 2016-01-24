@@ -12,6 +12,12 @@ hide ProductionPool
 hide EmptyProduction
 
 !include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
 
 !include cyk_executors.wsdi
 

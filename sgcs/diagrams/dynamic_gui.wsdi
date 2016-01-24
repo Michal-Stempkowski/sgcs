@@ -1,0 +1,18 @@
+@startuml
+
+package dynamic_gui #DDDDDD {
+
+class AutoUpdater
+
+
+class DynamicNode
+
+class DynamicRoot
+
+class refreshes_dynamics << (D,#00FFFF) Decorator >>
+
+class BlockSignals
+
+}
+
+@enduml
