@@ -3,4 +3,5 @@ package datalayer #DDDDDD {
     class SymbolTranslator
     class EagerFileFetcher
     class EagerTokenizer
+    class BasicJsonizer
 }

@@ -2,13 +2,11 @@ import copy
 import logging
 
 import multiprocessing
-import os
 import random
 
 from algorithm.gcs_runner import GcsRunner
 from algorithm.run_estimator import RunEstimator
 from grammar_estimator import GrammarEstimator
-from statistics.grammar_statistics import GrammarStatistics
 
 
 class GcsSimulator(object):
@@ -86,7 +84,8 @@ class GcsSimulator(object):
 
         return rule_population, auxiliary_rule_population, aux_fitness
 
-    def _perform_generalization_test(self, configuration, rule_population, auxiliary_rule_population,
+    def _perform_generalization_test(self, configuration, rule_population,
+                                     auxiliary_rule_population,
                                      testing_set, run_estimator):
         conf = self._prepare_configuration_for_generalization_test(configuration)
 

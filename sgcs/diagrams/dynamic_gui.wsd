@@ -1,0 +1,61 @@
+@startuml
+
+!include utils.wsdi
+hide Randomizer
+hide RunTimes
+hide chunk(x,size)
+hide Guard
+hide rmdir_forced(top)
+
+!include dynamic_gui.wsdi
+
+title dynamic_gui
+
+package dynamic_gui #FFFFFF {
+
+class AutoUpdater
+AutoUpdater : __init__(self, bind_func, update_model_func, update_gui_func, init_gui_func)
+AutoUpdater : bind
+AutoUpdater : init_gui
+AutoUpdater : update_model
+AutoUpdater : update_gui
+
+
+class DynamicNode
+DynamicNode : always(_)
+DynamicNode : widgets
+DynamicNode : visibility_condition
+DynamicNode : auto_updater
+DynamicNode : __init__(self, *widgets, visibility_condition=None, enabling_condition=None, auto_updater=None)
+DynamicNode : update_visibility(self, root)
+DynamicNode : update_availability(self, root)
+DynamicNode : bind(self)
+DynamicNode : init_gui(self)
+DynamicNode : update_model(self, root)
+DynamicNode : update_gui(self, root)
+DynamicNode "1" --* "0..1" AutoUpdater
+
+class DynamicRoot
+DynamicRoot : ui
+DynamicRoot : dynamic_nodes
+DynamicRoot : children
+DynamicRoot : update_dynamic_nodes(self)
+DynamicRoot : bind_dn(self)
+DynamicRoot : init_gui_dn(self)
+DynamicRoot : update_model_dn(self)
+DynamicRoot : update_dn_gui(self)
+DynamicRoot : dynamic_gui_update(self)
+DynamicRoot --o DynamicNode
+DynamicRoot --o DynamicRoot
+
+class refreshes_dynamics << (D,#00FFFF) Decorator >>
+refreshes_dynamics --> MethodDecoratorWrapper: uses
+
+class BlockSignals
+BlockSignals --|> Context
+
+class feed_with_data(widget,data,default_item=None,clear=False) << (F,#AA00AA) Function >>
+
+}
+
+@enduml

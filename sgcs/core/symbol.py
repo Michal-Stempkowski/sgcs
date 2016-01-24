@@ -13,7 +13,7 @@ class Symbol(SimpleJsonNode):
 
         run_one_more_time = RunTimes(1)
         while remainder > alphabet_size or run_one_more_time():
-            letter = chr(remainder % alphabet_size+ ord('a'))
+            letter = chr(remainder % alphabet_size + ord('a'))
             result.append(letter.upper())
             remainder //= alphabet_size
 

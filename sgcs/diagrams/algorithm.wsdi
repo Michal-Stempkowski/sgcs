@@ -1,0 +1,14 @@
+@startuml
+
+package algorithm {
+
+    class TaskModel
+
+    class GcsRunner
+
+    class RunEstimator
+
+    class GcsSimulator
+}
+
+@enduml

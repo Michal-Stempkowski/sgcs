@@ -1,0 +1,23 @@
+@startuml
+
+!include simulation_executor.wsdi
+
+!include grammar_estimator.wsdi
+
+package simulation_executor #FFFFFF {
+
+	class GrammarCriteriaPainter {
+		DIAGRAM_EXT
+		DIAGRAM_EXT2
+
+		criteria
+		out_name
+
+		__init__(self, criteria, out_name=None)
+		paint(self, grammar_estimator, path, configuration)
+	}
+	GrammarCriteriaPainter ..> GrammarEstimator: uses
+
+}
+
+@enduml

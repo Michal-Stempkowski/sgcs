@@ -1,0 +1,14 @@
+@startuml
+
+!include factory.wsdi
+
+package factory #FFFFFF {
+
+    class Factory {
+        __init__(self, implementation=None)
+        create(self, type_id, *args)
+    }
+
+}
+
+@enduml

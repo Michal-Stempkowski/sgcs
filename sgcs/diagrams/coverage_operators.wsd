@@ -55,12 +55,12 @@ package coverage_operators  {
     TerminalCoverageOperator --> TerminalRule: creates
 
     class UniversalCoverageOperator
-    UniversalCoverageOperator --|> CoverageOperator
+    UniversalCoverageOperator -|> CoverageOperator
     UniversalCoverageOperator ..> InvalidCykConfigurationError: raises
     UniversalCoverageOperator --> TerminalRule: creates
 
     class StartingCoverageOperator
-    StartingCoverageOperator --|> CoverageOperator
+    StartingCoverageOperator -|> CoverageOperator
     StartingCoverageOperator --> TerminalRule: creates
 
     class AggressiveCoverageOperator

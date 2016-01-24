@@ -1,0 +1,9 @@
+@startuml
+
+package system_status #DDDDDD {
+
+class SystemStatus
+
+}
+
+@enduml

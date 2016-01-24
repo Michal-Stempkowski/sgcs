@@ -1,0 +1,14 @@
+@startuml
+
+!include main_app.wsdi
+
+title gui_manager
+
+package gui_manager #FFFFFF {
+
+class main << (F,#AA00AA) Function >>
+main --> MainApp : creates
+
+}
+
+@enduml

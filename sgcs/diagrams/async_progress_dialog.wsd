@@ -1,0 +1,25 @@
+@startuml
+
+!include generic_widget.wsdi
+
+!include async_progress_dialog.wsdi
+
+title gui.async_progress_dialog
+
+package async_progress_dialog #FFFFFF {
+
+class AsyncProgressDialog {
+	CHANGE_STEP_EVENT
+	SET_PROGRESS_EVENT
+	RESET_EVENT
+	__init__(self, parent, worker)
+	make_lean(self)
+	show(self)
+}
+AsyncProgressDialog ..> GenericWidget: uses
+
+
+
+}
+
+@enduml

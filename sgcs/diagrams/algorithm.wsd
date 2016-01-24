@@ -18,6 +18,9 @@ hide AddingRuleStrategyHint
 
 !include evolution.wsdi
 
+!include algorithm.wsdi
+
+
 package algorithm {
     class StopCriteria
     StopCriteria : has_succeeded()

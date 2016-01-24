@@ -121,7 +121,7 @@ class Environment(object):
         production_pool = self.cyk_table[coordinates]
         return production_pool.is_empty()
 
-    # Na tym przy tracebacku jest chyba rozp...
+    # Usnafe!
     def get_child_productions(self, production):
         result = []
         if not production.rule.is_terminal_rule():

@@ -1,0 +1,9 @@
+@startuml
+
+package options_configurator #DDDDDD {
+
+	class OptionsConfigurator
+
+}
+
+@enduml

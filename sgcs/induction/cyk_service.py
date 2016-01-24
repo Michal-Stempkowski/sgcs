@@ -1,13 +1,12 @@
 import logging
 
-from core.rule_population import StochasticRulePopulation
 from factory import Factory
 from induction import cyk_executors
 from induction.coverage_operators import CoverageOperations
 from induction.environment import Environment
 from induction.grammar_corrector import GrammarCorrector
 from induction.production import ProductionPool
-from induction.traceback import Traceback, ThoroughTraceback, StochasticBestTreeTraceback
+from induction.traceback import Traceback, StochasticBestTreeTraceback
 from sgcs.induction.cyk_executors import CykTypeId
 
 

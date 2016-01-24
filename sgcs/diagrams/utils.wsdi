@@ -1,3 +1,20 @@
 package utils #DDDDDD {
     class Randomizer
+
+    class RunTimes
+
+    class chunk << (F,#AA00AA) Function >>  {
+    	x
+    	size
+    }
+
+    class MethodDecoratorWrapper
+
+    class Guard
+
+    class Context
+
+    class rmdir_forced << (F,#AA00AA) Function >> {
+    	top
+    }
 }

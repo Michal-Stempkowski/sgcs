@@ -1,0 +1,21 @@
+@startuml
+
+package run_estimator #FFFFFF {
+
+class RunEstimator {
+	successes
+	failures
+	n_success
+	n_evals
+	s
+	min_evals
+
+	__init__(self)
+	append_failure(self)
+	append_success(self, steps)
+	__str__(self)
+}
+
+}
+
+@enduml
