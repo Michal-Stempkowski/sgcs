@@ -157,7 +157,7 @@ class StochasticRulePopulation(RulePopulation):
     def get_normalized_rule_probability(self, rule):
         left_side_probability = self.left_side_probabilities.get(rule.parent, 1)
         return self.rule_probabilities.get(rule, 0) / \
-            left_side_probability if left_side_probability > 0 else 0
+            left_side_probability if left_side_probability > 0 else 1
 
     def perform_probability_estimation(self, fitness_getter):
         for parent in self.left_side_probabilities:
