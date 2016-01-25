@@ -1,0 +1,19 @@
+@startuml
+(Run gui_manager.py) as gui
+(Run console_fetcher.py) as cloud
+user -right-> gui
+
+user -left-> cloud
+cloud -up-> (input verification with -p flag)
+cloud -down-> (Run simulation with no gui)
+
+gui -down-> (Prepare input data)
+gui -right-> (Prepare configuration)
+(Schedule a simulation) as sch
+gui -up-> sch
+gui -down-> (Show system status)
+sch -right-> (Run simulation with gui)
+
+user -down-> (Check generated artifacts)
+
+@enduml

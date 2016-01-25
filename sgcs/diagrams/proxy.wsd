@@ -1,0 +1,63 @@
+@startuml
+
+!include run_estimator.wsdi
+
+!include gcs_simulator.wsdi
+hide GcsSimulator
+
+!include gcs_runner.wsdi
+
+!include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
+
+package proxy #FFFFFF {
+
+	class RunResult {
+		SIGNAL
+
+		task_no
+		run_id
+		has_succeeded
+		fitness_reached
+		run_estimator
+		evolution_step
+
+		__init__(self, task_no, run_id, has_succeeded, fitness_reached, run_estimator, evolution_step)
+	}
+	RunResult ..> RunEstimator: uses
+
+    class PyQtAwareAsyncGcsSimulator {
+    	TIME_FORMAT
+    	START_TIME_SIGNAL
+    	END_TIME_SIGNAL
+    	TESTING_HAS_STARTED_SIGNAL
+
+    	pyqt_hook
+    	task_no
+
+    	__init__(self, randomizer, algorithm_variant, task_no, pyqt_hook)
+    }
+    PyQtAwareAsyncGcsSimulator -|> AsyncGcsSimulator
+    PyQtAwareAsyncGcsSimulator ..> Randomizer
+    PyQtAwareAsyncGcsSimulator ..> CykServiceVariationManager
+
+    class PyQtAwareGcsRunner {
+    	STEP_SIGNAL
+
+    	task_no
+    	pyqt_hook
+
+    	__init__(self, randomizer, run_no, pyqt_hook, task_no, cyk_service_variant=None)
+    }
+    PyQtAwareGcsRunner --|> GcsRunner
+    PyQtAwareGcsRunner .> Randomizer
+    PyQtAwareGcsRunner ..> CykServiceVariationManager
+
+}
+
+@enduml
