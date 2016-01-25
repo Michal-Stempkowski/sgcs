@@ -4,7 +4,6 @@ import shutil
 import sys
 from optparse import OptionParser
 
-from PyQt4 import QtGui
 
 from algorithm.task_model import TaskModel
 from executors.simulation_executor import SimulationExecutor
@@ -13,10 +12,22 @@ from gui.runner import Runner
 from utils import chunk, rmdir_forced
 
 
+class DummyQueue(object):
+    def put(*args, **kwargs):
+        pass
+
+
+
+class Runner(object):
+    def __init__(self):
+        self.input_queue = DummyQueue()
+
+
+
+
 def main():
     logging.basicConfig(
         level=logging.INFO,
-        filename=r"C:\Users\Michał\PycharmProjects\mgr\sgcs\log.log",
         format='%(asctime)s %(message)s'
     )
     usage = "usage: %prog -o OUTPUT_DIR [options] [input, config]..."
@@ -54,17 +65,17 @@ def main():
     if options.run:
         print('Starting run')
         executor = SimulationExecutor()
-        runner = None
+        runner = Runner()
         for i, x in enumerate(tasks):
             run_func, configuration, population_printer = executor.prepare_simulation(
-                runner, i, x.input_file, x.params_configuration)
+                runner, i, x.data_configuration, x.params_configuration)
 
             result = run_func(configuration)
 
             collected = False
             while not collected:
                 try:
-                    _collect_task(x, result, i, configuration, population_printer, executor)
+                    _collect_task(x, result, i, configuration, population_printer, executor, options.output)
                 except PermissionError:
                     collected = False
                     print('not collected!')
