@@ -3,9 +3,9 @@
 !include utils.wsdi
 hide Randomizer
 hide RunTimes
-hide chunk(x,size)
+hide chunk
 hide Guard
-hide rmdir_forced(top)
+hide rmdir_forced
 
 !include dynamic_gui.wsdi
 
@@ -53,8 +53,6 @@ refreshes_dynamics --> MethodDecoratorWrapper: uses
 
 class BlockSignals
 BlockSignals --|> Context
-
-class feed_with_data(widget,data,default_item=None,clear=False) << (F,#AA00AA) Function >>
 
 }
 

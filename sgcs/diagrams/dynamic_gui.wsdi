@@ -13,6 +13,13 @@ class refreshes_dynamics << (D,#00FFFF) Decorator >>
 
 class BlockSignals
 
+class feed_with_data << (F,#AA00AA) Function >> {
+	widget
+	data
+	default_item=None
+	clear=False
+}
+
 }
 
 @enduml

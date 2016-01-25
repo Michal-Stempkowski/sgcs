@@ -37,6 +37,12 @@ hide EvolutionStepEstimator
 
 !include evolution.wsdi
 
+!include induction.wsdi
+hide Environment
+hide Production
+hide EmptyProduction
+hide Detector
+
 class Exception < standard library >
 
 package gcs_runner #FFFFFF {
@@ -114,6 +120,7 @@ package gcs_runner #FFFFFF {
 	GcsRunner --* AddingRuleSupervisor
 	GcsRunner ..> GrammarEstimator: uses
 	GcsRunner --* EvolutionService
+	GcsRunner -* CykService
 	GcsRunner --o StopCriteria
 	GcsRunner --> Rule: creates
 	GcsRunner ..> Sentence: uses

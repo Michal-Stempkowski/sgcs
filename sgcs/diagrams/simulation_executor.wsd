@@ -3,6 +3,33 @@
 !include simulation_executor.wsdi
 
 !include grammar_estimator.wsdi
+hide EvolutionStepEstimator
+
+!include core.wsdi
+hide Sentence
+hide Rule
+hide RulePopulationAccessViolationError
+hide TerminalRule
+
+!include datalayer.wsdi
+hide EagerTokenizer
+hide EagerFileFetcher
+
+!include utils.wsdi
+hide RunTimes
+hide chunk
+hide MethodDecoratorWrapper
+hide Guard
+hide Context
+hide rmdir_forced
+
+!include gcs_runner.wsdi
+hide GcsRunner
+
+!include proxy.wsdi
+hide PyQtAwareGcsRunner
+
+!include run_estimator.wsdi
 
 package simulation_executor #FFFFFF {
 
@@ -17,6 +44,37 @@ package simulation_executor #FFFFFF {
 		paint(self, grammar_estimator, path, configuration)
 	}
 	GrammarCriteriaPainter ..> GrammarEstimator: uses
+
+	class SimulationExecutor {
+		POPULATION_EXT
+		GRAMMAR_ESTIMATOR_EXT
+		RUN_SUMMARY_EXT
+
+		configuration_serializer
+		population_serializer
+		diagram_painter
+		randomizer
+
+		prepare_simulation(self, runner, task_no, data_path, config_path, population_path=None)
+		save_population(self, rule_population, population_printer, path, name)
+		load_population(self, path, name, *pop_args, **pop_kwargs)
+		save_grammar_estimator(self, grammar_estimator, path, name)
+		save_execution_summary(self, run_estimator, ngen, generalisation_data, path, name)
+		generate_grammar_estimation_diagrams(self, grammar_estimator, path, configuration)
+	}
+	SimulationExecutor --> Symbol: uses
+	SimulationExecutor --> BasicJsonizer: uses
+	SimulationExecutor --> RulePopulationJsonizer: uses
+	SimulationExecutor --o GrammarCriteriaPainter
+	SimulationExecutor --* Randomizer
+	SimulationExecutor --> CykServiceVariationManager: creates
+	SimulationExecutor --> SymbolTranslator: creates
+	SimulationExecutor ..> RulePopulation: uses
+	SimulationExecutor ..> GrammarEstimator: uses
+	SimulationExecutor ..> RunEstimator: uses
+	SimulationExecutor --> PyQtAwareAsyncGcsSimulator: creates
+
+
 
 }
 

@@ -3,9 +3,10 @@
 [data_layer]
 
 [core]
-core ..> data_layer
+core <..> data_layer
 
 [utils]
+utils <.. core
 [grammar_statistics]
 [rule_adding]
 

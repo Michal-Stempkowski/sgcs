@@ -3,6 +3,9 @@
 !include runner.wsdi
 
 !include dynamic_gui.wsdi
+hide refreshes_dynamics
+hide BlockSignals
+hide feed_with_data
 
 !include executors.wsdi
 
@@ -150,6 +153,7 @@ package runner #FFFFFF {
     Runner --* RunVolatileModel
     Runner --* RunPostMortemModel
     Runner --* Ui_runner
+    Runner --> DynamicNode: creates
 }
 
 @enduml

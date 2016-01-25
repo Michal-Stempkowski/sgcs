@@ -1,6 +1,5 @@
 import logging
 from PyQt4 import QtGui, QtCore
-from PyQt4.QtGui import QWidget
 import psutil as psutil
 from gui.generated.system_status__gen import Ui_systemStatus
 from gui.generic_widget import GenericWidget

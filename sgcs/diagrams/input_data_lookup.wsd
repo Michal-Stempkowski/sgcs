@@ -3,6 +3,8 @@
 !include datalayer.wsdi
 hide EagerTokenizer
 hide EagerFileFetcher
+hide BasicJsonizer
+hide RulePopulationJsonizer
 
 !include executors.wsdi
 

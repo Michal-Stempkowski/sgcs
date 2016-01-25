@@ -5,7 +5,7 @@ hide AutoUpdater
 hide DynamicNode
 hide refreshes_dynamics
 hide BlockSignals
-hide feed_with_data(widget,data,default_item=None,clear=False)
+hide feed_with_data
 
 title generic_widget
 

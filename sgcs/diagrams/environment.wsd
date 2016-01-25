@@ -12,6 +12,13 @@ hide EmptyProduction
 
 !include environment.wsdi
 
+!include cyk_executors.wsdi
+hide CykResult
+
+package cyk_executors #DDDDDD {
+	enum CykTypeId
+}
+
 package environment #FFFFFF {
 
 class CykTableIndexError
@@ -43,6 +50,7 @@ Environment ..> Production: uses
 Environment --> CykTableIndexError: raises
 Environment --> viterbi_probability_approach: uses
 Environment --> baum_welch_probability_approach: uses
+Environment --> CykTypeId: uses
 
 class viterbi_probability_approach << (F,#AA00AA) Function >> {
 	current

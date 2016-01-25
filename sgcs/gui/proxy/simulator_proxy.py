@@ -7,7 +7,8 @@ from algorithm.gcs_simulator import AsyncGcsSimulator
 class RunResult(object):
     SIGNAL = 'PROXY_RUN_RESULT_SIGNAL'
 
-    def __init__(self, task_no, run_id, has_succeeded, fitness_reached, run_estimator, evolution_step):
+    def __init__(self, task_no, run_id, has_succeeded, fitness_reached,
+                 run_estimator, evolution_step):
         self.task_no = task_no
         self.run_id = run_id
         self.has_succeeded = has_succeeded
