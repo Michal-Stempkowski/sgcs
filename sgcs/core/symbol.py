@@ -3,21 +3,30 @@ from utils import RunTimes
 
 
 class Symbol(SimpleJsonNode):
+    ALPHABET_SIZE = ord('z') - ord('a')
+
     def __init__(self, symbol_id=None):
         self.symbol_id = symbol_id
 
     def human_friendly_representation(self, abs_shift):
         remainder = self.symbol_id - abs_shift + 1
         result = []
-        alphabet_size = ord('z') - ord('a')
 
         run_one_more_time = RunTimes(1)
-        while remainder > alphabet_size or run_one_more_time():
-            letter = chr(remainder % alphabet_size + ord('a'))
+        while remainder > self.ALPHABET_SIZE or run_one_more_time():
+            letter = chr(remainder % self.ALPHABET_SIZE + ord('a'))
             result.append(letter.upper())
-            remainder //= alphabet_size
+            remainder //= self.ALPHABET_SIZE
 
         return ''.join(reversed(result))
+
+    @staticmethod
+    def from_human_friendly_representation(human_repr, abs_shift):
+        acc = 0
+        for letter in human_repr:
+            acc = acc * Symbol.ALPHABET_SIZE + (ord(letter.lower()) - ord('a'))
+
+        return Symbol(acc + abs_shift - 1)
 
     def __eq__(self, other):
         return self.symbol_id == other.symbol_id

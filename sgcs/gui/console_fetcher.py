@@ -1,14 +1,11 @@
 import logging
 import os
 import shutil
-import sys
 from optparse import OptionParser
 
 
 from algorithm.task_model import TaskModel
 from executors.simulation_executor import SimulationExecutor
-from gui.non_gui_scheduler import NonGuiScheduler
-from gui.runner import Runner
 from utils import chunk, rmdir_forced
 
 
@@ -17,12 +14,9 @@ class DummyQueue(object):
         pass
 
 
-
 class Runner(object):
     def __init__(self):
         self.input_queue = DummyQueue()
-
-
 
 
 def main():

@@ -180,11 +180,14 @@ class SimulationExecutor(object):
         return open(os.path.join(path, name + extension), mode)
 
     def save_population(self, rule_population, population_printer, path, name):
+        self.save_population_data(rule_population, path, name)
+        with self._artifact_file(path, name + '_view', self.RUN_SUMMARY_EXT, 'w+') as pop_view_file:
+            pop_view_file.write('{0}\n'.format(population_printer(rule_population)))
+
+    def save_population_data(self, rule_population, path, name):
         serialized_population = self.population_serializer.to_json(rule_population)
         with self._artifact_file(path, name, self.POPULATION_EXT, 'w+') as pop_file:
             json.dump(serialized_population, pop_file, sort_keys=True, indent=4)
-        with self._artifact_file(path, name + '_view', self.RUN_SUMMARY_EXT, 'w+') as pop_view_file:
-            pop_view_file.write('{0}\n'.format(population_printer(rule_population)))
 
     def load_population(self, path, name, *pop_args, **pop_kwargs):
         with self._artifact_file(path, name, self.POPULATION_EXT) as pop_file:
@@ -194,7 +197,7 @@ class SimulationExecutor(object):
 
     def save_grammar_estimator(self, grammar_estimator, path, name):
         serialized_grammar_estimator = grammar_estimator.json_coder()
-        with self._artifact_file(path, name, self.POPULATION_EXT, 'w+') as est_file:
+        with self._artifact_file(path, name, self.GRAMMAR_ESTIMATOR_EXT, 'w+') as est_file:
             json.dump(serialized_grammar_estimator, est_file, sort_keys=True, indent=4)
 
     @staticmethod

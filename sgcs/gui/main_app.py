@@ -6,6 +6,7 @@ from gui.generated.main__gen import Ui_mainApp
 from gui.generic_widget import GenericWidget
 from gui.input_data_lookup import InputDataLookup
 from gui.options_configurator import OptionsConfigurator
+from gui.population_editor import PopulationEditor
 from gui.scheduler import Scheduler
 from gui.system_status import SystemStatus
 
@@ -21,6 +22,7 @@ class MainApp(GenericWidget):
         self.ui.optionsConfiguratorButton.clicked.connect(self.on_configuration_button_clicked)
         self.ui.schedulerButton.clicked.connect(self.on_scheduler_button_clicked)
         self.ui.systemStatusButton.clicked.connect(self.on_system_status_button_clicked)
+        self.ui.editPopulationPushButton.clicked.connect(self.on_population_editor_button_clicked)
 
         self.last_directory = ''
 
@@ -40,6 +42,10 @@ class MainApp(GenericWidget):
             DynamicNode(
                 self.ui.systemStatusButton,
                 enabling_condition=self.no_system_status
+            ),
+            DynamicNode(
+                self.ui.editPopulationPushButton,
+                enabling_condition=self.no_population_editor
             )
         ]
 
@@ -65,6 +71,10 @@ class MainApp(GenericWidget):
     def no_system_status(main_app):
         return SystemStatus.__name__ not in main_app.windows_container
 
+    @staticmethod
+    def no_population_editor(main_app):
+        return PopulationEditor.__name__ not in main_app.windows_container
+
     def on_input_data_lookup_button_clicked(self):
         if self.no_input_data_lookup(self):
             self.logger.debug('Creating input data lookup')
@@ -87,6 +97,12 @@ class MainApp(GenericWidget):
         if self.no_system_status(self):
             self.logger.debug('Creating system status')
             self._register_and_show(SystemStatus())
+            self.dynamic_gui_update()
+
+    def on_population_editor_button_clicked(self):
+        if self.no_population_editor(self):
+            self.logger.debug('Creating population editor')
+            self._register_and_show(PopulationEditor())
             self.dynamic_gui_update()
 
     def _register_and_show(self, window):

@@ -29,6 +29,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QPushButton" name="editPopulationPushButton">
+     <property name="text">
+      <string>Edit population</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QPushButton" name="schedulerButton">
      <property name="text">
       <string>Run simulations</string>

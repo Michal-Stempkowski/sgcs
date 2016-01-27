@@ -7,6 +7,9 @@ class Rule(object):
         self.left_child = left_child
         self.right_child = right_child
 
+    STARTING_SYMBOL_REPR = '<S>'
+    UNIVERSAL_SYMBOL_REPR = '<U>'
+
     @property
     def parent(self):
         return self._parent
@@ -17,9 +20,9 @@ class Rule(object):
     @staticmethod
     def _repr_or_special(symbol, shift, starting, universal):
         if symbol == starting:
-            return '<S>'
+            return Rule.STARTING_SYMBOL_REPR
         elif universal and symbol == universal:
-            return '<U>'
+            return Rule.UNIVERSAL_SYMBOL_REPR
         else:
             return symbol.human_friendly_representation(shift)
 
@@ -34,6 +37,31 @@ class Rule(object):
             right_child = self._repr_or_special(
                 self.right_child, abs_shift, starting_symbol, universal_symbol)
             return left_side, left_child, right_child
+
+    @staticmethod
+    def from_human_friendly_representation(
+            shift, starting_symbol, universal_symbol, parent, left, right=None):
+        abs_shift = abs(shift)
+        left_side = Rule.from_repr_or_special(parent, abs_shift, starting_symbol, universal_symbol)
+
+        if not right:
+            return left_side, left
+        else:
+            left_child = Rule.from_repr_or_special(
+                left, abs_shift, starting_symbol, universal_symbol)
+            right_child = Rule.from_repr_or_special(
+                right, abs_shift, starting_symbol, universal_symbol)
+
+            return left_side, left_child, right_child
+
+    @staticmethod
+    def from_repr_or_special(symbol_repr, shift, starting, universal):
+        if symbol_repr == Rule.STARTING_SYMBOL_REPR:
+            return starting
+        elif universal and symbol_repr == universal:
+            return universal
+        else:
+            return Symbol.from_human_friendly_representation(symbol_repr, shift)
 
     def __eq__(self, other):
         return self is other or other is not None and\
