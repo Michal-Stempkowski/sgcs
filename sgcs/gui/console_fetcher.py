@@ -24,12 +24,16 @@ def main():
         level=logging.INFO,
         format='%(asctime)s %(message)s'
     )
-    usage = "usage: %prog -o OUTPUT_DIR [options] [input, config]..."
+    usage = "usage: %prog -o -OUTPUT_DIR [options] [input, config [,starting_rules]]..."
     parser = OptionParser(usage=usage)
     parser.add_option('-p', '--print_only', action="store_false", dest='run', default=True,
                       help='Only shows configuration, does not run it')
     parser.add_option('-o', '--output', dest='output', default=None,
                       help='Destination')
+    parser.add_option('-s', '--starting_rules', action="store_true", dest='starting_rules',
+                      default=False,
+                      help='Script expects triplets of data(input, config, starting_rules) ' +
+                           'instead of tuples (input, config), if used.')
     options, args = parser.parse_args()
 
     if options.output is None:
@@ -38,13 +42,15 @@ def main():
 
     print('artifact directory:', options.output)
 
-    if not args or len(args) % 2 != 0:
+    chunk_size = 3 if options.starting_rules else 2
+
+    if not args or len(args) % chunk_size != 0:
         print("Invalid number of arguments!")
         return
 
     i = 0
     tasks = []
-    for input_file, config_file in chunk(args, 2):
+    for input_file, config_file, *rest in chunk(args, chunk_size):
         print('Task', i)
         task = TaskModel()
 
@@ -54,6 +60,13 @@ def main():
         print('\tconfig:', config_file)
         task.params_configuration = config_file
 
+        starting_population = None
+        if rest:
+            starting_population = rest[0]
+            print('\tstarting population:', starting_population)
+
+        task.population_configuration = starting_population
+
         tasks.append(task)
 
     if options.run:
@@ -62,7 +75,7 @@ def main():
         runner = Runner()
         for i, x in enumerate(tasks):
             run_func, configuration, population_printer = executor.prepare_simulation(
-                runner, i, x.data_configuration, x.params_configuration)
+                runner, i, x.data_configuration, x.params_configuration, x.population_configuration)
 
             result = run_func(configuration)
 

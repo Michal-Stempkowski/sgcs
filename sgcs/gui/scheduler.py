@@ -4,6 +4,7 @@ import os
 from PyQt4 import QtGui, QtCore
 
 from algorithm.task_model import TaskModel
+from executors.simulation_executor import SimulationExecutor
 from gui.dynamic_gui import DynamicNode, AutoUpdater
 from gui.generated.scheduler__gen import Ui_scheduler
 from gui.generic_widget import GenericWidget
@@ -18,6 +19,7 @@ class TaskView(object):
 
     DATA_CONFIG_SELECTED_SIGNAL = 'DATA_CONFIG_SELECTED_SIGNAL'
     PARAMS_SET_CONFIG_SELECTED_SIGNAL = 'PARAMS_SET_CONFIG_SELECTED_SIGNAL'
+    STARTING_RULES_CHOSEN_SIGNAL = 'STARTING_RULES_CHOSEN_SIGNAL'
 
     NOT_SPECIFIED_LABEL = '<not selected>'
     EMPTY_STARTING_POPULATION_LABEL = '<empty starting population>'
@@ -143,7 +145,30 @@ class TaskView(object):
         population_line, population_select_button, population_default_button = \
             self.create_task_item(self.groupbox_layout, 'Starting population')
         population_default_button.setVisible(True)
+
+        # noinspection PyUnresolvedReferences
+        population_select_button.clicked.connect(
+            self._on_select_population_clicked
+        )
+        # noinspection PyUnresolvedReferences
+        population_default_button.clicked.connect(
+            self._on_default_population_clicked
+        )
+
         return population_line
+
+    def _on_select_population_clicked(self):
+        selected_filename = QtGui.QFileDialog.getOpenFileName(
+            self.scheduler.widget, 'Load starting population...', self.scheduler.last_directory,
+            '*' + SimulationExecutor.POPULATION_EXT)
+
+        if selected_filename:
+            self.groupbox.emit(
+                QtCore.SIGNAL(self.STARTING_RULES_CHOSEN_SIGNAL), self, selected_filename)
+            self.scheduler.last_directory = os.path.dirname(selected_filename)
+
+    def _on_default_population_clicked(self):
+        self.groupbox.emit(QtCore.SIGNAL(self.STARTING_RULES_CHOSEN_SIGNAL), self, None)
 
     def create_control_section(self):
         groupbox, groupbox_layout = self._create_groupbox_with_horizontal_layout('')
@@ -282,6 +307,17 @@ class Scheduler(GenericWidget):
                 QtCore.SIGNAL(TaskView.PARAMS_SET_CONFIG_SELECTED_SIGNAL),
                 self.on_params_set_selected
             )
+
+            self.widget.connect(
+                task.groupbox,
+                QtCore.SIGNAL(TaskView.STARTING_RULES_CHOSEN_SIGNAL),
+                self._on_starting_rules_chosen
+            )
+
+    def _on_starting_rules_chosen(self, task, selected_filename):
+        self.logger.debug('Updating starting rules')
+        self.tasks[task.index].population_configuration = selected_filename
+        self.dynamic_gui_update()
 
     def on_remove_task(self, task):
         self.logger.debug('Removing task')

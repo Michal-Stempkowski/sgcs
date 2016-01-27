@@ -156,7 +156,7 @@ class SimulationExecutor(object):
         testing_set.negative_allowed = True
 
         return (lambda conf: self._perform_simulation(
-            algorithm_variant, learning_set, testing_set, conf, runner, task_no),
+            algorithm_variant, learning_set, testing_set, conf, runner, task_no, population_path),
             configuration,
             self._mk_population_printer(learning_set)
         )
@@ -166,12 +166,21 @@ class SimulationExecutor(object):
         return lambda x: translator.rule_population_to_string(x)
 
     def _perform_simulation(self, algorithm_variant, learning_set, testing_set, configuration,
-                            runner, task_no):
+                            runner, task_no, population_path=None):
         algorithm_simulator = PyQtAwareAsyncGcsSimulator(self.randomizer, algorithm_variant,
                                                          task_no, runner.input_queue)
+        if population_path is not None:
+            pop_path = os.path.dirname(population_path)
+            pop_name = os.path.basename(population_path).split('.')[0]
+            starting_pop = self.load_population(pop_path, pop_name, starting_symbol=Symbol(1))
+            starting_rules = list(starting_pop.get_all_non_terminal_rules())
+            starting_rules += starting_pop.get_terminal_rules()
+        else:
+            starting_rules = []
 
         result, ngen, gener_grammar_estimator, population, grammar_estimator = \
-            algorithm_simulator.perform_simulation(learning_set, testing_set, configuration)
+            algorithm_simulator.perform_simulation(learning_set, testing_set, configuration,
+                                                   starting_rules=starting_rules)
 
         return result, ngen, grammar_estimator, population, gener_grammar_estimator
 

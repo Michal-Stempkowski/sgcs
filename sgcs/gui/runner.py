@@ -259,7 +259,8 @@ class SimulationWorker(QtCore.QThread):
         self.current_data = new_data
 
         run_func, configuration, pop_printer = self.simulation_executor.prepare_simulation(
-            self.runner, task_no, new_data.current_input, new_data.current_config)
+            self.runner, task_no, new_data.current_input, new_data.current_config,
+            population_path=task.population_configuration)
 
         run_post_mortem_data = []
         for _ in range(configuration.max_algorithm_runs):

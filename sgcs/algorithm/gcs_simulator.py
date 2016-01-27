@@ -109,7 +109,8 @@ class GcsSimulator(object):
     def _generalization_run(self, conf, rules, sentences):
         return self._perform_run(conf, rules, sentences, None)
 
-    def perform_simulation(self, learning_set, testing_set, configuration):
+    def perform_simulation(self, learning_set, testing_set, configuration, starting_rules=None):
+        starting_rules = starting_rules if starting_rules is not None else []
         final_grammar_estimator = GrammarEstimator()
         run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
             self._prepare_for_run(learning_set)
@@ -117,7 +118,7 @@ class GcsSimulator(object):
         for i in range(configuration.max_algorithm_runs):
             logging.info('Run: %s', str(i))
             rp, stop_reasoning, fitness_reached, evolution_step, grammar_estimator = \
-                self._perform_run(configuration, [], sentences, i)
+                self._perform_run(configuration, starting_rules, sentences, i)
 
             rule_population, auxiliary_rule_population, aux_fitness = self._handle_run_result(
                 stop_reasoning, learning_set, run_estimator, rp, rule_population, fitness_reached,
@@ -139,7 +140,8 @@ class AsyncGcsSimulator(GcsSimulator):
         self.randomizer.generator = random.Random(seed)
         return self.calculate(func, args_), run_no
 
-    def perform_simulation(self, learning_set, testing_set, configuration):
+    def perform_simulation(self, learning_set, testing_set, configuration, starting_rules=None):
+        starting_rules = starting_rules if starting_rules is not None else []
         final_grammar_estimator = GrammarEstimator()
         run_estimator, rule_population, auxiliary_rule_population, aux_fitness, sentences = \
             self._prepare_for_run(learning_set)
@@ -149,7 +151,11 @@ class AsyncGcsSimulator(GcsSimulator):
         with multiprocessing.Pool(worker_pool_size) as pool:
             runs_to_be_performed = range(configuration.max_algorithm_runs)
             tasks = [(self._perform_run, (
-                copy.deepcopy(configuration), copy.deepcopy([]), copy.deepcopy(sentences), run_no),
+                copy.deepcopy(configuration),
+                copy.deepcopy(starting_rules),
+                copy.deepcopy(sentences),
+                run_no
+            ),
                       run_no, random.randint(0, 10**10))
                      for run_no in runs_to_be_performed]
 
