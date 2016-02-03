@@ -32,8 +32,8 @@ def main():
                       help='Destination')
     parser.add_option('-s', '--starting_rules', action="store_true", dest='starting_rules',
                       default=False,
-                      help='Script expects triplets of data(input, config, starting_rules) ' +
-                           'instead of tuples (input, config), if used.')
+                      help='Script expects triples of data(input, config, starting_rules) ' +
+                           'instead of doubles (input, config), if used.')
     options, args = parser.parse_args()
 
     if options.output is None:

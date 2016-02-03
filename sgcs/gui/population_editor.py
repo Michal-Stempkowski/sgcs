@@ -152,9 +152,16 @@ class LoadPopulationWorker(QtCore.QThread):
         self.emit(QtCore.SIGNAL(AsyncProgressDialog.RESET_EVENT))
 
     def load_learning_set_operation(self):
-        self.translator = self.population_executor.get_learned_translator(
-            self.population_editor.population_path)
-        self.emit(QtCore.SIGNAL(self.TRANSLATOR_READY_SIGNAL))
+        try:
+            self.translator = self.population_executor.get_learned_translator(
+                self.population_editor.population_path)
+        except:
+            dialog = QtGui.QMessageBox()
+            dialog.critical(
+                self.population_editor.widget, 'Invalid file',
+                'File "{0}" has invalid format!'.format(self.population_editor.population_path))
+        finally:
+            self.emit(QtCore.SIGNAL(self.TRANSLATOR_READY_SIGNAL))
 
     def load_population_operation(self):
         name = os.path.basename(self.population_editor.population_path).split('.')[0]
